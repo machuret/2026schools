@@ -1,210 +1,248 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-/* Severity fill colours per state */
+const W = 800, H = 560;
+
 const STATE_SEVERITY: Record<string, "critical" | "high" | "notable"> = {
-  "New South Wales":             "high",
-  "Victoria":                    "high",
-  "Queensland":                  "critical",
-  "South Australia":             "high",
-  "Western Australia":           "critical",
-  "Tasmania":                    "high",
-  "Northern Territory":          "critical",
-  "Australian Capital Territory":"notable",
+  "New South Wales":              "high",
+  "Victoria":                     "high",
+  "Queensland":                   "critical",
+  "South Australia":              "high",
+  "Western Australia":            "critical",
+  "Tasmania":                     "high",
+  "Northern Territory":           "critical",
+  "Australian Capital Territory": "notable",
 };
 
-const SEVERITY_COLOR = {
+const SEVERITY_COLOR: Record<string, string> = {
+  critical: "#DC2626",
+  high:     "#D97706",
+  notable:  "#059669",
+};
+const SEVERITY_HOVER: Record<string, string> = {
   critical: "#B91C1C",
   high:     "#B45309",
-  notable:  "#15803D",
-};
-
-const SEVERITY_ACTIVE = {
-  critical: "#7F1D1D",
-  high:     "#78350F",
-  notable:  "#14532D",
+  notable:  "#047857",
 };
 
 const STATE_ABBR: Record<string, string> = {
-  "New South Wales":             "NSW",
-  "Victoria":                    "VIC",
-  "Queensland":                  "QLD",
-  "South Australia":             "SA",
-  "Western Australia":           "WA",
-  "Tasmania":                    "TAS",
-  "Northern Territory":          "NT",
-  "Australian Capital Territory":"ACT",
+  "New South Wales":              "NSW",
+  "Victoria":                     "VIC",
+  "Queensland":                   "QLD",
+  "South Australia":              "SA",
+  "Western Australia":            "WA",
+  "Tasmania":                     "TAS",
+  "Northern Territory":           "NT",
+  "Australian Capital Territory": "ACT",
 };
 
-/* Normalise property names from different GeoJSON sources */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function stateName(d: any): string {
-  const p = d.properties ?? {};
-  return (
-    p.STATE_NAME ?? p.ste_name ?? p.ste_name16 ?? p.name ?? p.Name ??
-    p.STATE ?? p.state ?? p.admin ?? ""
-  );
-}
+/* Major cities with approximate [lon, lat] */
+const CITIES: { name: string; lon: number; lat: number; state: string }[] = [
+  { name: "Sydney",       lon: 151.21, lat: -33.87, state: "New South Wales" },
+  { name: "Newcastle",    lon: 151.78, lat: -32.93, state: "New South Wales" },
+  { name: "Wollongong",   lon: 150.89, lat: -34.43, state: "New South Wales" },
+  { name: "Melbourne",    lon: 144.96, lat: -37.81, state: "Victoria" },
+  { name: "Geelong",      lon: 144.35, lat: -38.15, state: "Victoria" },
+  { name: "Brisbane",     lon: 153.02, lat: -27.47, state: "Queensland" },
+  { name: "Gold Coast",   lon: 153.40, lat: -28.00, state: "Queensland" },
+  { name: "Townsville",   lon: 146.82, lat: -19.26, state: "Queensland" },
+  { name: "Cairns",       lon: 145.77, lat: -16.92, state: "Queensland" },
+  { name: "Adelaide",     lon: 138.60, lat: -34.93, state: "South Australia" },
+  { name: "Perth",        lon: 115.86, lat: -31.95, state: "Western Australia" },
+  { name: "Bunbury",      lon: 115.64, lat: -33.32, state: "Western Australia" },
+  { name: "Hobart",       lon: 147.33, lat: -42.88, state: "Tasmania" },
+  { name: "Darwin",       lon: 130.84, lat: -12.46, state: "Northern Territory" },
+  { name: "Canberra",     lon: 149.13, lat: -35.28, state: "Australian Capital Territory" },
+];
 
 interface Props {
   onSelectState: (name: string) => void;
   selectedState: string | null;
 }
 
+interface StateShape {
+  name: string;
+  d: string;
+  cx: number;
+  cy: number;
+}
+
 export default function AusMap({ onSelectState, selectedState }: Props) {
-  const svgRef    = useRef<SVGSVGElement>(null);
-  const rendered  = useRef(false);
-  /* keep a stable ref to selectedState so event handlers see current value */
-  const selRef    = useRef(selectedState);
-  selRef.current  = selectedState;
-
-  /* Re-stroke selected path whenever selectedState changes */
-  useEffect(() => {
-    if (!svgRef.current) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const d3sel = (window as any).__d3sel;
-    if (!d3sel) return;
-    const { svg, pathGen, geoData } = d3sel;
-    applySelection(svg, pathGen, geoData, selectedState);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedState]);
+  const svgRef  = useRef<SVGSVGElement>(null);
+  const built   = useRef(false);
+  const [shapes, setShapes] = useState<StateShape[]>([]);
+  const [cities, setCities] = useState<{ name: string; x: number; y: number; state: string }[]>([]);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const [tooltip, setTooltip] = useState<{ name: string; x: number; y: number } | null>(null);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (rendered.current) return;
-    rendered.current = true;
+    if (built.current) return;
+    built.current = true;
 
     async function build() {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const d3: any = await import("d3");
-
-      const W = 960, H = 680;
-      const svg = d3.select(svgRef.current);
-      svg.selectAll("*").remove();
-
-      /* Ocean background */
-      svg.append("rect")
-        .attr("width", W).attr("height", H)
-        .attr("fill", "#EFF6FF");
-
-      /* Try multiple reliable GeoJSON sources in order */
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let geoData: any = null;
-      const SOURCES = [
-        "https://raw.githubusercontent.com/rowanhogan/australian-states/master/states.min.geojson",
-        "https://raw.githubusercontent.com/matteason/australian-state-boundaries/main/states.geojson",
-        "https://raw.githubusercontent.com/datasets/geo-boundaries-world-110m/master/countries.geojson",
-      ];
-      for (const url of SOURCES) {
-        try {
-          const r = await fetch(url);
-          if (!r.ok) continue;
-          const json = await r.json();
-          /* Only accept if it has Australian state-level features */
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const names = (json.features ?? []).map((f: any) => stateName(f)).filter(Boolean);
-          if (names.some((n: string) => n.includes("Wales") || n.includes("Victoria") || n.includes("Queensland"))) {
-            geoData = json;
-            break;
-          }
-        } catch { /* try next */ }
-      }
-
-      if (!geoData) {
-        svg.append("text")
-          .attr("x", W / 2).attr("y", H / 2)
-          .attr("text-anchor", "middle")
-          .attr("fill", "#64748B")
-          .attr("font-size", "16")
-          .text("Map unavailable — check your connection");
-        return;
-      }
-
-      const projection = d3.geoMercator().fitSize([W, H], geoData);
-      const pathGen = d3.geoPath().projection(projection);
-
-      const paths = svg.selectAll(".sp")
-        .data(geoData.features)
-        .enter()
-        .append("path")
-        .attr("class", "sp")
+      try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .attr("d", (d: any) => pathGen(d) ?? "")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .attr("fill", (d: any) => {
-          const sev = STATE_SEVERITY[stateName(d)] ?? "notable";
-          return SEVERITY_COLOR[sev];
-        })
-        .attr("fill-opacity", 0.82)
-        .attr("stroke", "#ffffff")
-        .attr("stroke-width", 1.5)
-        .attr("stroke-linejoin", "round")
-        .style("cursor", "pointer")
-        .style("transition", "fill-opacity 0.15s");
+        const d3: any = await import("d3");
 
-      /* Hover */
-      paths
+        /* Fetch from /public — guaranteed local, no CDN */
+        const res = await fetch("/states.min.geojson");
+        if (!res.ok) throw new Error("Failed to fetch");
+        const geo = await res.json();
+
+        const projection = d3.geoMercator().fitSize([W, H], geo);
+        const pathGen    = d3.geoPath().projection(projection);
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .on("mouseover", function(this: any, _: any, d: any) {
-          if (stateName(d) !== selRef.current) {
-            d3.select(this).attr("fill-opacity", 0.65);
-          }
-        })
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .on("mouseout", function(this: any, _: any, d: any) {
-          if (stateName(d) !== selRef.current) {
-            d3.select(this).attr("fill-opacity", 0.82);
-          }
-        })
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .on("click", function(this: any, _: any, d: any) {
-          onSelectState(stateName(d));
+        const built: StateShape[] = geo.features.map((f: any) => {
+          const name = f.properties.STATE_NAME as string;
+          const d    = pathGen(f) as string;
+          const [cx, cy] = pathGen.centroid(f) as [number, number];
+          return { name, d, cx: Math.round(cx), cy: Math.round(cy) };
         });
 
-      /* State abbreviation labels */
-      svg.selectAll(".sl")
-        .data(geoData.features)
-        .enter()
-        .append("text")
-        .attr("class", "sl")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .attr("x", (d: any) => pathGen.centroid(d)[0])
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .attr("y", (d: any) => pathGen.centroid(d)[1])
-        .attr("text-anchor", "middle")
-        .attr("dominant-baseline", "central")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .attr("font-size", (d: any) => stateName(d) === "Australian Capital Territory" ? "9" : "13")
-        .attr("font-weight", "700")
-        .attr("font-family", "Inter, -apple-system, sans-serif")
-        .attr("fill", "#ffffff")
-        .attr("paint-order", "stroke")
-        .attr("stroke", "rgba(0,0,0,0.45)")
-        .attr("stroke-width", "3")
-        .style("pointer-events", "none")
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .text((d: any) => STATE_ABBR[stateName(d)] ?? "");
+        const projectedCities = CITIES.map(c => {
+          const [x, y] = projection([c.lon, c.lat]) as [number, number];
+          return { name: c.name, x: Math.round(x), y: Math.round(y), state: c.state };
+        });
 
-      /* Store references so the selection-sync effect can reach them */
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).__d3sel = { svg, pathGen, geoData };
-
-      /* Apply any already-set selection */
-      applySelection(svg, pathGen, geoData, selRef.current);
+        setShapes(built);
+        setCities(projectedCities);
+      } catch {
+        setError(true);
+      }
     }
 
     build();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <div className="map-wrapper">
-      <div className="map-hint">Click a state or territory to explore regional data</div>
-      <svg
-        ref={svgRef}
-        viewBox="0 0 960 680"
-        style={{ width: "100%", height: "auto", display: "block" }}
-        aria-label="Interactive map of Australia"
-      />
+    <div className="map-wrapper" style={{ position: "relative" }}>
+      <div className="map-hint">Click any state or territory to explore its regional data</div>
+
+      {error && (
+        <div style={{ textAlign: "center", padding: "40px", color: "#64748B" }}>
+          Map unavailable. Please refresh the page.
+        </div>
+      )}
+
+      {!error && (
+        <svg
+          ref={svgRef}
+          viewBox={`0 0 ${W} ${H}`}
+          style={{ width: "100%", height: "auto", display: "block", background: "#DBEAFE", borderRadius: "8px" }}
+          aria-label="Interactive map of Australia showing wellbeing data by state"
+        >
+          {/* Ocean */}
+          <rect width={W} height={H} fill="#BFDBFE" rx="8" />
+
+          {/* State paths */}
+          {shapes.map(s => {
+            const sev  = STATE_SEVERITY[s.name] ?? "notable";
+            const fill = hovered === s.name ? SEVERITY_HOVER[sev] : SEVERITY_COLOR[sev];
+            return (
+              <path
+                key={s.name}
+                d={s.d}
+                fill={fill}
+                fillOpacity={0.88}
+                stroke="#FFFFFF"
+                strokeWidth={hovered === s.name ? 2.5 : 1.5}
+                strokeLinejoin="round"
+                style={{ cursor: "pointer", transition: "fill 0.15s, stroke-width 0.1s" }}
+                onClick={() => onSelectState(s.name)}
+                onMouseEnter={e => {
+                  setHovered(s.name);
+                  const svg = svgRef.current!;
+                  const rect = svg.getBoundingClientRect();
+                  const scaleX = W / rect.width;
+                  const scaleY = H / rect.height;
+                  const mx = (e.clientX - rect.left) * scaleX;
+                  const my = (e.clientY - rect.top)  * scaleY;
+                  setTooltip({ name: s.name, x: mx, y: my });
+                }}
+                onMouseLeave={() => { setHovered(null); setTooltip(null); }}
+                aria-label={`${s.name} — click to explore`}
+                role="button"
+                tabIndex={0}
+                onKeyDown={e => e.key === "Enter" && onSelectState(s.name)}
+              />
+            );
+          })}
+
+          {/* State abbreviation labels */}
+          {shapes.map(s => {
+            const isACT = s.name === "Australian Capital Territory";
+            const isWA  = s.name === "Western Australia";
+            return (
+              <text
+                key={`lbl-${s.name}`}
+                x={s.cx}
+                y={s.cy}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={isACT ? 8 : isWA ? 15 : 13}
+                fontWeight="800"
+                fontFamily="Inter, -apple-system, sans-serif"
+                fill="#FFFFFF"
+                stroke="rgba(0,0,0,0.5)"
+                strokeWidth="3"
+                paintOrder="stroke"
+                style={{ pointerEvents: "none", userSelect: "none" }}
+              >
+                {STATE_ABBR[s.name] ?? ""}
+              </text>
+            );
+          })}
+
+          {/* City dots */}
+          {cities.map(c => (
+            <g key={`city-${c.name}`} style={{ pointerEvents: "none" }}>
+              <circle cx={c.x} cy={c.y} r={3.5} fill="#FFFFFF" stroke="#1E3A5F" strokeWidth={1.2} opacity={0.9} />
+              <text
+                x={c.x + 5}
+                y={c.y}
+                fontSize={7.5}
+                fontFamily="Inter, -apple-system, sans-serif"
+                fill="#1E3A5F"
+                dominantBaseline="central"
+                fontWeight="600"
+                stroke="rgba(255,255,255,0.7)"
+                strokeWidth="2"
+                paintOrder="stroke"
+              >
+                {c.name}
+              </text>
+            </g>
+          ))}
+
+          {/* Hover tooltip */}
+          {tooltip && (
+            <g style={{ pointerEvents: "none" }}>
+              <rect
+                x={tooltip.x + 10}
+                y={tooltip.y - 22}
+                width={tooltip.name.length * 7 + 16}
+                height={26}
+                rx={5}
+                fill="#0B1D35"
+                opacity={0.92}
+              />
+              <text
+                x={tooltip.x + 18}
+                y={tooltip.y - 5}
+                fontSize={11}
+                fontWeight="700"
+                fontFamily="Inter, -apple-system, sans-serif"
+                fill="#FFFFFF"
+              >
+                {tooltip.name} →
+              </text>
+            </g>
+          )}
+        </svg>
+      )}
+
       <div className="map-legend">
         <div className="legend-item"><div className="legend-dot dot-critical" /> Critical concern</div>
         <div className="legend-item"><div className="legend-dot dot-high" /> Elevated concern</div>
@@ -212,19 +250,4 @@ export default function AusMap({ onSelectState, selectedState }: Props) {
       </div>
     </div>
   );
-}
-
-/* ── helpers ── */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function applySelection(svg: any, _pathGen: unknown, _geoData: unknown, selected: string | null) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  svg.selectAll(".sp").each(function(this: SVGPathElement, d: any) {
-    const name = stateName(d);
-    const isSelected = name === selected;
-    const sev = STATE_SEVERITY[name] ?? "notable";
-    this.setAttribute("fill", isSelected ? SEVERITY_ACTIVE[sev] : SEVERITY_COLOR[sev]);
-    this.setAttribute("fill-opacity", isSelected ? "1" : "0.82");
-    this.setAttribute("stroke", isSelected ? "#0B1D35" : "#ffffff");
-    this.setAttribute("stroke-width", isSelected ? "3" : "1.5");
-  });
 }

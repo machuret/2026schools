@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { REGIONAL } from "@/lib/regional";
+import { getAreasByState } from "@/lib/areas";
 
 const SLUG_TO_STATE: Record<string, string> = {
   "new-south-wales":              "New South Wales",
@@ -118,6 +119,51 @@ export default async function StatePage({ params }: Props) {
             );
           })}
         </div>
+
+        {/* AREAS / CITIES */}
+        {(() => {
+          const areas = getAreasByState(slug);
+          if (areas.length === 0) return null;
+          return (
+            <section style={{ marginBottom: "52px" }}>
+              <h2 style={{ fontSize: "1.3rem", color: "var(--navy)", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.04em", paddingBottom: "12px", borderBottom: "2px solid var(--border)" }}>
+                Cities &amp; Regions in {stateName}
+              </h2>
+              <p style={{ fontSize: "0.95rem", color: "var(--text-light)", marginBottom: "24px", lineHeight: 1.7 }}>
+                Select a city or region to explore a detailed wellbeing report for that specific area, including local data, priority issues, and prevention insights.
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "14px" }}>
+                {areas.map(area => (
+                  <Link
+                    key={area.slug}
+                    href={`/areas/${area.slug}`}
+                    style={{
+                      display: "block",
+                      background: "#FFFFFF",
+                      border: "1px solid var(--border)",
+                      borderRadius: "10px",
+                      padding: "18px 20px",
+                      textDecoration: "none",
+                      boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+                      transition: "border-color 0.15s, box-shadow 0.15s",
+                    }}
+                  >
+                    <div style={{ fontSize: "0.68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--accent)", marginBottom: "6px" }}>
+                      {area.type === "city" ? "City" : area.type === "lga" ? "LGA" : "Region"}
+                    </div>
+                    <div style={{ fontWeight: 700, color: "var(--navy)", fontSize: "0.975rem", marginBottom: "6px" }}>{area.name}</div>
+                    <div style={{ fontSize: "0.8rem", color: "var(--text-light)", lineHeight: 1.5 }}>
+                      {area.population} · {area.issues.length} priority issues
+                    </div>
+                    <div style={{ marginTop: "10px", fontSize: "0.8rem", color: "var(--teal)", fontWeight: 600 }}>
+                      View report →
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
 
         {/* DATA → PREVENTION BRIDGE */}
         <section style={{ background: "linear-gradient(135deg, #0B1D35 0%, #132848 100%)", borderRadius: "16px", padding: "36px 40px", marginBottom: "52px" }}>

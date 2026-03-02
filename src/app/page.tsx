@@ -1,5 +1,6 @@
 import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
+import NewsTicker from "@/components/NewsTicker";
 import StatTicker from "@/components/StatTicker";
 import MapSection from "@/components/MapSection";
 import IssuesSection from "@/components/IssuesSection";
@@ -12,6 +13,7 @@ export default function Home() {
   return (
     <>
       <Nav />
+      <NewsTicker />
       <Hero />
       <StatTicker />
       <MapSection />
