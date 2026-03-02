@@ -4,7 +4,7 @@ import { getAreaBySlug, getAreasByState, AREAS } from "@/lib/areas";
 import InnerNav from "@/components/InnerNav";
 
 interface Props {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export async function generateStaticParams() {
@@ -12,7 +12,8 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: Props) {
-  const area = getAreaBySlug(params.slug);
+  const { slug } = await params;
+  const area = getAreaBySlug(slug);
   if (!area) return { title: "Area Not Found" };
   return {
     title: `${area.name} Student Wellbeing Report | Schools Monitor`,
@@ -20,11 +21,12 @@ export async function generateMetadata({ params }: Props) {
   };
 }
 
-export default function AreaPage({ params }: Props) {
-  const area = getAreaBySlug(params.slug);
+export default async function AreaPage({ params }: Props) {
+  const { slug } = await params;
+  const area = getAreaBySlug(slug);
   if (!area) notFound();
 
-  const relatedAreas = getAreasByState(area.stateSlug)
+  const relatedAreas = getAreasByState(area!.stateSlug)
     .filter(a => a.slug !== area.slug)
     .slice(0, 4);
 
