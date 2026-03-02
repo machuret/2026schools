@@ -2,7 +2,7 @@ import { Issue } from "./types";
 
 export const ISSUES: Issue[] = [
   {
-    rank: 1, icon: "😰", severity: "critical",
+    rank: 1, slug: "anxiety-depression", icon: "😰", severity: "critical",
     title: "Anxiety & Depression in School-Aged Children",
     anchorStat: "13.9% of children aged 4–17 have a mental disorder; anxiety is the most common",
     shortDesc: "Anxiety and depression are the leading mental health challenges in Australian schools, affecting hundreds of thousands of children and disrupting learning at its foundations.",
@@ -19,7 +19,7 @@ export const ISSUES: Issue[] = [
     sources: ["Young Minds Matter National Survey (2013–14)", "AIHW Child & Youth Mental Health", "AIHW Youth Self-Harm Atlas — depression/anxiety risk factor layer"],
   },
   {
-    rank: 2, icon: "🆘", severity: "critical",
+    rank: 2, slug: "self-harm-suicidality", icon: "🆘", severity: "critical",
     title: "Self-Harm & Suicidality",
     anchorStat: "AIHW Youth Self-Harm Atlas maps regional estimates at PHN and SA3 level nationally",
     shortDesc: "Youth self-harm and suicidal ideation are among the most serious indicators in Australian schools. Regional disparities are stark, with remote and Indigenous communities most at risk.",
@@ -36,7 +36,7 @@ export const ISSUES: Issue[] = [
     sources: ["AIHW Youth Self-Harm Atlas — regional PHN/SA3/SA4 data", "AIHW Suicide & Self-Harm Monitoring", "National Suicide Prevention Adviser reports"],
   },
   {
-    rank: 3, icon: "💔", severity: "critical",
+    rank: 3, slug: "distress-loneliness", icon: "💔", severity: "critical",
     title: "Psychological Distress & Loneliness in Teens",
     anchorStat: "1 in 5 Australian youth report high psychological distress; 1 in 5 feel lonely most or all of the time",
     shortDesc: "Loneliness and psychological distress have emerged as interconnected epidemics among Australian teenagers, accelerated by the COVID-19 pandemic and social media disruption.",
@@ -53,7 +53,7 @@ export const ISSUES: Issue[] = [
     sources: ["Mission Australia Youth Survey 2024", "AIHW Children's Mental Health Overview", "Productivity Commission RoGS 2026 — engagement indicators"],
   },
   {
-    rank: 4, icon: "👊", severity: "critical",
+    rank: 4, slug: "bullying", icon: "👊", severity: "critical",
     title: "Bullying at School",
     anchorStat: "46,000+ bullying incidents recorded in Queensland schools in 2023 alone",
     shortDesc: "School bullying remains pervasive and underreported across Australia. The absence of consistent national data collection is itself a governance failure that this site documents explicitly.",
@@ -70,7 +70,7 @@ export const ISSUES: Issue[] = [
     sources: ["Queensland Auditor-General Report 6 (2024–25)", "AIHW Australia's Children: In Brief", "Department of Education Anti-Bullying Rapid Review Consultation Paper"],
   },
   {
-    rank: 5, icon: "📱", severity: "critical",
+    rank: 5, slug: "cyberbullying", icon: "📱", severity: "critical",
     title: "Cyberbullying",
     anchorStat: "53% of 10–17 year olds experienced cyberbullying; 38% in the past 12 months",
     shortDesc: "Cyberbullying has erased the boundary between school and home. For many children, the torment follows them to bed. Australia's eSafety Commissioner leads the world in documenting this crisis.",
@@ -87,7 +87,7 @@ export const ISSUES: Issue[] = [
     sources: ["eSafety Commissioner — Online Experiences of Children in Australia", "eSafety Commissioner — Cyberbullying Snapshot", "Black Dog Institute Teens & Screens 2024"],
   },
   {
-    rank: 6, icon: "🌐", severity: "high",
+    rank: 6, slug: "online-hate", icon: "🌐", severity: "high",
     title: "Online Hate, Harassment & Harmful Content",
     anchorStat: "eSafety documents widespread exposure to hate, harmful content, and online harassment among Australian children",
     shortDesc: "Australian children's online environments are saturated with hate, extremism, and harmful content. Exposure is not rare — it is routine. Schools cannot control the digital world children inhabit.",
@@ -104,7 +104,7 @@ export const ISSUES: Issue[] = [
     sources: ["eSafety Commissioner — Online Experiences of Children in Australia", "eSafety Commissioner — Harmful Content Research", "Mission Australia Youth Survey 2024"],
   },
   {
-    rank: 7, icon: "🏫", severity: "high",
+    rank: 7, slug: "school-belonging", icon: "🏫", severity: "high",
     title: "School Belonging & Connectedness",
     anchorStat: "NSW CESE evidence links belonging directly to lower bullying and better academic outcomes",
     shortDesc: "A child who doesn't feel they belong at school is unlikely to succeed in it. Belonging is not a soft goal — it is a measurable, evidence-based predictor of wellbeing, learning, and retention.",
@@ -121,7 +121,7 @@ export const ISSUES: Issue[] = [
     sources: ["Productivity Commission RoGS 2026 — school education", "NSW CESE Belonging Research", "Mission Australia Youth Survey 2024"],
   },
   {
-    rank: 8, icon: "📉", severity: "high",
+    rank: 8, slug: "attendance-disengagement", icon: "📉", severity: "high",
     title: "Attendance Decline & Disengagement",
     anchorStat: "57% average attendance in very remote schools vs 93% in major cities — RoGS 2026",
     shortDesc: "Australia's school attendance crisis is starkest in remote communities, but is worsening nationally. Every missed day compounds learning loss and disconnection in ways that are hard to reverse.",
@@ -138,7 +138,7 @@ export const ISSUES: Issue[] = [
     sources: ["Productivity Commission RoGS 2026 — school education", "AIHW Australia's Children", "Australian Curriculum, Assessment and Reporting Authority"],
   },
   {
-    rank: 9, icon: "🚪", severity: "high",
+    rank: 9, slug: "school-refusal", icon: "🚪", severity: "high",
     title: "School Refusal & Emotionally Based Absence",
     anchorStat: "Post-pandemic spike in school refusal documented nationally — Parliamentary Library 2022–23",
     shortDesc: "School refusal is not defiance. It is fear. Distinguishing emotionally-based school avoidance from truancy is critical to getting the response right — and many schools still don't make this distinction.",
@@ -155,7 +155,7 @@ export const ISSUES: Issue[] = [
     sources: ["Parliamentary Library Research Paper 2022–23 — School Refusal", "Young Minds Matter anxiety prevalence data", "Australian Institute of Family Studies"],
   },
   {
-    rank: 10, icon: "💤", severity: "high",
+    rank: 10, slug: "sleep-deprivation", icon: "💤", severity: "high",
     title: "Sleep Deprivation & Fatigue",
     anchorStat: "25% of 12–13 yr olds and 50% of 16–17 yr olds miss sleep guidelines on school nights",
     shortDesc: "Sleep deprivation is quietly undermining the cognitive capacity of Australian teenagers. A tired student is physically present in the classroom but neurologically compromised.",
@@ -172,7 +172,7 @@ export const ISSUES: Issue[] = [
     sources: ["AIHW Sleep Problems as a Risk Factor", "Black Dog Institute Teens & Screens 2024", "National Sleep Foundation Age-Based Guidelines"],
   },
   {
-    rank: 11, icon: "📲", severity: "high",
+    rank: 11, slug: "screens-social-media", icon: "📲", severity: "high",
     title: "Screens, Social Media & Mental Health Load",
     anchorStat: "Black Dog Institute 2024: Australian adolescent screen use is creating measurable mental health burden",
     shortDesc: "Australian research now documents the link between high social media use and adolescent mental health deterioration. The evidence has moved past debate — but the solutions remain actively contested.",
@@ -189,7 +189,7 @@ export const ISSUES: Issue[] = [
     sources: ["Black Dog Institute Teens & Screens Report 2024", "eSafety Commissioner Online Experiences Research", "AIHW Adolescent Health Indicators"],
   },
   {
-    rank: 12, icon: "📚", severity: "high",
+    rank: 12, slug: "academic-stress", icon: "📚", severity: "high",
     title: "Stress & Academic Workload Pressure",
     anchorStat: "Australian PISA 2022 documents student exposure to stress and performance pressure as education risk factors",
     shortDesc: "Academic pressure is developmentally appropriate in small doses. In Australian secondary schools — particularly Years 11–12 — it has become a crisis of chronic, sustained stress.",
@@ -206,7 +206,7 @@ export const ISSUES: Issue[] = [
     sources: ["ACER PISA 2022 Australia Volume II — Student Wellbeing", "Mission Australia Youth Survey 2024", "Australian Association of Psychologists — exam stress research"],
   },
   {
-    rank: 13, icon: "🤜", severity: "high",
+    rank: 13, slug: "racism-discrimination", icon: "🤜", severity: "high",
     title: "Racism, Discrimination & Exclusion",
     anchorStat: "Mission Australia Youth Survey 2024: discrimination and inequality rated a top societal concern by Australian youth",
     shortDesc: "Racism in Australian schools is not just a social justice issue — it is a documented mental health and educational attainment crisis. Children who experience discrimination learn less and suffer more.",
@@ -223,7 +223,7 @@ export const ISSUES: Issue[] = [
     sources: ["Mission Australia Youth Survey 2024", "eSafety Commissioner Online Hate Research", "AIHW Social Determinants and Child Health"],
   },
   {
-    rank: 14, icon: "🎯", severity: "notable",
+    rank: 14, slug: "motivation-disengagement", icon: "🎯", severity: "notable",
     title: "Motivation & Learning Disengagement",
     anchorStat: "RoGS 2026 defines cognitive engagement including motivation as a key schooling indicator, measured across jurisdictions",
     shortDesc: "Motivation is not a personal failing — it is the product of whether a student believes school is relevant, safe, and achievable. When schools lose student motivation, they lose the students.",
@@ -240,7 +240,7 @@ export const ISSUES: Issue[] = [
     sources: ["Productivity Commission RoGS 2026 — School Education Engagement", "Mission Australia Youth Survey 2024", "ACER PISA 2022 — Motivation indicators"],
   },
   {
-    rank: 15, icon: "⚠️", severity: "notable",
+    rank: 15, slug: "reporting-gaps", icon: "⚠️", severity: "notable",
     title: "Safety & Wellbeing Incident Reporting Gaps",
     anchorStat: "Queensland Auditor-General Report 6 (2024–25): Australia's only state-level public accountability dataset on school safety incidents",
     shortDesc: "How schools record and report wellbeing incidents varies dramatically across jurisdictions. Queensland's audit exposes what happens when accountability is taken seriously — and what the silence elsewhere reveals.",

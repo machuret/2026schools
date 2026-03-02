@@ -1,9 +1,8 @@
-"use client";
+import Link from "next/link";
 import { Issue } from "@/lib/types";
 
 interface Props {
   issue: Issue;
-  onOpen: (rank: number) => void;
 }
 
 const SEVERITY_LABEL: Record<string, string> = {
@@ -12,23 +11,25 @@ const SEVERITY_LABEL: Record<string, string> = {
   notable: "● Notable",
 };
 
-export default function IssueCard({ issue, onOpen }: Props) {
+export default function IssueCard({ issue }: Props) {
   return (
-    <div className="issue-card" onClick={() => onOpen(issue.rank)}>
-      <div className={`card-severity-bar bar-${issue.severity}`} />
-      <div className="card-body">
-        <div className="card-rank">#{issue.rank}</div>
-        <div className="card-icon">{issue.icon}</div>
-        <div className="card-title">{issue.title}</div>
-        <div className="card-anchor-stat">{issue.anchorStat}</div>
-        <div className="card-desc">{issue.shortDesc}</div>
+    <Link href={`/issues/${issue.slug}`} className="issue-card-link">
+      <div className="issue-card">
+        <div className={`card-severity-bar bar-${issue.severity}`} />
+        <div className="card-body">
+          <div className="card-rank">#{issue.rank}</div>
+          <div className="card-icon">{issue.icon}</div>
+          <div className="card-title">{issue.title}</div>
+          <div className="card-anchor-stat">{issue.anchorStat}</div>
+          <div className="card-desc">{issue.shortDesc}</div>
+        </div>
+        <div className="card-footer">
+          <span className={`severity-chip chip-${issue.severity}`}>
+            {SEVERITY_LABEL[issue.severity]}
+          </span>
+          <span className="card-cta">Read Deep Dive →</span>
+        </div>
       </div>
-      <div className="card-footer">
-        <span className={`severity-chip chip-${issue.severity}`}>
-          {SEVERITY_LABEL[issue.severity]}
-        </span>
-        <span className="card-cta">Read Deep Dive →</span>
-      </div>
-    </div>
+    </Link>
   );
 }

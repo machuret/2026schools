@@ -1,9 +1,9 @@
 export default function Hero() {
   const stats = [
-    { num: "13.9", suffix: "%", label: "of children aged 4–17 have a mental disorder" },
-    { num: "1", suffix: " in 5", label: "teens report high psychological distress" },
-    { num: "53", suffix: "%", label: "of 10–17 yr olds experienced cyberbullying" },
-    { num: "50", suffix: "%", label: "of 16–17 year olds miss sleep guidelines" },
+    { num: "Suicide", suffix: "", label: "is the leading cause of death for Australians aged 15–24" },
+    { num: "1", suffix: " in 7", label: "children has a diagnosable mental disorder — most go undetected" },
+    { num: "72%", suffix: "", label: "of all lifetime mental health conditions begin before age 25" },
+    { num: "8×", suffix: "", label: "more cost-effective to intervene early than treat a crisis later" },
   ];
 
   return (
@@ -14,13 +14,17 @@ export default function Hero() {
           Australian Schools Wellbeing Monitor · 2024–25
         </div>
         <h1>
-          The data that can<br />
-          stop a crisis <em>before</em><br />
-          it starts
+          Understanding the data<br />
+          is how we prevent the<br />
+          <em>next</em> tragedy
         </h1>
         <p className="hero-sub">
-          One in seven Australian children has a diagnosable mental disorder. Behind every statistic is a student who could have been reached earlier. Understanding the data is the first step to prevention.
+          Suicide. Anxiety. Self-harm. These are not school failures — they are complex challenges that schools, families and communities face together. What makes the difference is having the right data, early enough to act. This monitor exists to make that data visible.
         </p>
+        <div className="hero-cta-row">
+          <a href="#issues" className="hero-btn-primary">Explore the Issues</a>
+          <a href="#prevention" className="hero-btn-secondary">How Data Helps →</a>
+        </div>
         <div className="hero-stats">
           {stats.map((s) => (
             <div key={s.label} className="hero-stat">

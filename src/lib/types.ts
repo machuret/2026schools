@@ -7,6 +7,7 @@ export interface ImpactBox {
 
 export interface Issue {
   rank: number;
+  slug: string;
   icon: string;
   severity: Severity;
   title: string;

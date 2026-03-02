@@ -1,34 +1,19 @@
-"use client";
-import { useState } from "react";
 import { ISSUES } from "@/lib/issues";
 import IssueCard from "./IssueCard";
-import IssueModal from "./IssueModal";
-import { Issue } from "@/lib/types";
 
 export default function IssuesSection() {
-  const [activeIssue, setActiveIssue] = useState<Issue | null>(null);
-
-  function openModal(rank: number) {
-    const issue = ISSUES.find((i) => i.rank === rank) ?? null;
-    setActiveIssue(issue);
-  }
-
   return (
-    <>
-      <section className="section" id="issues">
-        <div className="section-tag">Deep Dive · 15 Priority Issues</div>
-        <h2>The Issues Facing Our Students</h2>
-        <p className="section-lead">
-          Each card is grounded in documented Australian data. Click any card to read the full analysis — what the data shows, how it damages learning, and who is most affected.
-        </p>
-        <div className="issues-grid">
-          {ISSUES.map((issue) => (
-            <IssueCard key={issue.rank} issue={issue} onOpen={openModal} />
-          ))}
-        </div>
-      </section>
-
-      <IssueModal issue={activeIssue} onClose={() => setActiveIssue(null)} />
-    </>
+    <section className="section" id="issues">
+      <div className="section-tag">15 Priority Issues · Australian Data</div>
+      <h2>What Schools Are Navigating — Without Enough Data</h2>
+      <p className="section-lead">
+        Schools want to help their students. The challenge is knowing where to look, who is struggling, and what to do next. These 15 issues represent the documented wellbeing challenges facing Australian students — each one preventable with the right information at the right time.
+      </p>
+      <div className="issues-grid">
+        {ISSUES.map((issue) => (
+          <IssueCard key={issue.rank} issue={issue} />
+        ))}
+      </div>
+    </section>
   );
 }
