@@ -19,6 +19,25 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+export async function generateMetadata({ params }: Props) {
+  const { slug } = await params;
+  const sb = await createClient();
+  const { data } = await sb.from("states").select("name, subtitle, seo_title, seo_desc, og_image").eq("slug", slug).single();
+  if (!data) return { title: "State Not Found" };
+  const title = data.seo_title || `${data.name} — Student Wellbeing Data`;
+  const description = data.seo_desc || data.subtitle;
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      ...(data.og_image ? { images: [{ url: data.og_image }] } : {}),
+    },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
+
 export default async function StatePage({ params }: Props) {
   const { slug } = await params;
   const sb = await createClient();

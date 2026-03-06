@@ -14,11 +14,19 @@ interface Props { params: Promise<{ slug: string }> }
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const sb = await createClient();
-  const { data } = await sb.from("pages").select("title, meta_title, meta_desc, description").eq("slug", slug).eq("status", "published").single();
+  const { data } = await sb.from("pages").select("title, meta_title, meta_desc, description, og_image").eq("slug", slug).eq("status", "published").single();
   if (!data) return { title: "Page Not Found" };
+  const title = data.meta_title || data.title;
+  const description = data.meta_desc || data.description;
   return {
-    title: data.meta_title || data.title,
-    description: data.meta_desc || data.description,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      ...(data.og_image ? { images: [{ url: data.og_image }] } : {}),
+    },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 

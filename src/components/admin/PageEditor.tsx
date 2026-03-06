@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import SeoPanel from "@/components/admin/SeoPanel";
 
 // ─── Block types ────────────────────────────────────────────────
 type BlockType = "heading" | "paragraph" | "image" | "cta" | "divider" | "two-col" | "callout" | "html";
@@ -205,6 +206,7 @@ export default function PageEditor({ page }: { page: Page | null }) {
   const [showInMenu, setShowInMenu] = useState(page?.show_in_menu ?? false);
   const [metaTitle, setMetaTitle] = useState(page?.meta_title ?? "");
   const [metaDesc, setMetaDesc] = useState(page?.meta_desc ?? "");
+  const [ogImage, setOgImage] = useState((page as Record<string, string> | null)?.og_image ?? "");
   const [showBlockPicker, setShowBlockPicker] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -257,6 +259,7 @@ export default function PageEditor({ page }: { page: Page | null }) {
       show_in_menu: showInMenu,
       meta_title: metaTitle.trim(),
       meta_desc: metaDesc.trim(),
+      og_image: ogImage.trim(),
     };
 
     const sb = createClient();
@@ -396,39 +399,43 @@ export default function PageEditor({ page }: { page: Page | null }) {
         )}
 
         {activeTab === "settings" && (
-          <div className="rounded-xl p-6" style={{ background: "#161B22", border: "1px solid #21262D" }}>
-            <h2 className="text-sm font-semibold mb-5" style={{ color: "#E6EDF3" }}>Page Settings</h2>
-            <div className={FIELD}>
-              <label className={LABEL} style={LS}>Status</label>
-              <select className={INPUT} style={IS} value={status} onChange={e => setStatus(e.target.value)}>
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-              </select>
-            </div>
-            <div className={FIELD}>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <div className="relative">
-                  <input type="checkbox" className="sr-only" checked={showInMenu} onChange={e => setShowInMenu(e.target.checked)} />
-                  <div className="w-10 h-6 rounded-full transition-colors" style={{ background: showInMenu ? "#238636" : "#21262D" }}>
-                    <div className="absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform"
-                      style={{ transform: showInMenu ? "translateX(16px)" : "translateX(0)" }} />
+          <>
+            <div className="rounded-xl p-6 mb-6" style={{ background: "#161B22", border: "1px solid #21262D" }}>
+              <h2 className="text-sm font-semibold mb-5" style={{ color: "#E6EDF3" }}>Page Settings</h2>
+              <div className={FIELD}>
+                <label className={LABEL} style={LS}>Status</label>
+                <select className={INPUT} style={IS} value={status} onChange={e => setStatus(e.target.value)}>
+                  <option value="draft">Draft</option>
+                  <option value="published">Published</option>
+                </select>
+              </div>
+              <div className={FIELD}>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <div className="relative">
+                    <input type="checkbox" className="sr-only" checked={showInMenu} onChange={e => setShowInMenu(e.target.checked)} />
+                    <div className="w-10 h-6 rounded-full transition-colors" style={{ background: showInMenu ? "#238636" : "#21262D" }}>
+                      <div className="absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform"
+                        style={{ transform: showInMenu ? "translateX(16px)" : "translateX(0)" }} />
+                    </div>
                   </div>
-                </div>
-                <span className="text-sm" style={{ color: "#C9D1D9" }}>Show in navigation menu</span>
-              </label>
+                  <span className="text-sm" style={{ color: "#C9D1D9" }}>Show in navigation menu</span>
+                </label>
+              </div>
             </div>
-            <hr style={{ borderColor: "#21262D", margin: "20px 0" }} />
-            <h3 className="text-xs font-semibold uppercase tracking-wide mb-4" style={{ color: "#6E7681" }}>SEO / Meta</h3>
-            <div className={FIELD}>
-              <label className={LABEL} style={LS}>Meta Title <span style={{ color: "#484F58", textTransform: "none", letterSpacing: 0, fontWeight: 400 }}>(defaults to page title)</span></label>
-              <input className={INPUT} style={IS} value={metaTitle} onChange={e => setMetaTitle(e.target.value)} placeholder={title} />
-            </div>
-            <div>
-              <label className={LABEL} style={LS}>Meta Description</label>
-              <textarea rows={3} className={INPUT} style={{ ...IS, resize: "none" }}
-                value={metaDesc} onChange={e => setMetaDesc(e.target.value)} placeholder={description} />
-            </div>
-          </div>
+            <SeoPanel
+              seoTitle={metaTitle}
+              seoDesc={metaDesc}
+              ogImage={ogImage}
+              defaultTitle={title}
+              defaultDesc={description}
+              onChange={(field, value) => {
+                if (field === "seo_title") setMetaTitle(value);
+                else if (field === "seo_desc") setMetaDesc(value);
+                else setOgImage(value);
+                setIsDirty(true);
+              }}
+            />
+          </>
         )}
       </div>
 

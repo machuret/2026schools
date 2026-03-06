@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import SeoPanel from "@/components/admin/SeoPanel";
 
 interface ImpactBox { title: string; text: string; }
 
@@ -21,6 +22,9 @@ interface Issue {
   impacts: ImpactBox[];
   groups: string[];
   sources: string[];
+  seo_title?: string;
+  seo_desc?: string;
+  og_image?: string;
 }
 
 const INPUT = "w-full rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500";
@@ -45,6 +49,9 @@ export default function IssueEditForm({ issue }: { issue: Issue }) {
     impacts: JSON.stringify(issue.impacts, null, 2),
     groups: (issue.groups as string[]).join("\n"),
     sources: (issue.sources as string[]).join("\n"),
+    seo_title: issue.seo_title ?? "",
+    seo_desc: issue.seo_desc ?? "",
+    og_image: issue.og_image ?? "",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -88,6 +95,9 @@ export default function IssueEditForm({ issue }: { issue: Issue }) {
       impacts,
       groups,
       sources,
+      seo_title: form.seo_title.trim(),
+      seo_desc: form.seo_desc.trim(),
+      og_image: form.og_image.trim(),
     }).eq("id", issue.id);
 
     if (err) {
@@ -196,6 +206,16 @@ export default function IssueEditForm({ issue }: { issue: Issue }) {
             onChange={e => set("sources", e.target.value)} />
         </div>
       </div>
+
+      {/* SEO */}
+      <SeoPanel
+        seoTitle={form.seo_title}
+        seoDesc={form.seo_desc}
+        ogImage={form.og_image}
+        defaultTitle={form.title}
+        defaultDesc={form.short_desc}
+        onChange={(field, value) => set(field, value)}
+      />
 
       {/* Actions */}
       {error && (

@@ -13,6 +13,25 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+export async function generateMetadata({ params }: Props) {
+  const { slug } = await params;
+  const sb = await createClient();
+  const { data } = await sb.from("issues").select("title, short_desc, seo_title, seo_desc, og_image").eq("slug", slug).single();
+  if (!data) return { title: "Issue Not Found" };
+  const title = data.seo_title || `${data.title} — Schools Wellbeing`;
+  const description = data.seo_desc || data.short_desc;
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      ...(data.og_image ? { images: [{ url: data.og_image }] } : {}),
+    },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
+
 export default async function IssuePage({ params }: Props) {
   const { slug } = await params;
   const sb = await createClient();

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import SeoPanel from "@/components/admin/SeoPanel";
 
 interface StateIssue { name: string; badge: string; stat: string; desc: string; }
 
@@ -13,6 +14,9 @@ interface State {
   icon: string;
   subtitle: string;
   issues: StateIssue[];
+  seo_title?: string;
+  seo_desc?: string;
+  og_image?: string;
 }
 
 const INPUT = "w-full rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500";
@@ -29,6 +33,9 @@ export default function StateEditForm({ state }: { state: State }) {
     icon: state.icon,
     subtitle: state.subtitle,
     issues: JSON.stringify(state.issues, null, 2),
+    seo_title: state.seo_title ?? "",
+    seo_desc: state.seo_desc ?? "",
+    og_image: state.og_image ?? "",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -60,6 +67,9 @@ export default function StateEditForm({ state }: { state: State }) {
       icon: form.icon.trim(),
       subtitle: form.subtitle.trim(),
       issues,
+      seo_title: form.seo_title.trim(),
+      seo_desc: form.seo_desc.trim(),
+      og_image: form.og_image.trim(),
     }).eq("id", state.id);
 
     if (err) {
@@ -121,17 +131,27 @@ export default function StateEditForm({ state }: { state: State }) {
         />
       </div>
 
+      {/* SEO */}
+      <SeoPanel
+        seoTitle={form.seo_title}
+        seoDesc={form.seo_desc}
+        ogImage={form.og_image}
+        defaultTitle={`${form.name} — Wellbeing Data`}
+        defaultDesc={form.subtitle}
+        onChange={(field, value) => set(field, value)}
+      />
+
       {error && (
-        <div className="mb-4 px-4 py-3 rounded-lg text-sm" style={{ background: "#3D1515", color: "#F87171", border: "1px solid #7F1D1D" }}>
+        <div className="mb-4 mt-5 px-4 py-3 rounded-lg text-sm" style={{ background: "#3D1515", color: "#F87171", border: "1px solid #7F1D1D" }}>
           {error}
         </div>
       )}
       {success && (
-        <div className="mb-4 px-4 py-3 rounded-lg text-sm" style={{ background: "#0D2D1A", color: "#6EE7B7", border: "1px solid #166534" }}>
+        <div className="mb-4 mt-5 px-4 py-3 rounded-lg text-sm" style={{ background: "#0D2D1A", color: "#6EE7B7", border: "1px solid #166534" }}>
           ✓ Saved successfully
         </div>
       )}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 mt-5">
         <button
           onClick={handleSave}
           disabled={saving}

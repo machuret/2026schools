@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import SeoPanel from "@/components/admin/SeoPanel";
 
 interface Area {
   id: string;
@@ -17,6 +18,9 @@ interface Area {
   key_stats: unknown;
   issues: unknown;
   prevention: string;
+  seo_title?: string;
+  seo_desc?: string;
+  og_image?: string;
 }
 
 const INPUT = "w-full rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500";
@@ -39,6 +43,9 @@ export default function AreaEditForm({ area }: { area: Area }) {
     key_stats: JSON.stringify(area.key_stats, null, 2),
     issues: JSON.stringify(area.issues, null, 2),
     prevention: area.prevention,
+    seo_title: area.seo_title ?? "",
+    seo_desc: area.seo_desc ?? "",
+    og_image: area.og_image ?? "",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -78,6 +85,9 @@ export default function AreaEditForm({ area }: { area: Area }) {
       key_stats,
       issues,
       prevention: form.prevention.trim(),
+      seo_title: form.seo_title.trim(),
+      seo_desc: form.seo_desc.trim(),
+      og_image: form.og_image.trim(),
     }).eq("id", area.id);
 
     if (err) {
@@ -179,17 +189,27 @@ export default function AreaEditForm({ area }: { area: Area }) {
         </div>
       </div>
 
+      {/* SEO */}
+      <SeoPanel
+        seoTitle={form.seo_title}
+        seoDesc={form.seo_desc}
+        ogImage={form.og_image}
+        defaultTitle={`${form.name}, ${form.state} — Wellbeing Data`}
+        defaultDesc={form.overview}
+        onChange={(field, value) => set(field, value)}
+      />
+
       {error && (
-        <div className="mb-4 px-4 py-3 rounded-lg text-sm" style={{ background: "#3D1515", color: "#F87171", border: "1px solid #7F1D1D" }}>
+        <div className="mb-4 mt-5 px-4 py-3 rounded-lg text-sm" style={{ background: "#3D1515", color: "#F87171", border: "1px solid #7F1D1D" }}>
           {error}
         </div>
       )}
       {success && (
-        <div className="mb-4 px-4 py-3 rounded-lg text-sm" style={{ background: "#0D2D1A", color: "#6EE7B7", border: "1px solid #166534" }}>
+        <div className="mb-4 mt-5 px-4 py-3 rounded-lg text-sm" style={{ background: "#0D2D1A", color: "#6EE7B7", border: "1px solid #166534" }}>
           ✓ Saved successfully
         </div>
       )}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 mt-5">
         <button
           onClick={handleSave}
           disabled={saving}

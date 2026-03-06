@@ -19,11 +19,19 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const sb = await createClient();
-  const { data: area } = await sb.from("areas").select("name, overview").eq("slug", slug).single();
-  if (!area) return { title: "Area Not Found" };
+  const { data } = await sb.from("areas").select("name, state, overview, seo_title, seo_desc, og_image").eq("slug", slug).single();
+  if (!data) return { title: "Area Not Found" };
+  const title = data.seo_title || `${data.name}, ${data.state} — Student Wellbeing Data`;
+  const description = data.seo_desc || data.overview;
   return {
-    title: `${area.name} Student Wellbeing Report | Schools Monitor`,
-    description: area.overview,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      ...(data.og_image ? { images: [{ url: data.og_image }] } : {}),
+    },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 
