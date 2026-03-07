@@ -1,8 +1,12 @@
 import { createClient } from '@/lib/supabase/server';
 
 export default async function AdminDashboard() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  let userEmail = '';
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    userEmail = user?.email ?? '';
+  } catch { /* middleware ensures auth, this is just for display */ }
 
   const stats = [
     { label: 'Issues Tracked', value: '15', change: 'Active', color: '#1C7ED6' },
@@ -19,7 +23,7 @@ export default async function AdminDashboard() {
           Dashboard
         </h1>
         <p className="text-sm" style={{ color: '#6E7681' }}>
-          Welcome back, {user?.email}. Manage content and data for Schools Wellbeing Australia.
+          Welcome back, {userEmail}. Manage content and data for Schools Wellbeing Australia.
         </p>
       </div>
 
