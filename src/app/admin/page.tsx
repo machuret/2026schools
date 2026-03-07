@@ -68,10 +68,8 @@ export default async function AdminDashboard() {
               <a
                 key={item.href}
                 href={item.href}
-                className="flex items-center justify-between px-4 py-3 rounded-lg transition-colors group"
+                className="flex items-center justify-between px-4 py-3 rounded-lg transition-colors group hover:border-blue-500"
                 style={{ background: '#0D1117', border: '1px solid #21262D' }}
-                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.borderColor = '#1C7ED6')}
-                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.borderColor = '#21262D')}
               >
                 <div>
                   <div className="text-sm font-medium" style={{ color: '#E6EDF3' }}>{item.label}</div>
