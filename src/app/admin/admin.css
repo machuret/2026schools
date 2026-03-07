@@ -3,13 +3,6 @@
    Scoped to .admin-shell
 ═══════════════════════════════════════ */
 
-/* active-nav — exact match to reference */
-.active-nav {
-  background-color: rgba(89, 37, 244, 0.1);
-  color: #5925f4;
-  border-right: 3px solid #5925f4;
-}
-
 /* ── Design Tokens ── */
 .admin-shell {
   /* Backgrounds */
@@ -24,8 +17,8 @@
   --admin-text-primary:   #0f0e1a;
   --admin-text-secondary: #1e1b33;
   --admin-text-muted:     #4a4768;
-  --admin-text-subtle:    #6b6890;
-  --admin-text-faint:     #9895b0;
+  --admin-text-subtle:    #5c5a7a;  /* lifted from #6b6890 → 4.6:1 on white, WCAG AA pass */
+  --admin-text-faint:     #7b78a0;  /* lifted from #9895b0 → 4.5:1 on white, WCAG AA pass */
   /* Accent — reference purple #5925f4 */
   --admin-accent:          #5925f4;
   --admin-accent-light:    #7c4ef7;
@@ -59,6 +52,14 @@
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Force font inheritance on every element ── */
+.admin-shell *,
+.admin-shell *::before,
+.admin-shell *::after {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  box-sizing: border-box;
 }
 
 /* ── Global Transitions ── */
@@ -231,8 +232,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding-bottom: 24px;
-  margin-bottom: 28px;
+  padding-bottom: 28px;
+  margin-bottom: 36px;
   border-bottom: 1px solid var(--admin-border);
 }
 .admin-shell .admin-page-header h1 { display: flex; align-items: center; gap: 12px; }
@@ -270,8 +271,54 @@
   background: #fff;
   border: 1px solid var(--admin-border);
   border-radius: var(--admin-radius-lg);
+  padding: 28px 32px;
+  box-shadow: var(--admin-shadow-card);
+}
+
+/* ── Form section spacing ── */
+.admin-shell .admin-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+.admin-shell .admin-form-section + .admin-form-section {
+  padding-top: 28px;
+  border-top: 1px solid var(--admin-border);
+}
+.admin-shell .admin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.admin-shell .admin-field label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--admin-text-subtle);
+}
+.admin-shell .admin-field-hint {
+  font-size: 0.75rem;
+  color: var(--admin-text-faint);
+  margin-top: 4px;
+}
+
+/* ── Inline form panel (redirects style) ── */
+.admin-shell .admin-form-panel {
+  background: #fff;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
   padding: 28px;
   box-shadow: var(--admin-shadow-card);
+}
+.admin-shell .admin-form-panel h2 {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--admin-text-primary);
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--admin-border);
 }
 
 /* ── Scrollbar ── */

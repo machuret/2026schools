@@ -204,55 +204,54 @@ export default function RedirectsClient({ initial }: { initial: Redirect[] }) {
       </div>
 
       {/* Right: add / edit form */}
-      <div className="w-72 flex-shrink-0">
-        <div className="rounded-xl p-5 sticky top-6" style={{ background: "#fff", border: "1px solid var(--admin-border)", boxShadow: "var(--admin-shadow-card)" }}>
-          <h2 className="text-sm font-bold mb-4" style={{ color: "var(--admin-text-primary)" }}>
-            {editId ? "Edit Redirect" : "Add Redirect"}
-          </h2>
+      <div className="w-80 flex-shrink-0">
+        <div className="admin-form-panel sticky top-6">
+          <h2>{editId ? "Edit Redirect" : "Add Redirect"}</h2>
 
-          <div className="mb-4">
-            <label className={LABEL} style={LS}>From Path</label>
-            <input className={INPUT} style={IS} value={form.from_path} onChange={e => setField("from_path", e.target.value)} placeholder="/old-page-slug" />
-            <div className="text-xs mt-1" style={{ color: "var(--admin-text-faint)" }}>Must start with /</div>
-          </div>
+          <div className="space-y-5">
+            <div>
+              <label className={LABEL} style={LS}>From Path</label>
+              <input className={INPUT} style={IS} value={form.from_path} onChange={e => setField("from_path", e.target.value)} placeholder="/old-page-slug" />
+              <div className="text-xs mt-1.5" style={{ color: "var(--admin-text-faint)" }}>Must start with /</div>
+            </div>
 
-          <div className="mb-4">
-            <label className={LABEL} style={LS}>To Path / URL</label>
-            <input className={INPUT} style={IS} value={form.to_path} onChange={e => setField("to_path", e.target.value)} placeholder="/new-page-slug" />
-            <div className="text-xs mt-1" style={{ color: "var(--admin-text-faint)" }}>Start with / or https://</div>
-          </div>
+            <div>
+              <label className={LABEL} style={LS}>To Path / URL</label>
+              <input className={INPUT} style={IS} value={form.to_path} onChange={e => setField("to_path", e.target.value)} placeholder="/new-page-slug" />
+              <div className="text-xs mt-1.5" style={{ color: "var(--admin-text-faint)" }}>Start with / or https://</div>
+            </div>
 
-          <div className="mb-4">
-            <label className={LABEL} style={LS}>Status Code</label>
-            <select className={INPUT} style={IS} value={form.status_code} onChange={e => setField("status_code", Number(e.target.value))}>
-              <option value={301}>301 — Permanent</option>
-              <option value={302}>302 — Temporary</option>
-            </select>
-          </div>
+            <div>
+              <label className={LABEL} style={LS}>Status Code</label>
+              <select className={INPUT} style={IS} value={form.status_code} onChange={e => setField("status_code", Number(e.target.value))}>
+                <option value={301}>301 — Permanent</option>
+                <option value={302}>302 — Temporary</option>
+              </select>
+            </div>
 
-          <div className="mb-4">
-            <label className={LABEL} style={LS}>Note (optional)</label>
-            <input className={INPUT} style={IS} value={form.note} onChange={e => setField("note", e.target.value)} placeholder="Why this redirect exists" />
-          </div>
+            <div>
+              <label className={LABEL} style={LS}>Note (optional)</label>
+              <input className={INPUT} style={IS} value={form.note} onChange={e => setField("note", e.target.value)} placeholder="Why this redirect exists" />
+            </div>
 
-          <div className="mb-5">
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex items-center gap-2.5 cursor-pointer">
               <input type="checkbox" checked={form.is_active} onChange={e => setField("is_active", e.target.checked)}
                 className="w-4 h-4 rounded" style={{ accentColor: "#5925f4" }} />
               <span className="text-sm font-medium" style={{ color: "var(--admin-text-secondary)" }}>Active</span>
             </label>
           </div>
 
-          <button onClick={handleSave} disabled={saving} className="admin-btn admin-btn-primary w-full mb-2"
-            style={{ opacity: saving ? 0.6 : 1 }}>
-            {saving ? "Saving…" : editId ? "Update Redirect" : "Add Redirect"}
-          </button>
-
-          {editId && (
-            <button onClick={cancelEdit} className="admin-btn admin-btn-secondary w-full">
-              Cancel
+          <div className="flex flex-col gap-2 mt-8 pt-6" style={{ borderTop: '1px solid var(--admin-border)' }}>
+            <button onClick={handleSave} disabled={saving} className="admin-btn admin-btn-primary w-full"
+              style={{ opacity: saving ? 0.6 : 1 }}>
+              {saving ? "Saving…" : editId ? "Update Redirect" : "Add Redirect"}
             </button>
-          )}
+            {editId && (
+              <button onClick={cancelEdit} className="admin-btn admin-btn-secondary w-full">
+                Cancel
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

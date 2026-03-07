@@ -70,8 +70,8 @@ export default function AdminSidebar({ userEmail }: { userEmail: string }) {
         overflow: 'hidden',
       }}
     >
-      {/* Brand */}
-      <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid var(--admin-border)', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+      {/* Brand — exactly 64px to align with topbar h-16 */}
+      <div style={{ height: 64, padding: '0 16px', borderBottom: '1px solid var(--admin-border)', display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
         <div style={{
           width: 40, height: 40, borderRadius: 10,
           background: 'linear-gradient(135deg, #5925f4, #7c4ef7)',
@@ -115,6 +115,7 @@ export default function AdminSidebar({ userEmail }: { userEmail: string }) {
                     key={item.href}
                     href={item.href}
                     title={!open ? item.label : undefined}
+                    aria-current={isActive ? 'page' : undefined}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -144,7 +145,7 @@ export default function AdminSidebar({ userEmail }: { userEmail: string }) {
                       }
                     }}
                   >
-                    <span className="material-symbols-outlined" style={{
+                    <span aria-hidden="true" className="material-symbols-outlined" style={{
                       fontSize: 20,
                       flexShrink: 0,
                       color: isActive ? '#5925f4' : 'var(--admin-text-faint)',
@@ -182,7 +183,7 @@ export default function AdminSidebar({ userEmail }: { userEmail: string }) {
             <button
               onClick={handleSignOut}
               disabled={signingOut}
-              title="Sign out"
+              aria-label="Sign out"
               style={{
                 flexShrink: 0, width: 30, height: 30,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -198,6 +199,7 @@ export default function AdminSidebar({ userEmail }: { userEmail: string }) {
         {/* Collapse toggle */}
         <button
           onClick={() => setOpen(!open)}
+          aria-label={open ? 'Collapse sidebar' : 'Expand sidebar'}
           style={{
             width: '100%', padding: '10px 0',
             display: 'flex', alignItems: 'center',
@@ -210,12 +212,12 @@ export default function AdminSidebar({ userEmail }: { userEmail: string }) {
             cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 500,
           }}
         >
-          <span className="material-symbols-outlined" style={{
+          <span aria-hidden="true" className="material-symbols-outlined" style={{
             fontSize: 18,
             transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
             transition: 'transform 280ms cubic-bezier(0.4,0,0.2,1)',
           }}>chevrons_right</span>
-          {open && <span style={{ opacity: open ? 1 : 0, transition: 'opacity 180ms ease' }}>Collapse</span>}
+          {open && <span aria-hidden="true" style={{ opacity: 1, transition: 'opacity 180ms ease' }}>Collapse</span>}
         </button>
       </div>
     </aside>

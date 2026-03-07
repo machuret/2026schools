@@ -93,83 +93,99 @@ export default function UsersClient({ initialUsers }: { initialUsers: User[] }) 
     setBusy(false);
   }
 
-  const LABEL = "block text-xs font-semibold mb-1.5 uppercase tracking-wide";
+  const LABEL = "block text-xs font-semibold mb-2 uppercase tracking-wide";
   const LABEL_STYLE = { color: "var(--admin-text-subtle)" };
 
-  const Modal = ({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(15,23,42,0.5)", backdropFilter: "blur(2px)" }}>
-      <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl" style={{ background: "#fff", border: "1px solid var(--admin-border-strong)" }}>
-        <h2 className="text-base font-bold mb-1" style={{ color: "var(--admin-text-primary)" }}>{title}</h2>
-        {sub && <p className="text-xs mb-5" style={{ color: "var(--admin-text-subtle)" }}>{sub}</p>}
-        {children}
-      </div>
-    </div>
-  );
-
   return (
-    <div>
-      {/* Toolbar */}
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-sm" style={{ color: "var(--admin-text-subtle)" }}>{users.length} user{users.length !== 1 ? "s" : ""}</span>
-        <button onClick={() => { setShowCreate(true); clearMessages(); }} className="admin-btn admin-btn-primary">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          New User
-        </button>
-      </div>
-
+    <div className="space-y-8">
       {/* Feedback */}
-      {!showCreate && !editUser && error   && <div className="admin-alert admin-alert-error mb-4">{error}</div>}
-      {!showCreate && !editUser && success && <div className="admin-alert admin-alert-success mb-4">{success}</div>}
+      {!showCreate && !editUser && error   && <div className="admin-alert admin-alert-error">{error}</div>}
+      {!showCreate && !editUser && success && <div className="admin-alert admin-alert-success">{success}</div>}
 
-      {/* Create modal */}
+      {/* Create inline panel */}
       {showCreate && (
-        <Modal title="Create New User" sub="The new user will be able to sign in immediately.">
-          <div className="mb-4">
-            <label className={LABEL} style={LABEL_STYLE}>Email</label>
-            <input type="email" className={INPUT} style={INPUT_STYLE} value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="user@example.com" />
+        <div className="admin-form-panel">
+          <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid var(--admin-border)' }}>
+            <div>
+              <h2 className="text-base font-bold" style={{ color: 'var(--admin-text-primary)', margin: 0, border: 'none', padding: 0 }}>Create New User</h2>
+              <p className="text-sm mt-1" style={{ color: 'var(--admin-text-subtle)' }}>The new user will be able to sign in immediately.</p>
+            </div>
+            <button onClick={() => { setShowCreate(false); setNewEmail(""); setNewPassword(""); clearMessages(); }}
+              className="admin-icon-btn" aria-label="Close">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
-          <div className="mb-5">
-            <label className={LABEL} style={LABEL_STYLE}>Password</label>
-            <input type="password" className={INPUT} style={INPUT_STYLE} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Min 6 characters" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <label className={LABEL} style={LABEL_STYLE}>Email</label>
+              <input type="email" className={INPUT} style={INPUT_STYLE} value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="user@example.com" />
+            </div>
+            <div>
+              <label className={LABEL} style={LABEL_STYLE}>Password</label>
+              <input type="password" className={INPUT} style={INPUT_STYLE} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Min 6 characters" />
+            </div>
           </div>
-          {error && <div className="admin-alert admin-alert-error mb-4">{error}</div>}
+          {error && <div className="admin-alert admin-alert-error mb-6">{error}</div>}
           <div className="flex gap-3">
-            <button onClick={handleCreate} disabled={busy} className="admin-btn admin-btn-primary flex-1" style={{ opacity: busy ? 0.6 : 1 }}>
+            <button onClick={handleCreate} disabled={busy} className="admin-btn admin-btn-primary" style={{ opacity: busy ? 0.6 : 1 }}>
               {busy ? "Creating…" : "Create User"}
             </button>
-            <button onClick={() => { setShowCreate(false); setNewEmail(""); setNewPassword(""); clearMessages(); }} className="admin-btn admin-btn-secondary flex-1">
+            <button onClick={() => { setShowCreate(false); setNewEmail(""); setNewPassword(""); clearMessages(); }} className="admin-btn admin-btn-secondary">
               Cancel
             </button>
           </div>
-        </Modal>
+        </div>
       )}
 
-      {/* Edit modal */}
+      {/* Edit inline panel */}
       {editUser && (
-        <Modal title="Edit User" sub={`Editing ${editUser.email} — leave a field blank to keep it unchanged.`}>
-          <div className="mb-4">
-            <label className={LABEL} style={LABEL_STYLE}>New Email</label>
-            <input type="email" className={INPUT} style={INPUT_STYLE} value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder={editUser.email} />
+        <div className="admin-form-panel">
+          <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid var(--admin-border)' }}>
+            <div>
+              <h2 className="text-base font-bold" style={{ color: 'var(--admin-text-primary)', margin: 0, border: 'none', padding: 0 }}>Edit User</h2>
+              <p className="text-sm mt-1" style={{ color: 'var(--admin-text-subtle)' }}>Editing <strong>{editUser.email}</strong> — leave a field blank to keep it unchanged.</p>
+            </div>
+            <button onClick={() => { setEditUser(null); setEditEmail(""); setEditPassword(""); clearMessages(); }}
+              className="admin-icon-btn" aria-label="Close">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
-          <div className="mb-5">
-            <label className={LABEL} style={LABEL_STYLE}>New Password</label>
-            <input type="password" className={INPUT} style={INPUT_STYLE} value={editPassword} onChange={e => setEditPassword(e.target.value)} placeholder="Leave blank to keep current" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <label className={LABEL} style={LABEL_STYLE}>New Email</label>
+              <input type="email" className={INPUT} style={INPUT_STYLE} value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder={editUser.email} />
+            </div>
+            <div>
+              <label className={LABEL} style={LABEL_STYLE}>New Password</label>
+              <input type="password" className={INPUT} style={INPUT_STYLE} value={editPassword} onChange={e => setEditPassword(e.target.value)} placeholder="Leave blank to keep current" />
+            </div>
           </div>
-          {error && <div className="admin-alert admin-alert-error mb-4">{error}</div>}
-          <div className="flex gap-3 mb-3">
-            <button onClick={handleEdit} disabled={busy} className="admin-btn admin-btn-primary flex-1" style={{ opacity: busy ? 0.6 : 1 }}>
+          {error && <div className="admin-alert admin-alert-error mb-6">{error}</div>}
+          <div className="flex flex-wrap gap-3">
+            <button onClick={handleEdit} disabled={busy} className="admin-btn admin-btn-primary" style={{ opacity: busy ? 0.6 : 1 }}>
               {busy ? "Saving…" : "Save Changes"}
             </button>
-            <button onClick={() => { setEditUser(null); setEditEmail(""); setEditPassword(""); clearMessages(); }} className="admin-btn admin-btn-secondary flex-1">
+            <button onClick={() => { setEditUser(null); setEditEmail(""); setEditPassword(""); clearMessages(); }} className="admin-btn admin-btn-secondary">
               Cancel
             </button>
+            <button onClick={() => handleResetPassword(editUser)} disabled={busy}
+              className="admin-btn"
+              style={{ background: "var(--admin-accent-bg)", color: "var(--admin-accent)", border: "1px solid rgba(89,37,244,0.2)" }}>
+              {busy ? "Sending…" : "Send Password Reset Email"}
+            </button>
           </div>
-          <button onClick={() => handleResetPassword(editUser)} disabled={busy}
-            className="admin-btn w-full text-xs"
-            style={{ background: "var(--admin-accent-bg)", color: "var(--admin-accent)", border: "1px solid rgba(89,37,244,0.2)" }}>
-            {busy ? "Sending…" : "✉ Send Password Reset Email"}
+        </div>
+      )}
+
+      {/* Toolbar */}
+      {!showCreate && !editUser && (
+        <div className="flex items-center justify-between">
+          <span className="text-sm" style={{ color: "var(--admin-text-subtle)" }}>{users.length} user{users.length !== 1 ? "s" : ""}</span>
+          <button onClick={() => { setShowCreate(true); clearMessages(); }} className="admin-btn admin-btn-primary">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New User
           </button>
-        </Modal>
+        </div>
       )}
 
       {/* Users table */}

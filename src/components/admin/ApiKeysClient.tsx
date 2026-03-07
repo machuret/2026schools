@@ -13,7 +13,7 @@ interface ApiKey {
 }
 
 const INPUT = "w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all";
-const INPUT_STYLE = { background: "#fff", border: "1px solid #cbd5e1", color: "#0f172a", boxShadow: "0 1px 2px rgba(0,0,0,0.04)" };
+const INPUT_STYLE = { background: "#fff", border: "1px solid var(--admin-border-strong)", color: "var(--admin-text-primary)", boxShadow: "0 1px 2px rgba(0,0,0,0.04)" };
 
 function maskKey(k: string) {
   if (k.length <= 8) return "••••••••";
@@ -93,31 +93,29 @@ export default function ApiKeysClient({ initialKeys }: { initialKeys: ApiKey[] }
   const LABEL_STYLE = { color: "var(--admin-text-subtle)" };
 
   return (
-    <div>
-      {/* Toolbar */}
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-sm" style={{ color: "var(--admin-text-subtle)" }}>{keys.length} key{keys.length !== 1 ? "s" : ""} configured</span>
-        <button onClick={() => { setShowCreate(true); clearMessages(); }} className="admin-btn admin-btn-primary">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add API Key
-        </button>
-      </div>
-
+    <div className="space-y-8">
       {/* Feedback */}
-      {error   && <div className="admin-alert admin-alert-error mb-4">{error}</div>}
-      {success && <div className="admin-alert admin-alert-success mb-4">{success}</div>}
+      {!showCreate && error   && <div className="admin-alert admin-alert-error">{error}</div>}
+      {!showCreate && success && <div className="admin-alert admin-alert-success">{success}</div>}
 
-      {/* Create modal */}
+      {/* Create inline panel */}
       {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(15,23,42,0.5)", backdropFilter: "blur(2px)" }}>
-          <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl" style={{ background: "#fff", border: "1px solid #e2e8f0" }}>
-            <h2 className="text-base font-bold mb-1" style={{ color: "var(--admin-text-primary)" }}>Add API Key</h2>
-            <p className="text-xs mb-5" style={{ color: "var(--admin-text-subtle)" }}>Keys are stored encrypted and only accessible to admin users.</p>
-            <div className="mb-4">
-              <label className={LABEL} style={LABEL_STYLE}>Label</label>
-              <input className={INPUT} style={INPUT_STYLE} value={label} onChange={e => setLabel(e.target.value)} placeholder="e.g. OpenAI Production Key" />
+        <div className="admin-form-panel">
+          <div className="flex items-center justify-between mb-6 pb-4" style={{ borderBottom: '1px solid var(--admin-border)' }}>
+            <div>
+              <h2 className="text-base font-bold" style={{ color: 'var(--admin-text-primary)', margin: 0, border: 'none', padding: 0 }}>Add API Key</h2>
+              <p className="text-sm mt-1" style={{ color: 'var(--admin-text-subtle)' }}>Keys are stored encrypted and only accessible to admin users.</p>
             </div>
-            <div className="mb-4">
+            <button onClick={() => { setShowCreate(false); clearMessages(); }} className="admin-icon-btn" aria-label="Close">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div>
+              <label className={LABEL} style={LABEL_STYLE}>Label</label>
+              <input className={INPUT} style={INPUT_STYLE} value={label} onChange={e => setLabel(e.target.value)} placeholder="e.g. OpenAI Production" />
+            </div>
+            <div>
               <label className={LABEL} style={LABEL_STYLE}>Provider</label>
               <select className={INPUT} style={INPUT_STYLE} value={provider} onChange={e => setProvider(e.target.value)}>
                 <option value="openai">OpenAI</option>
@@ -126,20 +124,31 @@ export default function ApiKeysClient({ initialKeys }: { initialKeys: ApiKey[] }
                 <option value="other">Other</option>
               </select>
             </div>
-            <div className="mb-5">
+            <div>
               <label className={LABEL} style={LABEL_STYLE}>API Key</label>
               <input type="password" className={INPUT} style={INPUT_STYLE} value={keyValue} onChange={e => setKeyValue(e.target.value)} placeholder="sk-..." />
             </div>
-            {error && <div className="admin-alert admin-alert-error mb-4">{error}</div>}
-            <div className="flex gap-3">
-              <button onClick={handleCreate} disabled={busy} className="admin-btn admin-btn-primary flex-1" style={{ opacity: busy ? 0.6 : 1 }}>
-                {busy ? "Saving…" : "Add Key"}
-              </button>
-              <button onClick={() => { setShowCreate(false); clearMessages(); }} className="admin-btn admin-btn-secondary flex-1">
-                Cancel
-              </button>
-            </div>
           </div>
+          {error && <div className="admin-alert admin-alert-error mb-6">{error}</div>}
+          <div className="flex gap-3">
+            <button onClick={handleCreate} disabled={busy} className="admin-btn admin-btn-primary" style={{ opacity: busy ? 0.6 : 1 }}>
+              {busy ? "Saving…" : "Add Key"}
+            </button>
+            <button onClick={() => { setShowCreate(false); clearMessages(); }} className="admin-btn admin-btn-secondary">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Toolbar */}
+      {!showCreate && (
+        <div className="flex items-center justify-between">
+          <span className="text-sm" style={{ color: "var(--admin-text-subtle)" }}>{keys.length} key{keys.length !== 1 ? "s" : ""} configured</span>
+          <button onClick={() => { setShowCreate(true); clearMessages(); }} className="admin-btn admin-btn-primary">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add API Key
+          </button>
         </div>
       )}
 
