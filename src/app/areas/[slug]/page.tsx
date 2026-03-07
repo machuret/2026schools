@@ -12,6 +12,7 @@ interface Props {
 
 export async function generateStaticParams() {
   const sb = createStaticClient();
+  if (!sb) return [];
   const { data } = await sb.from("areas").select("slug");
   return (data ?? []).map((a) => ({ slug: a.slug }));
 }

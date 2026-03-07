@@ -32,6 +32,7 @@ export async function generateMetadata({ params }: Props) {
 
 export async function generateStaticParams() {
   const sb = createStaticClient();
+  if (!sb) return [];
   const { data } = await sb.from("pages").select("slug").eq("status", "published");
   return (data ?? []).map(p => ({ slug: p.slug }));
 }

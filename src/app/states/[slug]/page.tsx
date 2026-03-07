@@ -11,6 +11,7 @@ const BADGE_COLOR: Record<string, { bg: string; text: string }> = {
 
 export async function generateStaticParams() {
   const sb = createStaticClient();
+  if (!sb) return [];
   const { data } = await sb.from("states").select("slug");
   return (data ?? []).map((s) => ({ slug: s.slug }));
 }

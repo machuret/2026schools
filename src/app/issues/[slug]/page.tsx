@@ -5,6 +5,7 @@ import { createClient, createStaticClient } from "@/lib/supabase/server";
 
 export async function generateStaticParams() {
   const sb = createStaticClient();
+  if (!sb) return [];
   const { data } = await sb.from("issues").select("slug").order("rank");
   return (data ?? []).map((i) => ({ slug: i.slug }));
 }
