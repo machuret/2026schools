@@ -1,36 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import SeoPanel from "@/components/admin/SeoPanel";
+import ConfirmModal from "@/components/admin/ConfirmModal";
 
 interface ImpactBox { title: string; text: string; }
 
 interface Issue {
-  id: string;
-  rank: number;
-  slug: string;
-  icon: string;
-  severity: string;
-  title: string;
-  anchor_stat: string;
-  short_desc: string;
-  definition: string;
-  australian_data: string;
-  mechanisms: string;
-  impacts: ImpactBox[];
-  groups: string[];
-  sources: string[];
-  seo_title?: string;
-  seo_desc?: string;
-  og_image?: string;
+  id: string; rank: number; slug: string; icon: string; severity: string;
+  title: string; anchor_stat: string; short_desc: string; definition: string;
+  australian_data: string; mechanisms: string; impacts: ImpactBox[];
+  groups: string[]; sources: string[];
+  seo_title?: string; seo_desc?: string; og_image?: string;
 }
 
 const I = "w-full rounded-xl px-4 py-2.5 text-[15px] outline-none transition-all";
-const IS = { background: "#09090B", border: "1px solid #3F3F46", color: "#D4D4D8" };
+const IS: React.CSSProperties = { background: "var(--admin-bg-deep)", border: "1px solid var(--admin-border-strong)", color: "var(--admin-text-secondary)" };
 const L = "block text-xs font-semibold mb-2 uppercase tracking-wider";
-const LS = { color: "#71717A" };
+const LS: React.CSSProperties = { color: "var(--admin-text-subtle)" };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="mb-4"><label className={L} style={LS}>{label}</label>{children}</div>;
@@ -48,10 +37,10 @@ function ImpactCard({ impact, idx, onChange, onRemove }: {
   onRemove: (idx: number) => void;
 }) {
   return (
-    <div className="rounded-xl p-5 relative" style={{ background: "#09090B", border: "1px solid #3F3F46" }}>
+    <div className="rounded-xl p-5" style={{ background: "var(--admin-bg-deep)", border: "1px solid var(--admin-border-strong)" }}>
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#52525B" }}>Impact #{idx + 1}</span>
-        <button onClick={() => onRemove(idx)} className="text-xs px-2.5 py-1 rounded-lg font-medium" style={{ color: "#FCA5A5", background: "#450A0A30" }}>Remove</button>
+        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--admin-text-faint)" }}>Impact #{idx + 1}</span>
+        <button onClick={() => onRemove(idx)} className="admin-btn admin-btn-danger text-xs px-2.5 py-1">Remove</button>
       </div>
       <Field label="Title">
         <input className={I} style={IS} value={impact.title} onChange={e => onChange(idx, "title", e.target.value)} placeholder="e.g. Academic Performance" />
@@ -69,31 +58,23 @@ function TagList({ items, onAdd, onRemove, placeholder }: {
   const [input, setInput] = useState("");
   function handleKeyDown(e: React.KeyboardEvent) {
     if ((e.key === "Enter" || e.key === ",") && input.trim()) {
-      e.preventDefault();
-      onAdd(input.trim());
-      setInput("");
+      e.preventDefault(); onAdd(input.trim()); setInput("");
     }
-    if (e.key === "Backspace" && !input && items.length > 0) {
-      onRemove(items.length - 1);
-    }
+    if (e.key === "Backspace" && !input && items.length > 0) onRemove(items.length - 1);
   }
   return (
     <div>
       <div className="flex flex-wrap gap-1.5 mb-2">
         {items.map((item, idx) => (
           <span key={idx} className="inline-flex items-center gap-1 text-[13px] px-3 py-1.5 rounded-lg font-medium"
-            style={{ background: "#27272A", color: "#D4D4D8", border: "1px solid #3F3F46" }}>
+            style={{ background: "var(--admin-bg-elevated)", color: "var(--admin-text-secondary)", border: "1px solid var(--admin-border-strong)" }}>
             {item}
-            <button onClick={() => onRemove(idx)} className="ml-1 hover:text-red-400" style={{ color: "#71717A" }}>×</button>
+            <button onClick={() => onRemove(idx)} className="ml-1" style={{ color: "var(--admin-text-subtle)" }}>×</button>
           </span>
         ))}
       </div>
-      <input
-        className={I} style={IS}
-        value={input} onChange={e => setInput(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={items.length === 0 ? placeholder : "Type and press Enter…"}
-      />
+      <input className={I} style={IS} value={input} onChange={e => setInput(e.target.value)}
+        onKeyDown={handleKeyDown} placeholder={items.length === 0 ? placeholder : "Type and press Enter…"} />
     </div>
   );
 }
@@ -102,21 +83,16 @@ export default function IssueEditForm({ issue }: { issue: Issue | null }) {
   const router = useRouter();
   const isNew = !issue;
   const [tab, setTab] = useState<"basic" | "content" | "impacts" | "seo">("basic");
+  const [dirty, setDirty] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const [form, setForm] = useState({
-    rank: issue?.rank ?? 0,
-    slug: issue?.slug ?? "",
-    icon: issue?.icon ?? "",
-    severity: issue?.severity ?? "notable",
-    title: issue?.title ?? "",
-    anchor_stat: issue?.anchor_stat ?? "",
-    short_desc: issue?.short_desc ?? "",
-    definition: issue?.definition ?? "",
-    australian_data: issue?.australian_data ?? "",
+    rank: issue?.rank ?? 0, slug: issue?.slug ?? "", icon: issue?.icon ?? "",
+    severity: issue?.severity ?? "notable", title: issue?.title ?? "",
+    anchor_stat: issue?.anchor_stat ?? "", short_desc: issue?.short_desc ?? "",
+    definition: issue?.definition ?? "", australian_data: issue?.australian_data ?? "",
     mechanisms: issue?.mechanisms ?? "",
-    seo_title: issue?.seo_title ?? "",
-    seo_desc: issue?.seo_desc ?? "",
-    og_image: issue?.og_image ?? "",
+    seo_title: issue?.seo_title ?? "", seo_desc: issue?.seo_desc ?? "", og_image: issue?.og_image ?? "",
   });
   const [impacts, setImpacts] = useState<ImpactBox[]>(parseJsonArray<ImpactBox>(issue?.impacts, []));
   const [groups, setGroups] = useState<string[]>(parseJsonArray<string>(issue?.groups, []));
@@ -127,83 +103,77 @@ export default function IssueEditForm({ issue }: { issue: Issue | null }) {
 
   function set(key: string, value: string | number) {
     setForm(f => ({ ...f, [key]: value }));
-    setSuccess(false);
+    setDirty(true); setSuccess(false);
   }
 
   function updateImpact(idx: number, field: keyof ImpactBox, val: string) {
     setImpacts(s => s.map((item, i) => i === idx ? { ...item, [field]: val } : item));
+    setDirty(true);
   }
-  function removeImpact(idx: number) { setImpacts(s => s.filter((_, i) => i !== idx)); }
-  function addImpact() { setImpacts(s => [...s, { title: "", text: "" }]); }
+  function removeImpact(idx: number) { setImpacts(s => s.filter((_, i) => i !== idx)); setDirty(true); }
+  function addImpact() { setImpacts(s => [...s, { title: "", text: "" }]); setDirty(true); }
 
-  async function handleSave() {
+  const handleSave = useCallback(async () => {
     if (!form.title.trim()) { setError("Title is required."); return; }
     if (!form.slug.trim()) { setError("Slug is required."); return; }
-    setSaving(true);
-    setError("");
-    setSuccess(false);
-
+    setSaving(true); setError(""); setSuccess(false);
     const sb = createClient();
     const payload = {
-      rank: Number(form.rank),
-      slug: form.slug.trim(),
-      icon: form.icon.trim(),
-      severity: form.severity,
-      title: form.title.trim(),
-      anchor_stat: form.anchor_stat.trim(),
-      short_desc: form.short_desc.trim(),
-      definition: form.definition.trim(),
-      australian_data: form.australian_data.trim(),
-      mechanisms: form.mechanisms.trim(),
-      impacts,
-      groups,
-      sources,
-      seo_title: form.seo_title.trim(),
-      seo_desc: form.seo_desc.trim(),
-      og_image: form.og_image.trim(),
+      rank: Number(form.rank), slug: form.slug.trim(), icon: form.icon.trim(),
+      severity: form.severity, title: form.title.trim(), anchor_stat: form.anchor_stat.trim(),
+      short_desc: form.short_desc.trim(), definition: form.definition.trim(),
+      australian_data: form.australian_data.trim(), mechanisms: form.mechanisms.trim(),
+      impacts, groups, sources,
+      seo_title: form.seo_title.trim(), seo_desc: form.seo_desc.trim(), og_image: form.og_image.trim(),
     };
-
     if (isNew) {
       const { data, error: err } = await sb.from("issues").insert(payload).select("id").single();
-      if (err) { setError(err.message); } else if (data) {
-        router.push(`/admin/issues/${data.id}`);
-        router.refresh();
-        return;
-      }
+      if (err) { setError(err.message); } else if (data) { router.push(`/admin/issues/${data.id}`); router.refresh(); return; }
     } else {
       const { error: err } = await sb.from("issues").update(payload).eq("id", issue!.id);
-      if (err) { setError(err.message); } else { setSuccess(true); router.refresh(); }
+      if (err) { setError(err.message); } else { setSuccess(true); setDirty(false); router.refresh(); }
     }
     setSaving(false);
-  }
+  }, [form, impacts, groups, sources, isNew, issue, router]);
 
   async function handleDelete() {
-    if (!issue || !confirm(`Delete "${issue.title}"? This cannot be undone.`)) return;
+    if (!issue) return;
     const sb = createClient();
     await sb.from("issues").delete().eq("id", issue.id);
-    router.push("/admin/issues");
-    router.refresh();
+    router.push("/admin/issues"); router.refresh();
   }
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") { e.preventDefault(); handleSave(); }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [handleSave]);
+
   const TABS = [
-    { id: "basic",   label: "Basic Info",  count: null },
-    { id: "content", label: "Content",     count: null },
+    { id: "basic",   label: "Basic Info",     count: null },
+    { id: "content", label: "Content",        count: null },
     { id: "impacts", label: "Impacts & Data", count: impacts.length },
-    { id: "seo",     label: "SEO",         count: null },
+    { id: "seo",     label: "SEO",            count: null },
   ] as const;
 
   return (
     <div className="max-w-4xl">
+      <ConfirmModal open={showDeleteModal} title="Delete this issue?"
+        message={`"${issue?.title}" will be permanently deleted. This cannot be undone.`}
+        confirmLabel="Delete Issue" onConfirm={handleDelete} onCancel={() => setShowDeleteModal(false)} />
+
       {/* Tab bar */}
-      <div className="flex gap-1 mb-8 p-1 rounded-2xl" style={{ background: "#18181B", border: "1px solid #27272A" }}>
+      <div className="flex gap-1 mb-8 p-1 rounded-2xl" style={{ background: "var(--admin-bg-surface)", border: "1px solid var(--admin-border)" }}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex-1 justify-center"
-            style={tab === t.id ? { background: "linear-gradient(135deg, #6366F1, #818CF8)", color: "#fff" } : { background: "transparent", color: "#71717A" }}>
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium flex-1 justify-center"
+            style={tab === t.id ? { background: "var(--admin-accent-gradient)", color: "#fff" } : { background: "transparent", color: "var(--admin-text-subtle)" }}>
             {t.label}
             {t.count !== null && (
               <span className="text-xs px-1.5 py-0.5 rounded-full font-bold"
-                style={{ background: tab === t.id ? "rgba(255,255,255,0.2)" : "#27272A", color: tab === t.id ? "#fff" : "#A1A1AA" }}>
+                style={{ background: tab === t.id ? "rgba(255,255,255,0.2)" : "var(--admin-bg-elevated)", color: tab === t.id ? "#fff" : "var(--admin-text-muted)" }}>
                 {t.count}
               </span>
             )}
@@ -213,29 +183,19 @@ export default function IssueEditForm({ issue }: { issue: Issue | null }) {
 
       {/* ── Tab: Basic Info ── */}
       {tab === "basic" && (
-        <div className="rounded-2xl p-7" style={{ background: "#18181B", border: "1px solid #27272A" }}>
+        <div className="admin-card">
           <div className="grid grid-cols-3 gap-5 mb-1">
-            <Field label="Rank">
-              <input type="number" className={I} style={IS} value={form.rank} onChange={e => set("rank", e.target.value)} />
-            </Field>
-            <Field label="Icon (emoji)">
-              <input className={I} style={IS} value={form.icon} onChange={e => set("icon", e.target.value)} placeholder="😰" />
-            </Field>
+            <Field label="Rank"><input type="number" className={I} style={IS} value={form.rank} onChange={e => set("rank", e.target.value)} /></Field>
+            <Field label="Icon (emoji)"><input className={I} style={IS} value={form.icon} onChange={e => set("icon", e.target.value)} placeholder="😰" /></Field>
             <Field label="Severity">
               <select className={I} style={IS} value={form.severity} onChange={e => set("severity", e.target.value)}>
-                <option value="critical">Critical</option>
-                <option value="high">High</option>
-                <option value="notable">Notable</option>
+                <option value="critical">Critical</option><option value="high">High</option><option value="notable">Notable</option>
               </select>
             </Field>
           </div>
           <div className="grid grid-cols-2 gap-5 mb-1">
-            <Field label="Slug">
-              <input className={I} style={IS} value={form.slug} onChange={e => set("slug", e.target.value)} placeholder="e.g. anxiety" />
-            </Field>
-            <Field label="Anchor Stat">
-              <input className={I} style={IS} value={form.anchor_stat} onChange={e => set("anchor_stat", e.target.value)} placeholder="e.g. 1 in 7 students" />
-            </Field>
+            <Field label="Slug"><input className={I} style={IS} value={form.slug} onChange={e => set("slug", e.target.value)} placeholder="e.g. anxiety" /></Field>
+            <Field label="Anchor Stat"><input className={I} style={IS} value={form.anchor_stat} onChange={e => set("anchor_stat", e.target.value)} placeholder="e.g. 1 in 7 students" /></Field>
           </div>
           <Field label="Title">
             <input className={I} style={{ ...IS, fontSize: "1rem", fontWeight: 600 }} value={form.title} onChange={e => set("title", e.target.value)} placeholder="e.g. Anxiety Disorders" />
@@ -248,7 +208,7 @@ export default function IssueEditForm({ issue }: { issue: Issue | null }) {
 
       {/* ── Tab: Content ── */}
       {tab === "content" && (
-        <div className="rounded-2xl p-7" style={{ background: "#18181B", border: "1px solid #27272A" }}>
+        <div className="admin-card">
           <Field label="Definition (What Is It?)">
             <textarea rows={5} className={I} style={{ ...IS, resize: "vertical" }} value={form.definition} onChange={e => set("definition", e.target.value)} placeholder="Detailed definition of this wellbeing issue…" />
           </Field>
@@ -264,98 +224,72 @@ export default function IssueEditForm({ issue }: { issue: Issue | null }) {
       {/* ── Tab: Impacts & Data ── */}
       {tab === "impacts" && (
         <div className="space-y-6">
-          {/* Impact cards */}
-          <div className="rounded-2xl p-7" style={{ background: "#18181B", border: "1px solid #27272A" }}>
+          <div className="admin-card">
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h2 className="text-sm font-semibold" style={{ color: "#FAFAFA" }}>Impact Areas</h2>
-                <p className="text-xs mt-1" style={{ color: "#71717A" }}>How this issue affects students</p>
+                <h2 className="text-sm font-semibold" style={{ color: "var(--admin-text-primary)" }}>Impact Areas</h2>
+                <p className="text-xs mt-1" style={{ color: "var(--admin-text-subtle)" }}>How this issue affects students</p>
               </div>
-              <button onClick={addImpact} className="text-xs font-semibold px-3 py-1.5 rounded-xl" style={{ background: "#22C55E", color: "#fff" }}>
-                + Add Impact
-              </button>
+              <button onClick={addImpact} className="admin-btn admin-btn-primary text-xs">+ Add Impact</button>
             </div>
             {impacts.length === 0 ? (
-              <div className="rounded-xl p-8 text-center" style={{ border: "2px dashed #27272A" }}>
-                <p className="text-xs" style={{ color: "#52525B" }}>No impacts yet — click &quot;Add Impact&quot; to add one.</p>
+              <div className="rounded-xl p-8 text-center" style={{ border: "2px dashed var(--admin-border)" }}>
+                <p className="text-xs" style={{ color: "var(--admin-text-faint)" }}>No impacts yet — click &quot;Add Impact&quot; to add one.</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {impacts.map((impact, idx) => (
-                  <ImpactCard key={idx} impact={impact} idx={idx} onChange={updateImpact} onRemove={removeImpact} />
-                ))}
+                {impacts.map((impact, idx) => <ImpactCard key={idx} impact={impact} idx={idx} onChange={updateImpact} onRemove={removeImpact} />)}
               </div>
             )}
           </div>
 
-          {/* Groups at risk */}
-          <div className="rounded-2xl p-7" style={{ background: "#18181B", border: "1px solid #27272A" }}>
-            <h2 className="text-sm font-semibold mb-1" style={{ color: "#FAFAFA" }}>Groups at Risk</h2>
-            <p className="text-xs mb-4" style={{ color: "#71717A" }}>Type a group name and press Enter to add</p>
-            <TagList
-              items={groups}
-              onAdd={val => setGroups(g => [...g, val])}
-              onRemove={idx => setGroups(g => g.filter((_, i) => i !== idx))}
-              placeholder="e.g. Indigenous students, Rural students…"
-            />
+          <div className="admin-card">
+            <h2 className="text-sm font-semibold mb-1" style={{ color: "var(--admin-text-primary)" }}>Groups at Risk</h2>
+            <p className="text-xs mb-4" style={{ color: "var(--admin-text-subtle)" }}>Type a group name and press Enter to add</p>
+            <TagList items={groups} onAdd={val => { setGroups(g => [...g, val]); setDirty(true); }}
+              onRemove={idx => { setGroups(g => g.filter((_, i) => i !== idx)); setDirty(true); }}
+              placeholder="e.g. Indigenous students, Rural students…" />
           </div>
 
-          {/* Sources */}
-          <div className="rounded-2xl p-7" style={{ background: "#18181B", border: "1px solid #27272A" }}>
-            <h2 className="text-sm font-semibold mb-1" style={{ color: "#FAFAFA" }}>Sources & Citations</h2>
-            <p className="text-xs mb-4" style={{ color: "#71717A" }}>Add reference URLs or citation text — press Enter after each</p>
-            <TagList
-              items={sources}
-              onAdd={val => setSources(s => [...s, val])}
-              onRemove={idx => setSources(s => s.filter((_, i) => i !== idx))}
-              placeholder="e.g. https://aihw.gov.au/reports/…"
-            />
+          <div className="admin-card">
+            <h2 className="text-sm font-semibold mb-1" style={{ color: "var(--admin-text-primary)" }}>Sources & Citations</h2>
+            <p className="text-xs mb-4" style={{ color: "var(--admin-text-subtle)" }}>Add reference URLs or citation text — press Enter after each</p>
+            <TagList items={sources} onAdd={val => { setSources(s => [...s, val]); setDirty(true); }}
+              onRemove={idx => { setSources(s => s.filter((_, i) => i !== idx)); setDirty(true); }}
+              placeholder="e.g. https://aihw.gov.au/reports/…" />
           </div>
         </div>
       )}
 
       {/* ── Tab: SEO ── */}
       {tab === "seo" && (
-        <SeoPanel
-          seoTitle={form.seo_title}
-          seoDesc={form.seo_desc}
-          ogImage={form.og_image}
-          defaultTitle={form.title}
-          defaultDesc={form.short_desc}
-          onChange={(field, value) => set(field, value)}
-        />
+        <SeoPanel seoTitle={form.seo_title} seoDesc={form.seo_desc} ogImage={form.og_image}
+          defaultTitle={form.title} defaultDesc={form.short_desc} onChange={(field, value) => set(field, value)} />
       )}
 
       {/* Actions bar */}
       <div className="mt-8">
-        {error && (
-          <div className="mb-4 px-4 py-3 rounded-xl text-sm font-medium" style={{ background: "#450A0A30", color: "#FCA5A5", border: "1px solid #7F1D1D50" }}>
-            {error}
-          </div>
-        )}
+        {error && <div className="admin-alert admin-alert-error mb-4">{error}</div>}
         {success && (
-          <div className="mb-4 px-4 py-3 rounded-xl text-sm font-medium" style={{ background: "#052E1630", color: "#86EFAC", border: "1px solid #16653450" }}>
-            ✓ Saved successfully
+          <div className="admin-alert admin-alert-success mb-4 flex items-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Saved successfully
           </div>
         )}
-        <div className="flex items-center gap-3 pt-6" style={{ borderTop: "1px solid #27272A" }}>
-          <button onClick={handleSave} disabled={saving}
-            className="text-sm font-semibold px-6 py-2.5 rounded-xl"
-            style={{ background: saving ? "#27272A" : "linear-gradient(135deg, #22C55E, #4ADE80)", color: "#FFFFFF", opacity: saving ? 0.6 : 1 }}>
+        <div className="flex items-center gap-3 pt-6" style={{ borderTop: "1px solid var(--admin-border)" }}>
+          <button onClick={handleSave} disabled={saving} className="admin-btn admin-btn-primary" style={{ minWidth: "130px", opacity: saving ? 0.7 : 1 }}>
             {saving ? "Saving…" : isNew ? "Create Issue" : "Save Changes"}
           </button>
-          <button onClick={() => router.push("/admin/issues")}
-            className="text-sm font-semibold px-5 py-2.5 rounded-xl"
-            style={{ background: "#27272A", color: "#D4D4D8" }}>
-            Cancel
-          </button>
-          {!isNew && (
-            <button onClick={handleDelete}
-              className="text-sm font-semibold px-5 py-2.5 rounded-xl ml-auto"
-              style={{ background: "#450A0A30", color: "#FCA5A5", border: "1px solid #7F1D1D50" }}>
-              Delete
-            </button>
+          {dirty && !saving && (
+            <span className="flex items-center gap-1.5 text-xs" style={{ color: "var(--admin-warning-light)" }}>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--admin-warning-light)" }} />
+              Unsaved changes
+            </span>
           )}
+          <div className="flex items-center gap-2 ml-auto">
+            <button onClick={() => router.push("/admin/issues")} className="admin-btn admin-btn-ghost">← Back</button>
+            {!isNew && <button onClick={() => setShowDeleteModal(true)} className="admin-btn admin-btn-danger">Delete</button>}
+          </div>
         </div>
       </div>
     </div>
