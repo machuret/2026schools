@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import InnerNav from "@/components/InnerNav";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createStaticClient } from "@/lib/supabase/server";
 
 interface AreaIssue { title: string; severity: string; stat: string; desc: string; }
 interface KeyStat { num: string; label: string; }
@@ -11,7 +11,7 @@ interface Props {
 }
 
 export async function generateStaticParams() {
-  const sb = await createClient();
+  const sb = createStaticClient();
   const { data } = await sb.from("areas").select("slug");
   return (data ?? []).map((a) => ({ slug: a.slug }));
 }

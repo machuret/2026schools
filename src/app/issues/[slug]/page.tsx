@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import InnerNav from "@/components/InnerNav";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createStaticClient } from "@/lib/supabase/server";
 
 export async function generateStaticParams() {
-  const sb = await createClient();
+  const sb = createStaticClient();
   const { data } = await sb.from("issues").select("slug").order("rank");
   return (data ?? []).map((i) => ({ slug: i.slug }));
 }

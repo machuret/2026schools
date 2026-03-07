@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createStaticClient } from "@/lib/supabase/server";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 
@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export async function generateStaticParams() {
-  const sb = await createClient();
+  const sb = createStaticClient();
   const { data } = await sb.from("pages").select("slug").eq("status", "published");
   return (data ?? []).map(p => ({ slug: p.slug }));
 }

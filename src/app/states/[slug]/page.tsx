@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import InnerNav from "@/components/InnerNav";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createStaticClient } from "@/lib/supabase/server";
 
 const BADGE_COLOR: Record<string, { bg: string; text: string }> = {
   "badge-critical": { bg: "#FEF2F2", text: "#B91C1C" },
@@ -10,7 +10,7 @@ const BADGE_COLOR: Record<string, { bg: string; text: string }> = {
 };
 
 export async function generateStaticParams() {
-  const sb = await createClient();
+  const sb = createStaticClient();
   const { data } = await sb.from("states").select("slug");
   return (data ?? []).map((s) => ({ slug: s.slug }));
 }
