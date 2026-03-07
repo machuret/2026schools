@@ -10,7 +10,7 @@ interface User {
 }
 
 const INPUT = "w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all";
-const INPUT_STYLE = { background: "#fff", border: "1px solid #cbd5e1", color: "#0f172a", boxShadow: "0 1px 2px rgba(0,0,0,0.04)" };
+const INPUT_STYLE = { background: "#fff", border: "1px solid var(--admin-border-strong)", color: "var(--admin-text-primary)", boxShadow: "0 1px 2px rgba(0,0,0,0.04)" };
 
 function fmt(d: string | null) {
   if (!d) return "Never";
@@ -98,7 +98,7 @@ export default function UsersClient({ initialUsers }: { initialUsers: User[] }) 
 
   const Modal = ({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) => (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(15,23,42,0.5)", backdropFilter: "blur(2px)" }}>
-      <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl" style={{ background: "#fff", border: "1px solid #e2e8f0" }}>
+      <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl" style={{ background: "#fff", border: "1px solid var(--admin-border-strong)" }}>
         <h2 className="text-base font-bold mb-1" style={{ color: "var(--admin-text-primary)" }}>{title}</h2>
         {sub && <p className="text-xs mb-5" style={{ color: "var(--admin-text-subtle)" }}>{sub}</p>}
         {children}

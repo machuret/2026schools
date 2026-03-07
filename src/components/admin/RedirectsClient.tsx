@@ -14,7 +14,7 @@ interface Redirect {
 }
 
 const INPUT = "w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all";
-const IS = { background: "#fff", border: "1px solid #cbd5e1", color: "#0f172a", boxShadow: "0 1px 2px rgba(0,0,0,0.04)" };
+const IS = { background: "#fff", border: "1px solid var(--admin-border-strong)", color: "var(--admin-text-primary)", boxShadow: "0 1px 2px rgba(0,0,0,0.04)" };
 const LABEL = "block text-xs font-semibold mb-1.5 uppercase tracking-wide";
 const LS = { color: "var(--admin-text-subtle)" };
 
