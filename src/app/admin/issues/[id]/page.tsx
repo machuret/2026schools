@@ -18,19 +18,18 @@ export default async function EditIssuePage({ params }: Props) {
     <div>
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-2 text-xs">
-          <Link href="/admin/issues" style={{ color: "#818CF8" }} className="font-semibold uppercase tracking-widest">Issues</Link>
-          <span style={{ color: "#3F3F46" }}>/</span>
-          <span className="font-semibold uppercase tracking-widest" style={{ color: "#71717A" }}>{issue.title}</span>
+          <Link href="/admin/issues" style={{ color: "var(--admin-accent)" }} className="font-semibold uppercase tracking-widest hover:underline">Issues</Link>
+          <span style={{ color: "var(--admin-border-strong)" }}>/</span>
+          <span className="font-semibold uppercase tracking-widest" style={{ color: "var(--admin-text-subtle)" }}>{issue.title}</span>
         </div>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold mb-1" style={{ color: "#FAFAFA", letterSpacing: "-0.025em" }}>Edit Issue</h1>
-            <p className="text-sm" style={{ color: "#71717A" }}>{issue.icon} {issue.title}</p>
+            <h1 className="text-2xl font-bold mb-1" style={{ color: "var(--admin-text-primary)", letterSpacing: "-0.025em" }}>Edit Issue</h1>
+            <p className="text-sm" style={{ color: "var(--admin-text-subtle)" }}>{issue.icon} {issue.title}</p>
           </div>
-          <Link href={`/issues/${issue.slug}`} target="_blank"
-            className="text-xs font-semibold px-3 py-1.5 rounded-lg"
-            style={{ background: "#18181B", color: "#71717A", border: "1px solid #27272A" }}>
-            View on site ↗
+          <Link href={`/issues/${issue.slug}`} target="_blank" className="admin-btn admin-btn-secondary text-xs">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            View on site
           </Link>
         </div>
       </div>
