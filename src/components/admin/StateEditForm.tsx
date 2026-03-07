@@ -15,7 +15,7 @@ interface State {
 }
 
 const I = "w-full rounded-xl px-4 py-2.5 text-[15px] outline-none transition-all";
-const IS: React.CSSProperties = { background: "var(--admin-bg-deep)", border: "1px solid var(--admin-border-strong)", color: "var(--admin-text-secondary)" };
+const IS: React.CSSProperties = { background: "#fff", border: "1px solid var(--admin-border-strong)", color: "var(--admin-text-primary)", boxShadow: "0 1px 2px rgba(0,0,0,0.04)" };
 const L = "block text-xs font-semibold mb-2 uppercase tracking-wider";
 const LS: React.CSSProperties = { color: "var(--admin-text-subtle)" };
 
@@ -49,7 +49,7 @@ function StateIssueCard({ issue, idx, onChange, onRemove }: {
   const leftColor = BADGE_LEFT[issue.badge] ?? BADGE_LEFT["badge-notable"];
   const badgeOpt = BADGE_OPTIONS.find(b => b.value === issue.badge) ?? BADGE_OPTIONS[2];
   return (
-    <div className="rounded-xl p-5" style={{ background: "var(--admin-bg-deep)", border: "1px solid var(--admin-border-strong)", borderLeft: `3px solid ${leftColor}` }}>
+    <div className="rounded-xl p-4" style={{ background: "var(--admin-bg-elevated)", border: "1px solid var(--admin-border)", borderLeft: `3px solid ${leftColor}` }}>
       <div className="flex items-center justify-between mb-3">
         <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--admin-text-faint)" }}>Issue #{idx + 1}</span>
         <button onClick={() => onRemove(idx)} className="admin-btn admin-btn-danger text-xs px-2.5 py-1">Remove</button>
@@ -152,15 +152,19 @@ export default function StateEditForm({ state }: { state: State | null }) {
         confirmLabel="Delete State" onConfirm={handleDelete} onCancel={() => setShowDeleteModal(false)} />
 
       {/* Tab bar */}
-      <div className="flex gap-1 mb-8 p-1 rounded-2xl" style={{ background: "var(--admin-bg-surface)", border: "1px solid var(--admin-border)" }}>
+      <div className="flex gap-1 mb-8 p-1 rounded-xl" style={{ background: "var(--admin-bg-elevated)", border: "1px solid var(--admin-border)" }}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium flex-1 justify-center"
-            style={tab === t.id ? { background: "var(--admin-accent-gradient)", color: "#fff" } : { background: "transparent", color: "var(--admin-text-subtle)" }}>
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium flex-1 justify-center"
+            style={tab === t.id
+              ? { background: "#fff", color: "var(--admin-text-primary)", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }
+              : { background: "transparent", color: "var(--admin-text-subtle)" }}>
             {t.label}
             {t.count !== null && (
               <span className="text-xs px-1.5 py-0.5 rounded-full font-bold"
-                style={{ background: tab === t.id ? "rgba(255,255,255,0.2)" : "var(--admin-bg-elevated)", color: tab === t.id ? "#fff" : "var(--admin-text-muted)" }}>
+                style={tab === t.id
+                  ? { background: "var(--admin-accent-bg)", color: "var(--admin-accent)" }
+                  : { background: "var(--admin-border)", color: "var(--admin-text-subtle)" }}>
                 {t.count}
               </span>
             )}

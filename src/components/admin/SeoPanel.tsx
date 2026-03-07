@@ -2,7 +2,7 @@
 import React from "react";
 
 const INPUT = "w-full rounded-xl px-4 py-2.5 text-[15px] outline-none transition-all";
-const IS: React.CSSProperties = { background: "var(--admin-bg-deep)", border: "1px solid var(--admin-border-strong)", color: "var(--admin-text-secondary)" };
+const IS: React.CSSProperties = { background: "#fff", border: "1px solid var(--admin-border-strong)", color: "var(--admin-text-primary)", boxShadow: "0 1px 2px rgba(0,0,0,0.04)" };
 const LABEL = "block text-xs font-semibold mb-2 uppercase tracking-wide";
 const LS: React.CSSProperties = { color: "var(--admin-text-subtle)" };
 const FIELD = "mb-5";
@@ -36,7 +36,7 @@ export default function SeoPanel({ seoTitle, seoDesc, ogImage, defaultTitle = ""
       </div>
 
       {/* Live Google preview */}
-      <div className="rounded-xl p-5 mb-6" style={{ background: "var(--admin-bg-deep)", border: "1px solid var(--admin-border)" }}>
+      <div className="rounded-xl p-5 mb-6" style={{ background: "var(--admin-bg-elevated)", border: "1px solid var(--admin-border)" }}>
         <div className="text-xs mb-2 font-semibold uppercase tracking-wide" style={{ color: "var(--admin-text-faint)" }}>Google Preview</div>
         <div className="text-xs mb-0.5" style={{ color: "var(--admin-text-subtle)" }}>schoolswellbeing.com.au › ...</div>
         <div className="text-sm font-medium mb-0.5 truncate" style={{ color: "var(--admin-accent-light)" }}>

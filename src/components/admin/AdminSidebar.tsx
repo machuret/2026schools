@@ -56,46 +56,48 @@ export default function AdminSidebar({ userEmail }: { userEmail: string }) {
   }
 
   return (
-    <aside className="w-60 flex-shrink-0 flex flex-col" style={{ background: '#18181B', borderRight: '1px solid #27272A' }}>
+    <aside className="w-60 flex-shrink-0 flex flex-col" style={{ background: '#030712', borderRight: '1px solid #111827' }}>
       {/* Brand */}
-      <div className="h-16 flex items-center px-5 gap-3" style={{ borderBottom: '1px solid #27272A' }}>
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
+      <div className="h-16 flex items-center px-4 gap-3" style={{ borderBottom: '1px solid #111827' }}>
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg"
+          style={{ background: 'linear-gradient(135deg, #4f46e5, #6366f1)' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path d="M12 2L2 7l10 5 10-5-10-5z" fill="white"/>
             <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" strokeWidth="2" strokeLinecap="round"/>
           </svg>
         </div>
         <div>
-          <div className="text-sm font-bold" style={{ color: '#FAFAFA' }}>SWA Admin</div>
-          <div className="text-[11px]" style={{ color: '#71717A' }}>Schools Wellbeing AU</div>
+          <div className="text-sm font-bold" style={{ color: '#f9fafb' }}>SWA Admin</div>
+          <div className="text-[10px]" style={{ color: '#6b7280' }}>Schools Wellbeing AU</div>
         </div>
       </div>
 
       {/* Nav sections */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
         {SECTIONS.map((section, sIdx) => (
-          <div key={sIdx} className={sIdx > 0 ? 'mt-7' : ''}>
+          <div key={sIdx} className={sIdx > 0 ? 'mt-5' : ''}>
             {section.title && (
-              <div className="px-3 mb-3 text-[11px] font-semibold uppercase tracking-widest" style={{ color: '#52525B' }}>
+              <div className="px-3 mb-2 mt-1 text-[10px] font-bold uppercase tracking-widest" style={{ color: '#4b5563' }}>
                 {section.title}
               </div>
             )}
-            <div className="space-y-1">
+            {sIdx > 0 && <div className="mb-2" style={{ borderTop: '1px solid #111827' }} />}
+            <div className="space-y-0.5">
               {section.items.map((item) => {
                 const isActive = item.href === '/admin'
                   ? pathname === '/admin'
                   : pathname.startsWith(item.href);
                 return (
                   <Link key={item.href} href={item.href}
-                    className="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium"
+                    className="group flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all"
                     style={{
-                      background: isActive ? '#6366F115' : 'transparent',
-                      color: isActive ? '#A5B4FC' : '#A1A1AA',
-                      borderLeft: isActive ? '2px solid #6366F1' : '2px solid transparent',
+                      background: isActive ? '#4f46e5' : 'transparent',
+                      color: isActive ? '#fff' : '#9ca3af',
+                      boxShadow: isActive ? '0 1px 6px rgba(79,70,229,0.4)' : 'none',
                     }}>
-                    <span className="flex-shrink-0" style={{ color: isActive ? '#818CF8' : '#71717A' }}>{item.icon}</span>
-                    <span className="group-hover:text-zinc-100">{item.label}</span>
+                    <span className="flex-shrink-0" style={{ color: isActive ? '#fff' : '#6b7280' }}>{item.icon}</span>
+                    <span style={{ color: isActive ? '#fff' : undefined }} className={isActive ? '' : 'group-hover:text-white'}>{item.label}</span>
+                    {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white/50" />}
                   </Link>
                 );
               })}
@@ -105,35 +107,34 @@ export default function AdminSidebar({ userEmail }: { userEmail: string }) {
       </nav>
 
       {/* Footer */}
-      <div className="p-3" style={{ borderTop: '1px solid #27272A' }}>
+      <div className="p-3" style={{ borderTop: '1px solid #111827' }}>
         <a href="/" target="_blank" rel="noopener noreferrer"
-          className="group flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium mb-1"
-          style={{ color: '#71717A' }}>
+          className="group flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium mb-1 transition-colors"
+          style={{ color: '#6b7280' }}>
           <svg className={IC} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
             <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
           </svg>
-          <span className="group-hover:text-zinc-100">View site</span>
+          <span className="group-hover:text-white transition-colors">View site</span>
         </a>
 
-        <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1"
-          style={{ background: '#27272A40' }}>
+        <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg mb-1" style={{ background: '#111827' }}>
           <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', color: '#fff' }}>
+            style={{ background: 'linear-gradient(135deg, #4f46e5, #6366f1)', color: '#fff' }}>
             {(userEmail || 'A')[0].toUpperCase()}
           </div>
-          <div className="min-w-0">
-            <p className="text-[12px] truncate font-medium" style={{ color: '#D4D4D8' }}>{userEmail || 'Admin'}</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-[12px] truncate font-medium" style={{ color: '#e5e7eb' }}>{userEmail || 'Admin'}</p>
           </div>
         </div>
 
         <button onClick={handleSignOut} disabled={signingOut}
-          className="group flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] font-medium w-full"
-          style={{ color: '#71717A' }}>
+          className="group flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium w-full transition-colors"
+          style={{ color: '#6b7280' }}>
           <svg className={IC} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
           </svg>
-          <span className="group-hover:text-red-400">{signingOut ? 'Signing out…' : 'Sign out'}</span>
+          <span className="group-hover:text-red-400 transition-colors">{signingOut ? 'Signing out…' : 'Sign out'}</span>
         </button>
       </div>
     </aside>

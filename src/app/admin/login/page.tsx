@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
                 required autoComplete="email" placeholder="you@example.com"
                 className="w-full px-4 py-3 rounded-xl text-[15px] outline-none transition-all"
-                style={{ background: 'var(--admin-bg-deep)', border: '1px solid var(--admin-border-strong)', color: 'var(--admin-text-primary)' }}
+                style={{ background: '#fff', border: '1px solid var(--admin-border-strong)', color: 'var(--admin-text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}
               />
             </div>
 
@@ -68,7 +68,7 @@ export default function AdminLoginPage() {
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
                 required autoComplete="current-password" placeholder="••••••••"
                 className="w-full px-4 py-3 rounded-xl text-[15px] outline-none transition-all"
-                style={{ background: 'var(--admin-bg-deep)', border: '1px solid var(--admin-border-strong)', color: 'var(--admin-text-primary)' }}
+                style={{ background: '#fff', border: '1px solid var(--admin-border-strong)', color: 'var(--admin-text-primary)', boxShadow: '0 1px 2px rgba(0,0,0,0.04)' }}
               />
             </div>
 
