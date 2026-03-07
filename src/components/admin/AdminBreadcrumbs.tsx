@@ -42,16 +42,16 @@ export default function AdminBreadcrumbs() {
         return (
           <span key={crumb.href} className="flex items-center gap-1.5">
             {i > 0 && (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--admin-border-strong)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="9 18 15 12 9 6"/>
               </svg>
             )}
             {isLast ? (
-              <span className="text-sm font-semibold" style={{ color: "#0f172a" }}>{crumb.label}</span>
+              <span className="text-sm font-semibold" style={{ color: "var(--admin-text-primary)" }}>{crumb.label}</span>
             ) : (
               <Link href={crumb.href}
                 className="text-sm transition-colors"
-                style={{ color: "#94a3b8" }}>
+                style={{ color: "var(--admin-text-subtle)" }}>
                 {crumb.label}
               </Link>
             )}
