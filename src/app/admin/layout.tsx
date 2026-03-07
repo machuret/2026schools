@@ -1,5 +1,3 @@
-import { redirect } from 'next/navigation';
-import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 
@@ -12,24 +10,15 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Middleware sets x-pathname — skip auth wrapper for login page
-  const headersList = await headers();
-  const pathname = headersList.get('x-pathname') ?? '';
-  if (pathname === '/admin/login') {
-    return <>{children}</>;
-  }
-
+  // Middleware handles auth redirect — by the time we're here, user is authenticated.
+  // Just get the user for display purposes; fall back gracefully if unavailable.
   let email = '';
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) redirect('/admin/login');
-    email = user.email ?? '';
-  } catch (e) {
-    // Re-throw Next.js redirect errors — they must not be swallowed
-    if (e instanceof Error && e.message.includes('NEXT_REDIRECT')) throw e;
-    // Any other error (e.g. missing env vars) → send to login
-    redirect('/admin/login');
+    email = user?.email ?? '';
+  } catch {
+    // Supabase unavailable — still render the shell
   }
 
   return (
