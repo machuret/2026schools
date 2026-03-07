@@ -1,7 +1,41 @@
 import { createServerClient } from '@supabase/ssr';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // ── 1. DB-driven redirects (skip admin and static assets) ────────
+  if (
+    !pathname.startsWith('/admin') &&
+    !pathname.startsWith('/_next') &&
+    !pathname.startsWith('/api') &&
+    !pathname.includes('.')
+  ) {
+    try {
+      const sb = createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      );
+      const { data: redirect } = await sb
+        .from('redirects')
+        .select('to_path, status_code')
+        .eq('from_path', pathname)
+        .eq('is_active', true)
+        .single();
+
+      if (redirect) {
+        const dest = redirect.to_path.startsWith('http')
+          ? redirect.to_path
+          : new URL(redirect.to_path, request.url).toString();
+        return NextResponse.redirect(dest, { status: redirect.status_code });
+      }
+    } catch {
+      // DB unavailable — continue normally
+    }
+  }
+
+  // ── 2. Auth protection for /admin ────────────────────────────────
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -29,8 +63,6 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { pathname } = request.nextUrl;
-
   // Protect all /admin routes except /admin/login
   if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
     if (!user) {
@@ -51,5 +83,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
 };
