@@ -453,6 +453,34 @@ footer { background: var(--navy); padding: 64px 80px 40px; border-top: 3px solid
 }
 .research-note strong { color: var(--navy); }
 
+/* ═══════════════════════════════════════
+   ADMIN SHELL RESET
+   Scope all admin pages away from public site globals
+═══════════════════════════════════════ */
+.admin-shell,
+.admin-shell * {
+  font-family: var(--font-inter, 'Inter'), -apple-system, BlinkMacSystemFont, sans-serif;
+}
+.admin-shell h1,
+.admin-shell h2,
+.admin-shell h3,
+.admin-shell h4 {
+  font-family: var(--font-inter, 'Inter'), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: revert;
+  line-height: revert;
+  font-weight: revert;
+  color: revert;
+  margin-bottom: revert;
+}
+.admin-shell p {
+  font-size: revert;
+  line-height: revert;
+}
+.admin-shell a {
+  color: revert;
+  text-decoration: revert;
+}
+
 /* ── RESPONSIVE ── */
 @media (max-width: 1200px) {
   .research-grid { grid-template-columns: repeat(2, 1fr); }

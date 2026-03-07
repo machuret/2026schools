@@ -22,7 +22,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen flex" style={{ background: '#0D1117' }}>
+    <div className="admin-shell min-h-screen flex" style={{ background: '#0D1117' }}>
       <AdminSidebar userEmail={email} />
       <main className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
