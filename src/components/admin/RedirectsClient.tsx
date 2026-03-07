@@ -13,10 +13,10 @@ interface Redirect {
   created_at: string;
 }
 
-const INPUT = "w-full rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500";
-const IS = { background: "#0D1117", border: "1px solid #30363D", color: "#C9D1D9" };
+const INPUT = "w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all";
+const IS = { background: "#fff", border: "1px solid #cbd5e1", color: "#0f172a", boxShadow: "0 1px 2px rgba(0,0,0,0.04)" };
 const LABEL = "block text-xs font-semibold mb-1.5 uppercase tracking-wide";
-const LS = { color: "#6E7681" };
+const LS = { color: "var(--admin-text-subtle)" };
 
 const EMPTY: Omit<Redirect, "id" | "created_at"> = {
   from_path: "",
@@ -129,67 +129,67 @@ export default function RedirectsClient({ initial }: { initial: Redirect[] }) {
       {/* Left: list */}
       <div className="flex-1 min-w-0">
         {/* Search */}
-        <div className="mb-4">
-          <input
-            className={INPUT} style={IS}
-            placeholder="Search redirects…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+        <div className="mb-4 relative">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input className={INPUT} style={{ ...IS, paddingLeft: "2.25rem" }}
+            placeholder="Search redirects…" value={search} onChange={e => setSearch(e.target.value)} />
         </div>
 
         {/* Feedback */}
-        {error && <div className="mb-3 px-4 py-2 rounded-lg text-sm" style={{ background: "#3D1515", color: "#F87171", border: "1px solid #7F1D1D" }}>{error}</div>}
-        {success && <div className="mb-3 px-4 py-2 rounded-lg text-sm" style={{ background: "#0D2D1A", color: "#6EE7B7", border: "1px solid #166534" }}>{success}</div>}
+        {error   && <div className="admin-alert admin-alert-error mb-3">{error}</div>}
+        {success && <div className="admin-alert admin-alert-success mb-3">{success}</div>}
 
         {/* Table */}
-        <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #21262D" }}>
-          <table className="w-full text-sm border-collapse">
+        <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--admin-border)" }}>
+          <table className="admin-table">
             <thead>
-              <tr style={{ background: "#161B22", borderBottom: "1px solid #21262D" }}>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "#6E7681" }}>From</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "#6E7681" }}>To</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "#6E7681" }}>Code</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "#6E7681" }}>Status</th>
-                <th className="px-4 py-3" />
+              <tr>
+                <th>From</th>
+                <th>To</th>
+                <th>Code</th>
+                <th>Status</th>
+                <th />
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-sm" style={{ color: "#484F58" }}>
+                  <td colSpan={5} className="px-4 py-10 text-center text-sm" style={{ color: "var(--admin-text-faint)" }}>
                     {search ? "No redirects match your search." : "No redirects yet. Add one using the form →"}
                   </td>
                 </tr>
               )}
               {filtered.map(r => (
-                <tr key={r.id} style={{ borderBottom: "1px solid #21262D", background: editId === r.id ? "#1C2430" : "transparent" }}>
-                  <td className="px-4 py-3 font-mono text-xs" style={{ color: "#58A6FF", maxWidth: "200px" }}>
-                    <div className="truncate">{r.from_path}</div>
-                    {r.note && <div className="text-xs mt-0.5 truncate" style={{ color: "#484F58" }}>{r.note}</div>}
+                <tr key={r.id} style={editId === r.id ? { background: "rgba(79,70,229,0.04)" } : undefined}>
+                  <td style={{ maxWidth: "200px" }}>
+                    <div className="font-mono text-xs font-semibold truncate" style={{ color: "var(--admin-accent)" }}>{r.from_path}</div>
+                    {r.note && <div className="text-xs mt-0.5 truncate" style={{ color: "var(--admin-text-faint)" }}>{r.note}</div>}
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs truncate" style={{ color: "#C9D1D9", maxWidth: "200px" }}>
-                    <div className="truncate">{r.to_path}</div>
+                  <td style={{ maxWidth: "200px" }}>
+                    <div className="font-mono text-xs truncate" style={{ color: "var(--admin-text-muted)" }}>{r.to_path}</div>
                   </td>
-                  <td className="px-4 py-3">
-                    <span className="text-xs font-mono px-2 py-0.5 rounded" style={{
-                      background: r.status_code === 301 ? "#1C2A3A" : "#2D1A0E",
-                      color: r.status_code === 301 ? "#58A6FF" : "#F0883E"
-                    }}>{r.status_code}</span>
+                  <td>
+                    <span className="admin-badge font-mono" style={r.status_code === 301
+                      ? { background: "#ede9fe", color: "#4338ca" }
+                      : { background: "#fef9c3", color: "#854d0e" }}>
+                      {r.status_code}
+                    </span>
                   </td>
-                  <td className="px-4 py-3">
-                    <button onClick={() => toggleActive(r)} className="text-xs px-2 py-0.5 rounded font-semibold" style={{
-                      background: r.is_active ? "#0D2D1A" : "#21262D",
-                      color: r.is_active ? "#6EE7B7" : "#6E7681",
-                      border: `1px solid ${r.is_active ? "#166534" : "#30363D"}`
-                    }}>
+                  <td>
+                    <button onClick={() => toggleActive(r)}
+                      className={`admin-badge cursor-pointer ${r.is_active ? "admin-badge-green" : "admin-badge-slate"}`}>
                       {r.is_active ? "Active" : "Paused"}
                     </button>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2 justify-end">
-                      <button onClick={() => startEdit(r)} className="text-xs px-3 py-1 rounded" style={{ background: "#21262D", color: "#C9D1D9" }}>Edit</button>
-                      <button onClick={() => handleDelete(r.id, r.from_path)} className="text-xs px-3 py-1 rounded" style={{ background: "#3D1515", color: "#F87171" }}>Delete</button>
+                  <td>
+                    <div className="flex items-center justify-end gap-1">
+                      <button onClick={() => startEdit(r)} className="admin-icon-btn" title="Edit">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                      </button>
+                      <button onClick={() => handleDelete(r.id, r.from_path)} className="admin-icon-btn" title="Delete"
+                        style={{ color: "var(--admin-danger)" }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -198,28 +198,28 @@ export default function RedirectsClient({ initial }: { initial: Redirect[] }) {
           </table>
         </div>
 
-        <div className="mt-3 text-xs" style={{ color: "#484F58" }}>
+        <div className="mt-3 text-xs" style={{ color: "var(--admin-text-faint)" }}>
           {redirects.length} redirect{redirects.length !== 1 ? "s" : ""} total · {redirects.filter(r => r.is_active).length} active
         </div>
       </div>
 
       {/* Right: add / edit form */}
       <div className="w-72 flex-shrink-0">
-        <div className="rounded-xl p-5 sticky top-6" style={{ background: "#161B22", border: "1px solid #21262D" }}>
-          <h2 className="text-sm font-semibold mb-4" style={{ color: "#E6EDF3" }}>
+        <div className="rounded-xl p-5 sticky top-6" style={{ background: "#fff", border: "1px solid var(--admin-border)", boxShadow: "var(--admin-shadow-card)" }}>
+          <h2 className="text-sm font-bold mb-4" style={{ color: "var(--admin-text-primary)" }}>
             {editId ? "Edit Redirect" : "Add Redirect"}
           </h2>
 
           <div className="mb-4">
             <label className={LABEL} style={LS}>From Path</label>
             <input className={INPUT} style={IS} value={form.from_path} onChange={e => setField("from_path", e.target.value)} placeholder="/old-page-slug" />
-            <div className="text-xs mt-1" style={{ color: "#484F58" }}>Must start with /</div>
+            <div className="text-xs mt-1" style={{ color: "var(--admin-text-faint)" }}>Must start with /</div>
           </div>
 
           <div className="mb-4">
             <label className={LABEL} style={LS}>To Path / URL</label>
             <input className={INPUT} style={IS} value={form.to_path} onChange={e => setField("to_path", e.target.value)} placeholder="/new-page-slug" />
-            <div className="text-xs mt-1" style={{ color: "#484F58" }}>Start with / or https://</div>
+            <div className="text-xs mt-1" style={{ color: "var(--admin-text-faint)" }}>Start with / or https://</div>
           </div>
 
           <div className="mb-4">
@@ -238,19 +238,18 @@ export default function RedirectsClient({ initial }: { initial: Redirect[] }) {
           <div className="mb-5">
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={form.is_active} onChange={e => setField("is_active", e.target.checked)}
-                className="w-4 h-4 rounded" style={{ accentColor: "#238636" }} />
-              <span className="text-sm" style={{ color: "#C9D1D9" }}>Active</span>
+                className="w-4 h-4 rounded" style={{ accentColor: "#4f46e5" }} />
+              <span className="text-sm font-medium" style={{ color: "var(--admin-text-secondary)" }}>Active</span>
             </label>
           </div>
 
-          <button onClick={handleSave} disabled={saving}
-            className="w-full text-sm font-semibold py-2 rounded-lg mb-2"
-            style={{ background: saving ? "#21262D" : "#238636", color: "#fff", opacity: saving ? 0.6 : 1 }}>
+          <button onClick={handleSave} disabled={saving} className="admin-btn admin-btn-primary w-full mb-2"
+            style={{ opacity: saving ? 0.6 : 1 }}>
             {saving ? "Saving…" : editId ? "Update Redirect" : "Add Redirect"}
           </button>
 
           {editId && (
-            <button onClick={cancelEdit} className="w-full text-sm py-2 rounded-lg" style={{ background: "#21262D", color: "#6E7681" }}>
+            <button onClick={cancelEdit} className="admin-btn admin-btn-secondary w-full">
               Cancel
             </button>
           )}

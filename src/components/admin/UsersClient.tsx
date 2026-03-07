@@ -9,8 +9,8 @@ interface User {
   last_sign_in_at: string | null;
 }
 
-const INPUT = "w-full rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500";
-const INPUT_STYLE = { background: "#0D1117", border: "1px solid #30363D", color: "#C9D1D9" };
+const INPUT = "w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all";
+const INPUT_STYLE = { background: "#fff", border: "1px solid #cbd5e1", color: "#0f172a", boxShadow: "0 1px 2px rgba(0,0,0,0.04)" };
 
 function fmt(d: string | null) {
   if (!d) return "Never";
@@ -93,131 +93,123 @@ export default function UsersClient({ initialUsers }: { initialUsers: User[] }) 
     setBusy(false);
   }
 
+  const LABEL = "block text-xs font-semibold mb-1.5 uppercase tracking-wide";
+  const LABEL_STYLE = { color: "var(--admin-text-subtle)" };
+
+  const Modal = ({ title, sub, children }: { title: string; sub?: string; children: React.ReactNode }) => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(15,23,42,0.5)", backdropFilter: "blur(2px)" }}>
+      <div className="w-full max-w-md rounded-2xl p-6 shadow-2xl" style={{ background: "#fff", border: "1px solid #e2e8f0" }}>
+        <h2 className="text-base font-bold mb-1" style={{ color: "#0f172a" }}>{title}</h2>
+        {sub && <p className="text-xs mb-5" style={{ color: "#94a3b8" }}>{sub}</p>}
+        {children}
+      </div>
+    </div>
+  );
+
   return (
     <div>
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-4">
-        <span className="text-sm" style={{ color: "#6E7681" }}>{users.length} user{users.length !== 1 ? "s" : ""}</span>
-        <button
-          onClick={() => { setShowCreate(true); clearMessages(); }}
-          className="text-sm font-semibold px-4 py-2 rounded-lg"
-          style={{ background: "#238636", color: "#FFFFFF" }}
-        >
-          + New User
+        <span className="text-sm" style={{ color: "var(--admin-text-subtle)" }}>{users.length} user{users.length !== 1 ? "s" : ""}</span>
+        <button onClick={() => { setShowCreate(true); clearMessages(); }} className="admin-btn admin-btn-primary">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New User
         </button>
       </div>
 
-      {/* Feedback — only when no modal is open */}
-      {!showCreate && !editUser && error && <div className="mb-4 px-4 py-3 rounded-lg text-sm" style={{ background: "#3D1515", color: "#F87171", border: "1px solid #7F1D1D" }}>{error}</div>}
-      {!showCreate && !editUser && success && <div className="mb-4 px-4 py-3 rounded-lg text-sm" style={{ background: "#0D2D1A", color: "#6EE7B7", border: "1px solid #166534" }}>{success}</div>}
+      {/* Feedback */}
+      {!showCreate && !editUser && error   && <div className="admin-alert admin-alert-error mb-4">{error}</div>}
+      {!showCreate && !editUser && success && <div className="admin-alert admin-alert-success mb-4">{success}</div>}
 
       {/* Create modal */}
       {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.7)" }}>
-          <div className="w-full max-w-md rounded-xl p-6" style={{ background: "#161B22", border: "1px solid #30363D" }}>
-            <h2 className="text-base font-semibold mb-5" style={{ color: "#E6EDF3" }}>Create New User</h2>
-            <div className="mb-4">
-              <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "#6E7681" }}>Email</label>
-              <input type="email" className={INPUT} style={INPUT_STYLE} value={newEmail}
-                onChange={e => setNewEmail(e.target.value)} placeholder="user@example.com" />
-            </div>
-            <div className="mb-6">
-              <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "#6E7681" }}>Password</label>
-              <input type="password" className={INPUT} style={INPUT_STYLE} value={newPassword}
-                onChange={e => setNewPassword(e.target.value)} placeholder="Min 6 characters" />
-            </div>
-            {error && <div className="mb-4 px-3 py-2 rounded text-xs" style={{ background: "#3D1515", color: "#F87171" }}>{error}</div>}
-            <div className="flex gap-3">
-              <button onClick={handleCreate} disabled={busy}
-                className="flex-1 text-sm font-semibold py-2 rounded-lg"
-                style={{ background: "#238636", color: "#FFFFFF", opacity: busy ? 0.6 : 1 }}>
-                {busy ? "Creating…" : "Create User"}
-              </button>
-              <button onClick={() => { setShowCreate(false); setNewEmail(""); setNewPassword(""); clearMessages(); }}
-                className="flex-1 text-sm font-semibold py-2 rounded-lg"
-                style={{ background: "#21262D", color: "#C9D1D9" }}>
-                Cancel
-              </button>
-            </div>
+        <Modal title="Create New User" sub="The new user will be able to sign in immediately.">
+          <div className="mb-4">
+            <label className={LABEL} style={LABEL_STYLE}>Email</label>
+            <input type="email" className={INPUT} style={INPUT_STYLE} value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="user@example.com" />
           </div>
-        </div>
+          <div className="mb-5">
+            <label className={LABEL} style={LABEL_STYLE}>Password</label>
+            <input type="password" className={INPUT} style={INPUT_STYLE} value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Min 6 characters" />
+          </div>
+          {error && <div className="admin-alert admin-alert-error mb-4">{error}</div>}
+          <div className="flex gap-3">
+            <button onClick={handleCreate} disabled={busy} className="admin-btn admin-btn-primary flex-1" style={{ opacity: busy ? 0.6 : 1 }}>
+              {busy ? "Creating…" : "Create User"}
+            </button>
+            <button onClick={() => { setShowCreate(false); setNewEmail(""); setNewPassword(""); clearMessages(); }} className="admin-btn admin-btn-secondary flex-1">
+              Cancel
+            </button>
+          </div>
+        </Modal>
       )}
 
       {/* Edit modal */}
       {editUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,0.7)" }}>
-          <div className="w-full max-w-md rounded-xl p-6" style={{ background: "#161B22", border: "1px solid #30363D" }}>
-            <h2 className="text-base font-semibold mb-1" style={{ color: "#E6EDF3" }}>Edit User</h2>
-            <p className="text-xs mb-1 font-mono" style={{ color: "#484F58" }}>{editUser.email}</p>
-            <p className="text-xs mb-5" style={{ color: "#6E7681" }}>Leave a field blank to keep it unchanged.</p>
-            <div className="mb-4">
-              <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "#6E7681" }}>New Email</label>
-              <input type="email" className={INPUT} style={INPUT_STYLE} value={editEmail}
-                onChange={e => setEditEmail(e.target.value)} placeholder={editUser.email} />
-            </div>
-            <div className="mb-6">
-              <label className="block text-xs font-semibold mb-1.5 uppercase tracking-wide" style={{ color: "#6E7681" }}>New Password</label>
-              <input type="password" className={INPUT} style={INPUT_STYLE} value={editPassword}
-                onChange={e => setEditPassword(e.target.value)} placeholder="Leave blank to keep current" />
-            </div>
-            {error && <div className="mb-4 px-3 py-2 rounded text-xs" style={{ background: "#3D1515", color: "#F87171" }}>{error}</div>}
-            <div className="flex gap-3 mb-3">
-              <button onClick={handleEdit} disabled={busy}
-                className="flex-1 text-sm font-semibold py-2 rounded-lg"
-                style={{ background: "#238636", color: "#FFFFFF", opacity: busy ? 0.6 : 1 }}>
-                {busy ? "Saving…" : "Save Changes"}
-              </button>
-              <button onClick={() => { setEditUser(null); setEditEmail(""); setEditPassword(""); clearMessages(); }}
-                className="flex-1 text-sm font-semibold py-2 rounded-lg"
-                style={{ background: "#21262D", color: "#C9D1D9" }}>
-                Cancel
-              </button>
-            </div>
-            <button
-              onClick={() => handleResetPassword(editUser)}
-              disabled={busy}
-              className="w-full text-xs font-semibold py-2 rounded-lg"
-              style={{ background: "#1C2A3A", color: "#58A6FF", border: "1px solid #1E3A5F" }}>
-              {busy ? "Sending…" : "✉ Send Password Reset Email"}
+        <Modal title="Edit User" sub={`Editing ${editUser.email} — leave a field blank to keep it unchanged.`}>
+          <div className="mb-4">
+            <label className={LABEL} style={LABEL_STYLE}>New Email</label>
+            <input type="email" className={INPUT} style={INPUT_STYLE} value={editEmail} onChange={e => setEditEmail(e.target.value)} placeholder={editUser.email} />
+          </div>
+          <div className="mb-5">
+            <label className={LABEL} style={LABEL_STYLE}>New Password</label>
+            <input type="password" className={INPUT} style={INPUT_STYLE} value={editPassword} onChange={e => setEditPassword(e.target.value)} placeholder="Leave blank to keep current" />
+          </div>
+          {error && <div className="admin-alert admin-alert-error mb-4">{error}</div>}
+          <div className="flex gap-3 mb-3">
+            <button onClick={handleEdit} disabled={busy} className="admin-btn admin-btn-primary flex-1" style={{ opacity: busy ? 0.6 : 1 }}>
+              {busy ? "Saving…" : "Save Changes"}
+            </button>
+            <button onClick={() => { setEditUser(null); setEditEmail(""); setEditPassword(""); clearMessages(); }} className="admin-btn admin-btn-secondary flex-1">
+              Cancel
             </button>
           </div>
-        </div>
+          <button onClick={() => handleResetPassword(editUser)} disabled={busy}
+            className="admin-btn w-full text-xs"
+            style={{ background: "rgba(79,70,229,0.07)", color: "#4f46e5", border: "1px solid rgba(79,70,229,0.2)" }}>
+            {busy ? "Sending…" : "✉ Send Password Reset Email"}
+          </button>
+        </Modal>
       )}
 
       {/* Users table */}
-      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #21262D" }}>
-        <table className="w-full text-sm">
+      <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--admin-border)" }}>
+        <table className="admin-table">
           <thead>
-            <tr style={{ background: "#161B22", borderBottom: "1px solid #21262D" }}>
-              <th className="text-left px-4 py-3 font-semibold" style={{ color: "#6E7681" }}>Email</th>
-              <th className="text-left px-4 py-3 font-semibold hidden md:table-cell" style={{ color: "#6E7681" }}>Created</th>
-              <th className="text-left px-4 py-3 font-semibold hidden md:table-cell" style={{ color: "#6E7681" }}>Last Sign In</th>
-              <th className="text-right px-4 py-3 font-semibold" style={{ color: "#6E7681" }}>Actions</th>
+            <tr>
+              <th>Email</th>
+              <th className="hidden md:table-cell">Created</th>
+              <th className="hidden md:table-cell">Last Sign In</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {users.map((user, idx) => (
-              <tr key={user.id} style={{ background: idx % 2 === 0 ? "#0D1117" : "#161B22", borderBottom: "1px solid #21262D" }}>
-                <td className="px-4 py-3">
-                  <span className="font-medium" style={{ color: "#C9D1D9" }}>{user.email}</span>
-                  <div className="text-xs mt-0.5 font-mono" style={{ color: "#484F58" }}>{user.id.slice(0, 8)}…</div>
+            {users.map((user) => (
+              <tr key={user.id}>
+                <td>
+                  <div className="text-[15px] font-semibold" style={{ color: "var(--admin-text-primary)" }}>{user.email}</div>
+                  <div className="text-xs mt-0.5 font-mono" style={{ color: "var(--admin-text-faint)" }}>{user.id.slice(0, 8)}…</div>
                 </td>
-                <td className="px-4 py-3 text-xs hidden md:table-cell" style={{ color: "#6E7681" }}>{fmt(user.created_at)}</td>
-                <td className="px-4 py-3 text-xs hidden md:table-cell" style={{ color: "#6E7681" }}>{fmt(user.last_sign_in_at)}</td>
-                <td className="px-4 py-3 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => { setEditUser(user); setEditEmail(""); setEditPassword(""); clearMessages(); setShowCreate(false); }}
-                      className="text-xs font-semibold px-3 py-1.5 rounded"
-                      style={{ background: "#21262D", color: "#C9D1D9" }}>
-                      Edit
+                <td className="hidden md:table-cell">
+                  <span className="text-sm" style={{ color: "var(--admin-text-muted)" }}>{fmt(user.created_at)}</span>
+                </td>
+                <td className="hidden md:table-cell">
+                  <span className="text-sm" style={{ color: "var(--admin-text-muted)" }}>{fmt(user.last_sign_in_at)}</span>
+                </td>
+                <td>
+                  <div className="flex items-center justify-end gap-1">
+                    <button onClick={() => { setEditUser(user); setEditEmail(""); setEditPassword(""); clearMessages(); setShowCreate(false); }}
+                      className="admin-icon-btn" title="Edit user">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
                     </button>
-                    <button
-                      onClick={() => handleDelete(user)}
-                      disabled={busy}
-                      className="text-xs font-semibold px-3 py-1.5 rounded"
-                      style={{ background: "#3D1515", color: "#F87171", border: "1px solid #7F1D1D" }}>
-                      Delete
+                    <button onClick={() => handleDelete(user)} disabled={busy}
+                      className="admin-icon-btn" title="Delete user"
+                      style={{ color: "var(--admin-danger)" }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                      </svg>
                     </button>
                   </div>
                 </td>
