@@ -21,11 +21,11 @@ export default async function AdminUsersPage() {
   const users = await getUsers();
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-xl font-semibold mb-1" style={{ color: "#E6EDF3" }}>User Management</h1>
-        <p className="text-sm" style={{ color: "#6E7681" }}>
-          Create, edit or delete admin users who have access to the backend.
-        </p>
+      <div className="admin-page-header">
+        <div>
+          <h1>User Management</h1>
+          <p className="text-sm mt-1" style={{ color: "var(--admin-text-subtle)" }}>Create, edit or delete admin users who have access to the backend.</p>
+        </div>
       </div>
       <UsersClient initialUsers={users} />
     </div>
