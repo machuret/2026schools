@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // ── 1. DB-driven redirects (skip admin and static assets) ────────
+  // ── 1. DB-driven redirects (public routes only, no auth needed) ──
   if (
     !pathname.startsWith('/admin') &&
     !pathname.startsWith('/_next') &&
@@ -31,11 +31,15 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(dest, { status: redirect.status_code });
       }
     } catch {
-      // DB unavailable — continue normally
+      // redirects table missing or DB unavailable — continue normally
     }
   }
 
-  // ── 2. Auth protection for /admin ────────────────────────────────
+  // ── 2. Auth protection — only runs for /admin routes ─────────────
+  if (!pathname.startsWith('/admin')) {
+    return NextResponse.next();
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -64,12 +68,10 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Protect all /admin routes except /admin/login
-  if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
-    if (!user) {
-      const loginUrl = request.nextUrl.clone();
-      loginUrl.pathname = '/admin/login';
-      return NextResponse.redirect(loginUrl);
-    }
+  if (pathname !== '/admin/login' && !user) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = '/admin/login';
+    return NextResponse.redirect(loginUrl);
   }
 
   // If logged in and visiting /admin/login, redirect to /admin
