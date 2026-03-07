@@ -2,9 +2,9 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
 const SEVERITY_STYLE: Record<string, { bg: string; color: string; label: string }> = {
-  critical: { bg: "#3D1515", color: "#F87171", label: "Critical" },
-  high:     { bg: "#2D2008", color: "#FCD34D", label: "High" },
-  notable:  { bg: "#0D2D1A", color: "#6EE7B7", label: "Notable" },
+  critical: { bg: "#450A0A30", color: "#FCA5A5", label: "Critical" },
+  high:     { bg: "#451A0330", color: "#FCD34D", label: "High" },
+  notable:  { bg: "#052E1630", color: "#86EFAC", label: "Notable" },
 };
 
 export default async function AdminIssuesPage() {
@@ -27,46 +27,46 @@ export default async function AdminIssuesPage() {
     <div>
       <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-semibold mb-1" style={{ color: "#E6EDF3" }}>Issues</h1>
-          <p className="text-sm" style={{ color: "#6E7681" }}>
+          <h1 className="text-2xl font-bold mb-2" style={{ color: "#FAFAFA", letterSpacing: "-0.025em" }}>Issues</h1>
+          <p className="text-[15px]" style={{ color: "#71717A" }}>
             {issues?.length ?? 0} wellbeing issues tracked across Australian schools.
           </p>
         </div>
         <Link
           href="/admin/issues/new"
-          className="text-sm font-semibold px-4 py-2 rounded-lg"
-          style={{ background: "#238636", color: "#FFFFFF" }}
+          className="text-sm font-semibold px-4 py-2.5 rounded-xl"
+          style={{ background: "linear-gradient(135deg, #6366F1, #818CF8)", color: "#FFFFFF" }}
         >
           + New Issue
         </Link>
       </div>
 
       {fetchError && (
-        <div className="mb-4 px-4 py-3 rounded-lg text-sm" style={{ background: "#3D1515", color: "#F87171", border: "1px solid #7F1D1D" }}>
+        <div className="mb-4 px-4 py-3 rounded-xl text-sm font-medium" style={{ background: "#450A0A30", color: "#FCA5A5", border: "1px solid #7F1D1D50" }}>
           {fetchError}
         </div>
       )}
 
       {(!issues || issues.length === 0) && !fetchError ? (
-        <div className="rounded-xl p-10 text-center" style={{ background: "#161B22", border: "1px solid #21262D" }}>
+        <div className="rounded-2xl p-10 text-center" style={{ background: "#18181B", border: "1px solid #27272A" }}>
           <div className="text-3xl mb-3">⚠️</div>
-          <p className="text-sm font-medium mb-1" style={{ color: "#C9D1D9" }}>No issues yet</p>
-          <p className="text-xs mb-4" style={{ color: "#484F58" }}>Create your first wellbeing issue.</p>
-          <Link href="/admin/issues/new" className="text-sm font-semibold px-4 py-2 rounded-lg inline-block"
-            style={{ background: "#238636", color: "#FFFFFF" }}>
+          <p className="text-sm font-medium mb-1" style={{ color: "#D4D4D8" }}>No issues yet</p>
+          <p className="text-xs mb-4" style={{ color: "#52525B" }}>Create your first wellbeing issue.</p>
+          <Link href="/admin/issues/new" className="text-sm font-semibold px-4 py-2.5 rounded-xl inline-block"
+            style={{ background: "linear-gradient(135deg, #6366F1, #818CF8)", color: "#FFFFFF" }}>
             Create an issue
           </Link>
         </div>
       ) : issues && issues.length > 0 ? (
-      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #21262D" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid #27272A" }}>
         <table className="w-full text-sm">
           <thead>
-            <tr style={{ background: "#161B22", borderBottom: "1px solid #21262D" }}>
-              <th className="text-left px-4 py-3 font-semibold" style={{ color: "#6E7681", width: "48px" }}>#</th>
-              <th className="text-left px-4 py-3 font-semibold" style={{ color: "#6E7681" }}>Issue</th>
-              <th className="text-left px-4 py-3 font-semibold" style={{ color: "#6E7681" }}>Severity</th>
-              <th className="text-left px-4 py-3 font-semibold hidden md:table-cell" style={{ color: "#6E7681" }}>Anchor Stat</th>
-              <th className="text-right px-4 py-3 font-semibold" style={{ color: "#6E7681" }}>Actions</th>
+            <tr style={{ background: "#18181B", borderBottom: "1px solid #27272A" }}>
+              <th className="text-left px-5 py-3.5 font-semibold text-xs uppercase tracking-wider" style={{ color: "#71717A", width: "48px" }}>#</th>
+              <th className="text-left px-5 py-3.5 font-semibold text-xs uppercase tracking-wider" style={{ color: "#71717A" }}>Issue</th>
+              <th className="text-left px-5 py-3.5 font-semibold text-xs uppercase tracking-wider" style={{ color: "#71717A" }}>Severity</th>
+              <th className="text-left px-5 py-3.5 font-semibold text-xs uppercase tracking-wider hidden md:table-cell" style={{ color: "#71717A" }}>Anchor Stat</th>
+              <th className="text-right px-5 py-3.5 font-semibold text-xs uppercase tracking-wider" style={{ color: "#71717A" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -76,43 +76,43 @@ export default async function AdminIssuesPage() {
                 <tr
                   key={issue.id}
                   style={{
-                    background: idx % 2 === 0 ? "#0D1117" : "#161B22",
-                    borderBottom: "1px solid #21262D",
+                    background: idx % 2 === 0 ? "#09090B" : "#18181B",
+                    borderBottom: "1px solid #27272A",
                   }}
                 >
-                  <td className="px-4 py-3 font-mono text-xs" style={{ color: "#484F58" }}>{issue.rank}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-5 py-3.5 font-mono text-xs" style={{ color: "#52525B" }}>{issue.rank}</td>
+                  <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2">
                       <span>{issue.icon}</span>
-                      <span className="font-medium" style={{ color: "#C9D1D9" }}>{issue.title}</span>
+                      <span className="font-medium" style={{ color: "#FAFAFA" }}>{issue.title}</span>
                     </div>
-                    <div className="text-xs mt-0.5" style={{ color: "#484F58" }}>/issues/{issue.slug}</div>
+                    <div className="text-xs mt-0.5" style={{ color: "#52525B" }}>/issues/{issue.slug}</div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-5 py-3.5">
                     <span
-                      className="text-xs font-bold px-2 py-0.5 rounded"
+                      className="text-xs font-bold px-2.5 py-1 rounded-lg"
                       style={{ background: sev.bg, color: sev.color }}
                     >
                       {sev.label}
                     </span>
                   </td>
-                  <td className="px-4 py-3 hidden md:table-cell text-xs" style={{ color: "#6E7681", maxWidth: "260px" }}>
+                  <td className="px-5 py-3.5 hidden md:table-cell text-xs" style={{ color: "#A1A1AA", maxWidth: "260px" }}>
                     <div className="truncate">{issue.anchor_stat}</div>
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-5 py-3.5 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Link
                         href={`/issues/${issue.slug}`}
                         target="_blank"
-                        className="text-xs font-semibold px-3 py-1.5 rounded"
-                        style={{ background: "#161B22", color: "#6E7681", border: "1px solid #21262D" }}
+                        className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+                        style={{ background: "#18181B", color: "#71717A", border: "1px solid #27272A" }}
                       >
                         View ↗
                       </Link>
                       <Link
                         href={`/admin/issues/${issue.id}`}
-                        className="text-xs font-semibold px-3 py-1.5 rounded"
-                        style={{ background: "#21262D", color: "#C9D1D9" }}
+                        className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+                        style={{ background: "#27272A", color: "#D4D4D8" }}
                       >
                         Edit
                       </Link>

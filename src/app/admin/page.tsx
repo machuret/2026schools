@@ -23,74 +23,60 @@ export default async function AdminDashboard() {
   } catch { /* middleware ensures auth, this is just for display */ }
 
   const stats = [
-    { label: 'Issues Tracked', value: String(issueCount), change: 'Wellbeing issues', color: '#1C7ED6' },
-    { label: 'States & Territories', value: String(stateCount), change: 'With priority data', color: '#2DA44E' },
-    { label: 'Areas / Cities', value: String(areaCount), change: 'LGAs and regions', color: '#9B59B6' },
-    { label: 'CMS Pages', value: String(pageCount), change: 'Custom pages', color: '#E67E22' },
+    { label: 'Issues', value: String(issueCount), sub: 'Wellbeing issues tracked', gradient: 'linear-gradient(135deg, #6366F1, #818CF8)' },
+    { label: 'States', value: String(stateCount), sub: 'With priority data', gradient: 'linear-gradient(135deg, #22C55E, #4ADE80)' },
+    { label: 'Areas', value: String(areaCount), sub: 'LGAs and regions', gradient: 'linear-gradient(135deg, #A855F7, #C084FC)' },
+    { label: 'Pages', value: String(pageCount), sub: 'Custom CMS pages', gradient: 'linear-gradient(135deg, #F59E0B, #FBBF24)' },
   ];
 
   return (
-    <div>
-      {/* Page header */}
-      <div className="mb-8">
-        <h1 className="text-xl font-semibold mb-1" style={{ color: '#E6EDF3' }}>
-          Dashboard
+    <div className="max-w-6xl">
+      {/* Header */}
+      <div className="mb-10">
+        <h1 className="text-2xl font-bold mb-2" style={{ color: '#FAFAFA', letterSpacing: '-0.025em' }}>
+          Welcome back
         </h1>
-        <p className="text-sm" style={{ color: '#6E7681' }}>
-          Welcome back, {userEmail}. Manage content and data for Schools Wellbeing Australia.
+        <p className="text-[15px]" style={{ color: '#71717A' }}>
+          {userEmail ? `Signed in as ${userEmail}` : 'Manage content and data for Schools Wellbeing Australia.'}
         </p>
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
         {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className="rounded-xl p-5"
-            style={{ background: '#161B22', border: '1px solid #21262D' }}
-          >
-            <div className="text-2xl font-bold mb-1" style={{ color: stat.color }}>
-              {stat.value}
-            </div>
-            <div className="text-sm font-medium mb-0.5" style={{ color: '#C9D1D9' }}>
-              {stat.label}
-            </div>
-            <div className="text-xs" style={{ color: '#484F58' }}>
-              {stat.change}
-            </div>
+          <div key={stat.label} className="rounded-2xl p-6 relative overflow-hidden"
+            style={{ background: '#18181B', border: '1px solid #27272A' }}>
+            <div className="text-3xl font-bold mb-2" style={{ color: '#FAFAFA' }}>{stat.value}</div>
+            <div className="text-sm font-semibold mb-0.5" style={{ color: '#D4D4D8' }}>{stat.label}</div>
+            <div className="text-xs" style={{ color: '#71717A' }}>{stat.sub}</div>
+            <div className="absolute top-0 right-0 w-20 h-20 opacity-10 rounded-bl-[40px]"
+              style={{ background: stat.gradient }} />
           </div>
         ))}
       </div>
 
-      {/* Sections */}
+      {/* Two-column grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Quick links */}
-        <div
-          className="rounded-xl p-6"
-          style={{ background: '#161B22', border: '1px solid #21262D' }}
-        >
-          <h2 className="text-sm font-semibold mb-4" style={{ color: '#C9D1D9' }}>
-            Quick Actions
-          </h2>
+        {/* Quick actions */}
+        <div className="rounded-2xl p-6" style={{ background: '#18181B', border: '1px solid #27272A' }}>
+          <h2 className="text-base font-semibold mb-5" style={{ color: '#FAFAFA' }}>Quick Actions</h2>
           <div className="space-y-2">
             {[
-              { label: 'Manage Issues', href: '/admin/issues', desc: 'Edit wellbeing issue content' },
-              { label: 'State Data', href: '/admin/states', desc: 'Update state-level statistics' },
-              { label: 'Content Blocks', href: '/admin/content', desc: 'Edit page sections and text' },
-              { label: 'Settings', href: '/admin/settings', desc: 'Site configuration' },
+              { label: 'Manage Issues', href: '/admin/issues', desc: 'Edit wellbeing issue content', emoji: '⚠️' },
+              { label: 'State Data', href: '/admin/states', desc: 'Update state-level statistics', emoji: '📊' },
+              { label: 'Areas & Cities', href: '/admin/content', desc: 'Edit area reports and data', emoji: '📍' },
+              { label: 'CMS Pages', href: '/admin/cms/pages', desc: 'Create and edit custom pages', emoji: '📄' },
             ].map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                className="flex items-center justify-between px-4 py-3 rounded-lg transition-colors group hover:border-blue-500"
-                style={{ background: '#0D1117', border: '1px solid #21262D' }}
-              >
-                <div>
-                  <div className="text-sm font-medium" style={{ color: '#E6EDF3' }}>{item.label}</div>
-                  <div className="text-xs mt-0.5" style={{ color: '#484F58' }}>{item.desc}</div>
+              <a key={item.href} href={item.href}
+                className="group flex items-center gap-4 px-4 py-3.5 rounded-xl"
+                style={{ background: '#09090B', border: '1px solid #27272A' }}>
+                <span className="text-lg">{item.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold group-hover:text-indigo-300" style={{ color: '#FAFAFA' }}>{item.label}</div>
+                  <div className="text-xs mt-0.5" style={{ color: '#71717A' }}>{item.desc}</div>
                 </div>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#484F58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="9 18 15 12 9 6" />
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#52525B" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 group-hover:translate-x-0.5">
+                  <polyline points="9 18 15 12 9 6"/>
                 </svg>
               </a>
             ))}
@@ -98,41 +84,29 @@ export default async function AdminDashboard() {
         </div>
 
         {/* System status */}
-        <div
-          className="rounded-xl p-6"
-          style={{ background: '#161B22', border: '1px solid #21262D' }}
-        >
-          <h2 className="text-sm font-semibold mb-4" style={{ color: '#C9D1D9' }}>
-            System Status
-          </h2>
-          <div className="space-y-3">
+        <div className="rounded-2xl p-6" style={{ background: '#18181B', border: '1px solid #27272A' }}>
+          <h2 className="text-base font-semibold mb-5" style={{ color: '#FAFAFA' }}>System Status</h2>
+          <div className="space-y-4">
             {[
               { label: 'Supabase Database', status: 'Connected', ok: true },
               { label: 'Authentication', status: 'Active', ok: true },
-              { label: 'OpenAI Integration', status: 'Not configured', ok: false },
+              { label: 'AI Integration', status: 'Not configured', ok: false },
               { label: 'Vercel Deployment', status: 'Live', ok: true },
             ].map((item) => (
-              <div key={item.label} className="flex items-center justify-between">
-                <span className="text-sm" style={{ color: '#8B949E' }}>{item.label}</span>
-                <span
-                  className="text-xs px-2 py-0.5 rounded-full font-medium"
+              <div key={item.label} className="flex items-center justify-between py-1">
+                <span className="text-sm" style={{ color: '#A1A1AA' }}>{item.label}</span>
+                <span className="text-xs px-2.5 py-1 rounded-full font-semibold"
                   style={{
-                    background: item.ok ? '#0D2818' : '#2D1317',
-                    color: item.ok ? '#2DA44E' : '#F85149',
-                    border: `1px solid ${item.ok ? '#2DA44E30' : '#F8514930'}`,
-                  }}
-                >
+                    background: item.ok ? '#052E1630' : '#450A0A30',
+                    color: item.ok ? '#4ADE80' : '#FCA5A5',
+                  }}>
                   {item.status}
                 </span>
               </div>
             ))}
           </div>
-
-          <div
-            className="mt-6 pt-4 text-xs"
-            style={{ borderTop: '1px solid #21262D', color: '#484F58' }}
-          >
-            Next step: configure OpenAI API key to enable AI-powered content generation.
+          <div className="mt-6 pt-4 text-sm" style={{ borderTop: '1px solid #27272A', color: '#52525B' }}>
+            Configure an OpenAI API key to enable AI content generation.
           </div>
         </div>
       </div>

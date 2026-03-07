@@ -21,45 +21,45 @@ export default async function AdminStatesPage() {
     <div>
       <div className="mb-8 flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-semibold mb-1" style={{ color: "#E6EDF3" }}>States & Territories</h1>
-          <p className="text-sm" style={{ color: "#6E7681" }}>
+          <h1 className="text-2xl font-bold mb-2" style={{ color: "#FAFAFA", letterSpacing: "-0.025em" }}>States & Territories</h1>
+          <p className="text-[15px]" style={{ color: "#71717A" }}>
             {states?.length ?? 0} states and territories with priority wellbeing issues.
           </p>
         </div>
         <Link
           href="/admin/states/new"
-          className="text-sm font-semibold px-4 py-2 rounded-lg"
-          style={{ background: "#238636", color: "#FFFFFF" }}
+          className="text-sm font-semibold px-4 py-2.5 rounded-xl"
+          style={{ background: "linear-gradient(135deg, #6366F1, #818CF8)", color: "#FFFFFF" }}
         >
           + New State
         </Link>
       </div>
 
       {fetchError && (
-        <div className="mb-4 px-4 py-3 rounded-lg text-sm" style={{ background: "#3D1515", color: "#F87171", border: "1px solid #7F1D1D" }}>
+        <div className="mb-4 px-4 py-3 rounded-xl text-sm font-medium" style={{ background: "#450A0A30", color: "#FCA5A5", border: "1px solid #7F1D1D50" }}>
           {fetchError}
         </div>
       )}
 
       {(!states || states.length === 0) && !fetchError ? (
-        <div className="rounded-xl p-10 text-center" style={{ background: "#161B22", border: "1px solid #21262D" }}>
+        <div className="rounded-2xl p-10 text-center" style={{ background: "#18181B", border: "1px solid #27272A" }}>
           <div className="text-3xl mb-3">🇳🇿</div>
-          <p className="text-sm font-medium mb-1" style={{ color: "#C9D1D9" }}>No states yet</p>
-          <p className="text-xs mb-4" style={{ color: "#484F58" }}>Create your first state or territory.</p>
-          <Link href="/admin/states/new" className="text-sm font-semibold px-4 py-2 rounded-lg inline-block"
-            style={{ background: "#238636", color: "#FFFFFF" }}>
+          <p className="text-sm font-medium mb-1" style={{ color: "#D4D4D8" }}>No states yet</p>
+          <p className="text-xs mb-4" style={{ color: "#52525B" }}>Create your first state or territory.</p>
+          <Link href="/admin/states/new" className="text-sm font-semibold px-4 py-2.5 rounded-xl inline-block"
+            style={{ background: "linear-gradient(135deg, #6366F1, #818CF8)", color: "#FFFFFF" }}>
             Create a state
           </Link>
         </div>
       ) : states && states.length > 0 ? (
-      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #21262D" }}>
+      <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid #27272A" }}>
         <table className="w-full text-sm">
           <thead>
-            <tr style={{ background: "#161B22", borderBottom: "1px solid #21262D" }}>
-              <th className="text-left px-4 py-3 font-semibold" style={{ color: "#6E7681" }}>State / Territory</th>
-              <th className="text-left px-4 py-3 font-semibold hidden md:table-cell" style={{ color: "#6E7681" }}>Subtitle</th>
-              <th className="text-left px-4 py-3 font-semibold" style={{ color: "#6E7681" }}>Issues</th>
-              <th className="text-right px-4 py-3 font-semibold" style={{ color: "#6E7681" }}>Actions</th>
+            <tr style={{ background: "#18181B", borderBottom: "1px solid #27272A" }}>
+              <th className="text-left px-5 py-3.5 font-semibold text-xs uppercase tracking-wider" style={{ color: "#71717A" }}>State / Territory</th>
+              <th className="text-left px-5 py-3.5 font-semibold text-xs uppercase tracking-wider hidden md:table-cell" style={{ color: "#71717A" }}>Subtitle</th>
+              <th className="text-left px-5 py-3.5 font-semibold text-xs uppercase tracking-wider" style={{ color: "#71717A" }}>Issues</th>
+              <th className="text-right px-5 py-3.5 font-semibold text-xs uppercase tracking-wider" style={{ color: "#71717A" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -69,42 +69,42 @@ export default async function AdminStatesPage() {
                 <tr
                   key={state.id}
                   style={{
-                    background: idx % 2 === 0 ? "#0D1117" : "#161B22",
-                    borderBottom: "1px solid #21262D",
+                    background: idx % 2 === 0 ? "#09090B" : "#18181B",
+                    borderBottom: "1px solid #27272A",
                   }}
                 >
-                  <td className="px-4 py-3">
+                  <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2">
                       <span>{state.icon}</span>
-                      <span className="font-medium" style={{ color: "#C9D1D9" }}>{state.name}</span>
+                      <span className="font-medium" style={{ color: "#FAFAFA" }}>{state.name}</span>
                     </div>
-                    <div className="text-xs mt-0.5" style={{ color: "#484F58" }}>/states/{state.slug}</div>
+                    <div className="text-xs mt-0.5" style={{ color: "#52525B" }}>/states/{state.slug}</div>
                   </td>
-                  <td className="px-4 py-3 hidden md:table-cell text-xs" style={{ color: "#6E7681", maxWidth: "300px" }}>
+                  <td className="px-5 py-3.5 hidden md:table-cell text-xs" style={{ color: "#A1A1AA", maxWidth: "300px" }}>
                     <div className="truncate">{state.subtitle}</div>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-5 py-3.5">
                     <span
-                      className="text-xs font-bold px-2 py-0.5 rounded"
-                      style={{ background: "#1C2A3A", color: "#58A6FF" }}
+                      className="text-xs font-bold px-2.5 py-1 rounded-lg"
+                      style={{ background: "#6366F115", color: "#A5B4FC" }}
                     >
                       {issueCount} issues
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-5 py-3.5 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Link
                         href={`/states/${state.slug}`}
                         target="_blank"
-                        className="text-xs font-semibold px-3 py-1.5 rounded"
-                        style={{ background: "#161B22", color: "#6E7681", border: "1px solid #21262D" }}
+                        className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+                        style={{ background: "#18181B", color: "#71717A", border: "1px solid #27272A" }}
                       >
                         View ↗
                       </Link>
                       <Link
                         href={`/admin/states/${state.id}`}
-                        className="text-xs font-semibold px-3 py-1.5 rounded"
-                        style={{ background: "#21262D", color: "#C9D1D9" }}
+                        className="text-xs font-semibold px-3 py-1.5 rounded-lg"
+                        style={{ background: "#27272A", color: "#D4D4D8" }}
                       >
                         Edit
                       </Link>

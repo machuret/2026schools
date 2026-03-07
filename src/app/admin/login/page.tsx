@@ -33,91 +33,73 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: '#0D1117' }}>
-      <div className="w-full max-w-md">
-        {/* Logo / Brand */}
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#09090B' }}>
+      <div className="w-full max-w-sm px-6">
+        {/* Brand */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl mb-5" style={{ background: '#1C7ED6' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L2 7l10 5 10-5-10-5z" fill="white" />
-              <path d="M2 17l10 5 10-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M2 12l10 5 10-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-6"
+            style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" fill="white"/>
+              <path d="M2 17l10 5 10-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 12l10 5 10-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
-          <h1 className="text-xl font-semibold text-white mb-1">Schools Wellbeing Admin</h1>
-          <p className="text-sm" style={{ color: '#6E7681' }}>Sign in to access the dashboard</p>
+          <h1 className="text-2xl font-bold mb-2" style={{ color: '#FAFAFA', letterSpacing: '-0.025em' }}>
+            Welcome back
+          </h1>
+          <p className="text-sm" style={{ color: '#71717A' }}>Sign in to the SWA admin dashboard</p>
         </div>
 
-        {/* Card */}
-        <div className="rounded-xl p-8" style={{ background: '#161B22', border: '1px solid #30363D' }}>
+        {/* Form card */}
+        <div className="rounded-2xl p-8" style={{ background: '#18181B', border: '1px solid #27272A' }}>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: '#C9D1D9' }}>
-                Email address
+              <label className="block text-sm font-medium mb-2" style={{ color: '#D4D4D8' }}>
+                Email
               </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all"
-                style={{
-                  background: '#0D1117',
-                  border: '1px solid #30363D',
-                  color: '#E6EDF3',
-                }}
-                onFocus={(e) => (e.target.style.borderColor = '#1C7ED6')}
-                onBlur={(e) => (e.target.style.borderColor = '#30363D')}
-                placeholder="admin@admin.com"
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                required autoComplete="email" placeholder="you@example.com"
+                className="w-full px-4 py-3 rounded-xl text-[15px] outline-none"
+                style={{ background: '#09090B', border: '1px solid #3F3F46', color: '#FAFAFA' }}
+                onFocus={(e) => { e.target.style.borderColor = '#6366F1'; e.target.style.boxShadow = '0 0 0 3px #6366F120'; }}
+                onBlur={(e) => { e.target.style.borderColor = '#3F3F46'; e.target.style.boxShadow = 'none'; }}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2" style={{ color: '#C9D1D9' }}>
+              <label className="block text-sm font-medium mb-2" style={{ color: '#D4D4D8' }}>
                 Password
               </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all"
-                style={{
-                  background: '#0D1117',
-                  border: '1px solid #30363D',
-                  color: '#E6EDF3',
-                }}
-                onFocus={(e) => (e.target.style.borderColor = '#1C7ED6')}
-                onBlur={(e) => (e.target.style.borderColor = '#30363D')}
-                placeholder="••••••••"
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
+                required autoComplete="current-password" placeholder="••••••••"
+                className="w-full px-4 py-3 rounded-xl text-[15px] outline-none"
+                style={{ background: '#09090B', border: '1px solid #3F3F46', color: '#FAFAFA' }}
+                onFocus={(e) => { e.target.style.borderColor = '#6366F1'; e.target.style.boxShadow = '0 0 0 3px #6366F120'; }}
+                onBlur={(e) => { e.target.style.borderColor = '#3F3F46'; e.target.style.boxShadow = 'none'; }}
               />
             </div>
 
             {error && (
-              <div className="rounded-lg px-4 py-3 text-sm" style={{ background: '#2D1317', border: '1px solid #6E1119', color: '#F85149' }}>
+              <div className="rounded-xl px-4 py-3 text-sm font-medium" style={{ background: '#450A0A30', border: '1px solid #7F1D1D50', color: '#FCA5A5' }}>
                 {error}
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 rounded-lg text-sm font-medium transition-opacity"
+            <button type="submit" disabled={loading}
+              className="w-full py-3 rounded-xl text-[15px] font-semibold"
               style={{
-                background: '#1C7ED6',
+                background: loading ? '#3F3F46' : 'linear-gradient(135deg, #6366F1, #8B5CF6)',
                 color: '#fff',
-                opacity: loading ? 0.65 : 1,
+                opacity: loading ? 0.7 : 1,
                 cursor: loading ? 'not-allowed' : 'pointer',
-              }}
-            >
+              }}>
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
         </div>
 
-        <p className="text-center mt-6 text-xs" style={{ color: '#484F58' }}>
+        <p className="text-center mt-8 text-xs" style={{ color: '#52525B' }}>
           Schools Wellbeing Australia · Admin Portal
         </p>
       </div>

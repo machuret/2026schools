@@ -19,10 +19,10 @@ interface State {
   og_image?: string;
 }
 
-const I = "w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors";
-const IS = { background: "#0D1117", border: "1px solid #30363D", color: "#C9D1D9" };
-const L = "block text-xs font-semibold mb-1.5 uppercase tracking-wider";
-const LS = { color: "#6E7681" };
+const I = "w-full rounded-xl px-4 py-2.5 text-[15px] outline-none transition-all";
+const IS = { background: "#09090B", border: "1px solid #3F3F46", color: "#D4D4D8" };
+const L = "block text-xs font-semibold mb-2 uppercase tracking-wider";
+const LS = { color: "#71717A" };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="mb-4"><label className={L} style={LS}>{label}</label>{children}</div>;
@@ -35,9 +35,9 @@ function parseJsonArray<T>(raw: unknown, fallback: T[]): T[] {
 }
 
 const BADGE_OPTIONS = [
-  { value: "badge-critical", label: "Critical", bg: "#3D1515", color: "#F87171", border: "#7F1D1D" },
-  { value: "badge-high",     label: "High",     bg: "#2D1A00", color: "#F59E0B", border: "#78350F" },
-  { value: "badge-notable",  label: "Notable",  bg: "#0D2D1A", color: "#6EE7B7", border: "#166534" },
+  { value: "badge-critical", label: "Critical", bg: "#450A0A30", color: "#FCA5A5", border: "#7F1D1D" },
+  { value: "badge-high",     label: "High",     bg: "#451A0330", color: "#FCD34D", border: "#78350F" },
+  { value: "badge-notable",  label: "Notable",  bg: "#052E1630", color: "#86EFAC", border: "#166534" },
 ];
 
 function StateIssueCard({ issue, idx, onChange, onRemove }: {
@@ -47,10 +47,10 @@ function StateIssueCard({ issue, idx, onChange, onRemove }: {
 }) {
   const badge = BADGE_OPTIONS.find(b => b.value === issue.badge) ?? BADGE_OPTIONS[2];
   return (
-    <div className="rounded-lg p-4" style={{ background: "#0D1117", border: "1px solid #30363D", borderLeft: `3px solid ${badge.color}` }}>
+    <div className="rounded-xl p-5" style={{ background: "#09090B", border: "1px solid #3F3F46", borderLeft: `3px solid ${badge.color}` }}>
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#484F58" }}>Issue #{idx + 1}</span>
-        <button onClick={() => onRemove(idx)} className="text-xs px-2 py-1 rounded" style={{ color: "#F87171", background: "#3D1515" }}>Remove</button>
+        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#52525B" }}>Issue #{idx + 1}</span>
+        <button onClick={() => onRemove(idx)} className="text-xs px-2.5 py-1 rounded-lg font-medium" style={{ color: "#FCA5A5", background: "#450A0A30" }}>Remove</button>
       </div>
       <div className="grid grid-cols-2 gap-3 mb-1">
         <Field label="Issue Name">
@@ -157,15 +157,15 @@ export default function StateEditForm({ state }: { state: State | null }) {
   return (
     <div className="max-w-4xl">
       {/* Tab bar */}
-      <div className="flex gap-1 mb-6 p-1 rounded-xl" style={{ background: "#161B22", border: "1px solid #21262D" }}>
+      <div className="flex gap-1 mb-8 p-1 rounded-2xl" style={{ background: "#18181B", border: "1px solid #27272A" }}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-1 justify-center"
-            style={tab === t.id ? { background: "#1C7ED6", color: "#fff" } : { background: "transparent", color: "#6E7681" }}>
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex-1 justify-center"
+            style={tab === t.id ? { background: "linear-gradient(135deg, #6366F1, #818CF8)", color: "#fff" } : { background: "transparent", color: "#71717A" }}>
             {t.label}
             {t.count !== null && (
               <span className="text-xs px-1.5 py-0.5 rounded-full font-bold"
-                style={{ background: tab === t.id ? "rgba(255,255,255,0.2)" : "#21262D", color: tab === t.id ? "#fff" : "#8B949E" }}>
+                style={{ background: tab === t.id ? "rgba(255,255,255,0.2)" : "#27272A", color: tab === t.id ? "#fff" : "#A1A1AA" }}>
                 {t.count}
               </span>
             )}
@@ -175,8 +175,8 @@ export default function StateEditForm({ state }: { state: State | null }) {
 
       {/* ── Tab: Basic Info ── */}
       {tab === "info" && (
-        <div className="rounded-xl p-6" style={{ background: "#161B22", border: "1px solid #21262D" }}>
-          <div className="grid grid-cols-2 gap-4 mb-1">
+        <div className="rounded-2xl p-7" style={{ background: "#18181B", border: "1px solid #27272A" }}>
+          <div className="grid grid-cols-2 gap-5 mb-1">
             <Field label="Icon (emoji)">
               <input className={I} style={IS} value={form.icon} onChange={e => set("icon", e.target.value)} placeholder="🏫" />
             </Field>
@@ -195,19 +195,19 @@ export default function StateEditForm({ state }: { state: State | null }) {
 
       {/* ── Tab: Priority Issues ── */}
       {tab === "issues" && (
-        <div className="rounded-xl p-6" style={{ background: "#161B22", border: "1px solid #21262D" }}>
-          <div className="flex items-center justify-between mb-4">
+        <div className="rounded-2xl p-7" style={{ background: "#18181B", border: "1px solid #27272A" }}>
+          <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-sm font-semibold" style={{ color: "#E6EDF3" }}>Priority Issues</h2>
-              <p className="text-xs mt-0.5" style={{ color: "#484F58" }}>Top wellbeing issues for this state/territory</p>
+              <h2 className="text-sm font-semibold" style={{ color: "#FAFAFA" }}>Priority Issues</h2>
+              <p className="text-xs mt-1" style={{ color: "#71717A" }}>Top wellbeing issues for this state/territory</p>
             </div>
-            <button onClick={addIssue} className="text-xs font-semibold px-3 py-1.5 rounded-lg" style={{ background: "#238636", color: "#fff" }}>
+            <button onClick={addIssue} className="text-xs font-semibold px-3 py-1.5 rounded-xl" style={{ background: "#22C55E", color: "#fff" }}>
               + Add Issue
             </button>
           </div>
           {issues.length === 0 ? (
-            <div className="rounded-lg p-6 text-center" style={{ border: "2px dashed #21262D" }}>
-              <p className="text-xs" style={{ color: "#484F58" }}>No priority issues yet — click &quot;Add Issue&quot; to add one.</p>
+            <div className="rounded-xl p-8 text-center" style={{ border: "2px dashed #27272A" }}>
+              <p className="text-xs" style={{ color: "#52525B" }}>No priority issues yet — click &quot;Add Issue&quot; to add one.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -232,32 +232,32 @@ export default function StateEditForm({ state }: { state: State | null }) {
       )}
 
       {/* Actions bar */}
-      <div className="mt-6">
+      <div className="mt-8">
         {error && (
-          <div className="mb-4 px-4 py-3 rounded-lg text-sm" style={{ background: "#3D1515", color: "#F87171", border: "1px solid #7F1D1D" }}>
+          <div className="mb-4 px-4 py-3 rounded-xl text-sm font-medium" style={{ background: "#450A0A30", color: "#FCA5A5", border: "1px solid #7F1D1D50" }}>
             {error}
           </div>
         )}
         {success && (
-          <div className="mb-4 px-4 py-3 rounded-lg text-sm" style={{ background: "#0D2D1A", color: "#6EE7B7", border: "1px solid #166534" }}>
+          <div className="mb-4 px-4 py-3 rounded-xl text-sm font-medium" style={{ background: "#052E1630", color: "#86EFAC", border: "1px solid #16653450" }}>
             ✓ Saved successfully
           </div>
         )}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 pt-6" style={{ borderTop: "1px solid #27272A" }}>
           <button onClick={handleSave} disabled={saving}
-            className="text-sm font-semibold px-5 py-2 rounded-lg"
-            style={{ background: saving ? "#21262D" : "#238636", color: "#FFFFFF", opacity: saving ? 0.6 : 1 }}>
+            className="text-sm font-semibold px-6 py-2.5 rounded-xl"
+            style={{ background: saving ? "#27272A" : "linear-gradient(135deg, #22C55E, #4ADE80)", color: "#FFFFFF", opacity: saving ? 0.6 : 1 }}>
             {saving ? "Saving…" : isNew ? "Create State" : "Save Changes"}
           </button>
           <button onClick={() => router.push("/admin/states")}
-            className="text-sm font-semibold px-5 py-2 rounded-lg"
-            style={{ background: "#21262D", color: "#C9D1D9" }}>
+            className="text-sm font-semibold px-5 py-2.5 rounded-xl"
+            style={{ background: "#27272A", color: "#D4D4D8" }}>
             Cancel
           </button>
           {!isNew && (
             <button onClick={handleDelete}
-              className="text-sm font-semibold px-5 py-2 rounded-lg ml-auto"
-              style={{ background: "#3D1515", color: "#F87171", border: "1px solid #7F1D1D" }}>
+              className="text-sm font-semibold px-5 py-2.5 rounded-xl ml-auto"
+              style={{ background: "#450A0A30", color: "#FCA5A5", border: "1px solid #7F1D1D50" }}>
               Delete
             </button>
           )}
