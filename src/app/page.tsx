@@ -10,6 +10,7 @@ import DataSection from "@/components/DataSection";
 import FinalCTA from "@/components/FinalCTA";
 import Footer from "@/components/Footer";
 
+// v2 build
 export default function Home() {
   return (
     <>
