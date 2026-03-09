@@ -17,6 +17,8 @@ export default async function VaultSourcesPage() {
         </div>
       </div>
 
+      {/* Toolbar — "Add Source" button is inside the client component below */}
+
       {error && (
         <div className="admin-alert admin-alert-error">
           Could not load sources: {error.message}. Make sure the <code>vault_sources</code> table has been created in Supabase.

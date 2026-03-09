@@ -338,6 +338,47 @@ export default function VaultSourcesClient({ initialSources }: { initialSources:
         </div>
       )}
 
+      {/* ── Toolbar: Add button + Search + Filters ── */}
+      {!showAdd && !editSource && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <input
+              className="swa-search"
+              placeholder="Search sources…"
+              type="search"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+            <select
+              className="swa-form-select"
+              style={{ width: 'auto', minWidth: 140 }}
+              value={filterCategory}
+              onChange={e => setFilterCategory(e.target.value)}
+            >
+              <option value="all">All categories</option>
+              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select
+              className="swa-form-select"
+              style={{ width: 'auto', minWidth: 130 }}
+              value={filterApproved}
+              onChange={e => setFilterApproved(e.target.value)}
+            >
+              <option value="all">All status</option>
+              <option value="approved">Approved</option>
+              <option value="suspended">Suspended</option>
+            </select>
+          </div>
+          <button
+            onClick={() => { setShowAdd(true); clearMessages(); setFieldErrors({}); }}
+            className="swa-btn swa-btn-primary"
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>add</span>
+            Add Source
+          </button>
+        </div>
+      )}
+
       {/* Sources list */}
       {filtered.length === 0 ? (
         <div className="admin-empty">
