@@ -96,6 +96,13 @@ function RegenBtn({ label, onClick, busy }: { label: string; onClick: () => void
   );
 }
 
+/** Snapshot of values before regeneration, keyed by section. */
+interface PendingRegen {
+  section: string;
+  prevForm: Record<string, string>;
+  prevIssues: StateIssue[];
+}
+
 export default function StateEditForm({ state }: { state: State | null }) {
   const router = useRouter();
   const isNew = !state;
@@ -113,6 +120,9 @@ export default function StateEditForm({ state }: { state: State | null }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  // Accept/Reject state for regeneration
+  const [pending, setPending] = useState<PendingRegen | null>(null);
 
   function set(key: string, value: string) {
     setForm(f => ({ ...f, [key]: value }));
@@ -161,16 +171,48 @@ export default function StateEditForm({ state }: { state: State | null }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [handleSave]);
 
-  /** Apply generated content into form/issues state. */
+  /** Apply generated content into form/issues state, with accept/reject. */
   async function handleRegen(sectionKeys?: string[]) {
     if (!state?.id) { regen.setError("Save the state first before generating content."); return; }
+
+    // Snapshot current values before regeneration
+    const sectionLabel = sectionKeys && sectionKeys.length === 1 ? sectionKeys[0] : "all";
+    const snapshot: PendingRegen = {
+      section: sectionLabel,
+      prevForm: { ...form },
+      prevIssues: issues.map(i => ({ ...i })),
+    };
+
     const result = await regen.generate("state", state.id, sectionKeys);
     if (!result) return;
+
+    // Apply generated values into form (preview mode)
     const u = result.updated;
-    if (u.subtitle   && typeof u.subtitle === "string")  { setForm(f => ({ ...f, subtitle: u.subtitle as string })); setDirty(true); }
-    if (u.seo_title  && typeof u.seo_title === "string")  { setForm(f => ({ ...f, seo_title: u.seo_title as string })); setDirty(true); }
-    if (u.seo_desc   && typeof u.seo_desc === "string")   { setForm(f => ({ ...f, seo_desc: u.seo_desc as string })); setDirty(true); }
-    if (Array.isArray(u.issues)) { setIssues(u.issues as typeof issues); setDirty(true); }
+    if (u.subtitle   && typeof u.subtitle === "string")  { setForm(f => ({ ...f, subtitle: u.subtitle as string })); }
+    if (u.seo_title  && typeof u.seo_title === "string")  { setForm(f => ({ ...f, seo_title: u.seo_title as string })); }
+    if (u.seo_desc   && typeof u.seo_desc === "string")   { setForm(f => ({ ...f, seo_desc: u.seo_desc as string })); }
+    if (Array.isArray(u.issues)) { setIssues(u.issues as typeof issues); }
+
+    // Set pending state — user must accept or reject
+    setPending(snapshot);
+    regen.setSuccess(`AI generated new content for "${sectionLabel}". Review below, then Accept or Reject.`);
+  }
+
+  function acceptRegen() {
+    setDirty(true);
+    setSuccess(false);
+    setPending(null);
+    regen.setSuccess("Changes accepted — click Save to persist.");
+  }
+
+  function rejectRegen() {
+    if (!pending) return;
+    // Restore previous values
+    setForm(f => ({ ...f, ...pending.prevForm }));
+    setIssues(pending.prevIssues);
+    setPending(null);
+    regen.setSuccess("");
+    regen.setError("");
   }
 
   const TABS = [
@@ -206,9 +248,45 @@ export default function StateEditForm({ state }: { state: State | null }) {
         ))}
       </div>
 
-      {/* ── Regen feedback ── */}
-      {regen.error   && <div className="admin-alert admin-alert-error mb-5" role="alert">{regen.error}</div>}
-      {regen.success && <div className="admin-alert admin-alert-success mb-5" role="status">{regen.success}</div>}
+      {/* ── Regen feedback / Accept-Reject banner ── */}
+      {regen.error && <div className="admin-alert admin-alert-error mb-5" role="alert">{regen.error}</div>}
+      {pending ? (
+        <div
+          className="mb-5"
+          style={{
+            padding: "14px 18px",
+            borderRadius: "var(--admin-radius-md)",
+            background: "var(--admin-accent-bg)",
+            border: "1px solid rgba(89,37,244,0.2)",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--admin-accent)" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.01"/></svg>
+          <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: "var(--admin-text-secondary)" }}>
+            AI generated new <strong>{pending.section}</strong> content. Review the changes below.
+          </span>
+          <button
+            onClick={acceptRegen}
+            className="admin-btn admin-btn-primary admin-btn-sm"
+            style={{ gap: 5 }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            Accept
+          </button>
+          <button
+            onClick={rejectRegen}
+            className="admin-btn admin-btn-danger admin-btn-sm"
+            style={{ gap: 5 }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Reject
+          </button>
+        </div>
+      ) : (
+        regen.success && <div className="admin-alert admin-alert-success mb-5" role="status">{regen.success}</div>
+      )}
 
       {/* ── Tab: Basic Info ── */}
       {tab === "info" && (

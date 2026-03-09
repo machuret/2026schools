@@ -46,6 +46,17 @@ export interface AdminVaultSource {
   created_at: string;
 }
 
+/** Row shape returned by the vault_content table. */
+export interface AdminVaultContent {
+  id: string;
+  title: string;
+  content: string;
+  source: string;
+  category: string;
+  is_approved: boolean;
+  created_at: string;
+}
+
 /** Row shape for a prompt template. */
 export interface PromptTemplate {
   id: string;
