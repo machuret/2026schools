@@ -13,7 +13,7 @@ const SECTIONS = [
     ],
   },
   {
-    title: 'Content',
+    title: 'CONTENT',
     items: [
       { label: 'Issues',     href: '/admin/issues',        ms: 'warning' },
       { label: 'States',     href: '/admin/states',        ms: 'analytics' },
@@ -37,7 +37,7 @@ const SECTIONS = [
     ],
   },
   {
-    title: 'System',
+    title: 'SYSTEM',
     items: [
       { label: 'Users',      href: '/admin/users',         ms: 'group' },
       { label: 'API Keys',   href: '/admin/api',           ms: 'key' },
@@ -47,9 +47,8 @@ const SECTIONS = [
 ];
 
 export default function AdminSidebar({ userEmail }: { userEmail: string }) {
-  const pathname  = usePathname();
-  const router    = useRouter();
-  const [open, setOpen]           = useState(true);
+  const pathname = usePathname();
+  const router   = useRouter();
   const [signingOut, setSigningOut] = useState(false);
 
   async function handleSignOut() {
@@ -61,79 +60,61 @@ export default function AdminSidebar({ userEmail }: { userEmail: string }) {
   }
 
   return (
-    <aside className={`admin-sidebar${open ? '' : ' collapsed'}`}>
-
+    <aside className="swa-sidebar">
       {/* Brand */}
-      <div className="admin-sidebar-brand">
-        <div className="admin-sidebar-logo">
-          <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20 }}>grid_view</span>
-        </div>
-        <div className="admin-sidebar-brand-text">
-          <strong>SWA Admin</strong>
-          <span>Schools Wellbeing AU</span>
+      <div className="swa-sidebar__logo">
+        <div className="swa-sidebar__logo-icon">S</div>
+        <div>
+          <div className="swa-sidebar__logo-title">SWA Admin</div>
+          <div className="swa-sidebar__logo-sub">Schools Wellbeing AU</div>
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="admin-sidebar-nav" aria-label="Admin navigation">
+      <nav className="swa-sidebar__nav" aria-label="Admin navigation">
         {SECTIONS.map((section, sIdx) => (
-          <div key={sIdx} className="admin-sidebar-section">
-            {section.title && open && (
-              <div className="admin-sidebar-section-title">{section.title}</div>
+          <div key={sIdx}>
+            {section.title && (
+              <div className="swa-sidebar__section-label">{section.title}</div>
             )}
-            {section.title && !open && (
-              <div className="admin-sidebar-divider" />
-            )}
-            <div className="admin-sidebar-items">
-              {section.items.map((item) => {
-                const isActive = item.href === '/admin'
-                  ? pathname === '/admin'
-                  : pathname.startsWith(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    title={!open ? item.label : undefined}
-                    aria-current={isActive ? 'page' : undefined}
-                    className={`admin-sidebar-link${isActive ? ' active' : ''}`}
-                  >
-                    <span aria-hidden="true" className="material-symbols-outlined admin-sidebar-icon">{item.ms}</span>
-                    <span className="admin-sidebar-link-label">{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
+            {section.items.map((item) => {
+              const isActive = item.href === '/admin'
+                ? pathname === '/admin'
+                : pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`swa-sidebar__nav-item${isActive ? ' active' : ''}`}
+                >
+                  <span aria-hidden="true" className="material-symbols-outlined">{item.ms}</span>
+                  {item.label}
+                </Link>
+              );
+            })}
           </div>
         ))}
       </nav>
 
       {/* Footer */}
-      <div className="admin-sidebar-footer">
-        <div className="admin-sidebar-user">
-          <div className="admin-sidebar-avatar">
+      <div className="swa-sidebar__footer">
+        <div className="swa-sidebar__user">
+          <div className="swa-sidebar__avatar">
             {(userEmail || 'A')[0].toUpperCase()}
           </div>
-          <div className="admin-sidebar-user-info">
-            <strong>{userEmail ? userEmail.split('@')[0] : 'Admin'}</strong>
-            <span>Admin Account</span>
+          <div>
+            <div className="swa-sidebar__user-name">{userEmail ? userEmail.split('@')[0] : 'Admin'}</div>
+            <div className="swa-sidebar__user-role">Admin Account</div>
           </div>
-          <button
-            onClick={handleSignOut}
-            disabled={signingOut}
-            aria-label="Sign out"
-            className="admin-sidebar-signout"
-          >
-            <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 18 }}>logout</span>
-          </button>
         </div>
-
         <button
-          onClick={() => setOpen(!open)}
-          aria-label={open ? 'Collapse sidebar' : 'Expand sidebar'}
-          className="admin-sidebar-toggle"
+          onClick={handleSignOut}
+          disabled={signingOut}
+          aria-label="Sign out"
+          className="swa-sidebar__logout"
         >
-          <span aria-hidden="true" className={`material-symbols-outlined admin-sidebar-toggle-icon${open ? ' open' : ''}`}>chevrons_right</span>
-          <span className="admin-sidebar-toggle-label">Collapse</span>
+          <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 15 }}>logout</span>
         </button>
       </div>
     </aside>

@@ -1,8 +1,8 @@
 import { headers } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import AdminSidebar from '@/components/admin/AdminSidebar';
-import AdminTopbar from '@/components/admin/AdminTopbar';
 import './admin.css';
+import './swa-design.css';
 
 export const metadata = {
   title: 'Admin — Schools Wellbeing Australia',
@@ -12,15 +12,14 @@ export function generateStaticParams() { return []; }
 
 const MATERIAL_SYMBOLS_URL =
   'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap';
-const INTER_URL =
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap';
+const DM_SANS_URL =
+  'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap';
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Read x-pathname set by middleware to detect login page
   const headersList = await headers();
   const pathname = headersList.get('x-pathname') ?? '';
 
@@ -28,12 +27,12 @@ export default async function AdminLayout({
     <>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <link rel="stylesheet" href={INTER_URL} />
+      <link rel="stylesheet" href={DM_SANS_URL} />
       <link rel="stylesheet" href={MATERIAL_SYMBOLS_URL} />
     </>
   );
 
-  // Login page renders standalone — no sidebar, no header
+  // Login page renders standalone
   if (pathname === '/admin/login') {
     return <div className="admin-shell">{fonts}{children}</div>;
   }
@@ -48,15 +47,14 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="admin-shell flex h-screen overflow-hidden">
+    <div className="admin-shell swa-root">
       {fonts}
       <AdminSidebar userEmail={email} />
-      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        <AdminTopbar email={email} />
-        <div className="p-6 lg:p-10 space-y-6 lg:space-y-10 overflow-x-auto">
+      <div className="swa-main-area no-right-panel">
+        <main className="swa-main-content">
           {children}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

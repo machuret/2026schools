@@ -23,224 +23,191 @@ export default async function AdminDashboard() {
     pageCount = pages.count ?? 0;
   } catch { /* middleware ensures auth */ }
 
+  const today = new Date().toLocaleDateString('en-AU', { weekday: 'long', month: 'long', day: 'numeric' });
+
   const QUICK_ACTIONS = [
-    { label: 'Manage Issues',  href: '/admin/issues',      ms: 'warning',      desc: 'Edit wellbeing issue content' },
-    { label: 'State Data',     href: '/admin/states',      ms: 'analytics',    desc: 'Update state-level statistics' },
-    { label: 'Areas & Cities', href: '/admin/content',     ms: 'location_on',  desc: 'Edit area reports and data' },
-    { label: 'CMS Pages',      href: '/admin/cms/pages',   ms: 'article',      desc: 'Create and edit custom pages' },
-    { label: 'API Keys',       href: '/admin/api',         ms: 'key',          desc: 'Manage integration keys' },
-    { label: 'Settings',       href: '/admin/settings',    ms: 'settings',     desc: 'Configure system preferences' },
+    { label: 'Manage Issues',  href: '/admin/issues',      ms: 'warning' },
+    { label: 'State Data',     href: '/admin/states',      ms: 'analytics' },
+    { label: 'Areas & Cities', href: '/admin/content',     ms: 'location_on' },
+    { label: 'CMS Pages',      href: '/admin/cms/pages',   ms: 'article' },
+    { label: 'API Keys',       href: '/admin/api',         ms: 'key' },
+    { label: 'Settings',       href: '/admin/settings',    ms: 'settings' },
   ];
 
-  const cardStyle = {
-    background: '#fff',
-    border: '1px solid var(--admin-border)',
-    borderRadius: 'var(--admin-radius-lg)',
-    boxShadow: 'var(--admin-shadow-card)',
-  };
-  const metricTileStyle = {
-    padding: 16,
-    borderRadius: 'var(--admin-radius-md)',
-    background: 'var(--admin-bg-elevated)',
-    border: '1px solid var(--admin-border)',
-  };
+  const healthItems = [
+    { label: 'Supabase DB',    status: 'OK',      color: '#10b981', pct: '100%' },
+    { label: 'Auth',           status: 'Active',   color: '#10b981', pct: '100%' },
+    { label: 'AI Integration', status: 'Not set',  color: '#f59e0b', pct: '45%' },
+    { label: 'Deployment',     status: 'Live',     color: '#10b981', pct: '88%' },
+  ];
+
+  const activity = [
+    { ms: 'article',     bg: '#ede9fe', color: '#7c3aed', title: 'Issue published',    desc: 'New wellbeing issue went live.',      time: '2 min ago' },
+    { ms: 'trending_up', bg: '#e0f2fe', color: '#06b6d4', title: 'State data updated', desc: 'Victoria statistics refreshed.',      time: '45 min ago' },
+    { ms: 'location_on', bg: '#fef3c7', color: '#f59e0b', title: 'New area added',     desc: 'Northern Beaches (NSW) created.',     time: '1 hr ago' },
+    { ms: 'edit_note',   bg: '#ede9fe', color: '#8b5cf6', title: 'CMS page edited',    desc: 'About page content updated.',         time: '3 hr ago' },
+  ];
+
+  const sparkD = "M0,15 Q10,5 20,18 T40,10 T60,15 T80,5 T120,12";
+  const sparkD2 = "M0,18 Q20,15 40,12 T60,8 T80,15 T120,5";
+  const sparkD3 = "M0,5 Q20,10 40,5 T60,15 T80,12 T120,18";
 
   return (
     <>
-      {/* Stat cards */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Page Header */}
+      <div className="swa-page-header">
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1e1040', margin: 0 }}>Dashboard</h1>
+          <p style={{ fontSize: 13, color: '#9ca3af', margin: '2px 0 0' }}>{today} · Schools Wellbeing AU</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <input
+            placeholder="Search resources, users or reports..."
+            className="swa-search"
+            type="search"
+          />
+          <Link href="/admin/issues/new" className="swa-btn swa-btn-primary" style={{ textDecoration: 'none' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 16 }}>add</span>
+            New Issue
+          </Link>
+        </div>
+      </div>
 
-        {/* Issues */}
-        <Link href="/admin/issues" className="block p-6" style={cardStyle}>
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <p className="text-sm font-medium" style={{ color: 'var(--admin-text-subtle)' }}>Wellbeing Issues</p>
-              <h3 className="text-3xl font-bold mt-1" style={{ color: 'var(--admin-text-primary)' }}>{issueCount}</h3>
-            </div>
-            <span className="admin-badge admin-badge-green">Active</span>
+      {/* Stat Cards */}
+      <div className="swa-stat-grid">
+        <Link href="/admin/issues" className="swa-stat-card">
+          <div className="swa-stat-card__top">
+            <span className="swa-stat-card__label">Wellbeing Issues</span>
+            <span className="swa-badge swa-badge--success">Active</span>
           </div>
-          <div className="h-12 w-full">
-            <svg className="w-full h-full" viewBox="0 0 100 20">
-              <defs>
-                <linearGradient id="grad-issues" x1="0%" x2="0%" y1="0%" y2="100%">
-                  <stop offset="0%" style={{stopColor:'rgba(89,37,244,0.2)',stopOpacity:1}}/>
-                  <stop offset="100%" style={{stopColor:'rgba(89,37,244,0)',stopOpacity:1}}/>
-                </linearGradient>
-              </defs>
-              <path d="M0 15 Q 10 5, 20 18 T 40 10 T 60 15 T 80 5 T 100 12" fill="none" stroke="#5925f4" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
-              <path d="M0 15 Q 10 5, 20 18 T 40 10 T 60 15 T 80 5 T 100 12 V 20 H 0 Z" fill="url(#grad-issues)"/>
-            </svg>
-          </div>
-        </Link>
-
-        {/* States */}
-        <Link href="/admin/states" className="block p-6" style={cardStyle}>
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <p className="text-sm font-medium" style={{ color: 'var(--admin-text-subtle)' }}>States & Territories</p>
-              <h3 className="text-3xl font-bold mt-1" style={{ color: 'var(--admin-text-primary)' }}>{stateCount}</h3>
-            </div>
-            <span className="admin-badge admin-badge-green">All active</span>
-          </div>
-          <div className="h-12 w-full">
-            <svg className="w-full h-full" viewBox="0 0 100 20">
-              <defs>
-                <linearGradient id="grad-states" x1="0%" x2="0%" y1="0%" y2="100%">
-                  <stop offset="0%" style={{stopColor:'rgba(89,37,244,0.2)',stopOpacity:1}}/>
-                  <stop offset="100%" style={{stopColor:'rgba(89,37,244,0)',stopOpacity:1}}/>
-                </linearGradient>
-              </defs>
-              <path d="M0 18 Q 20 15, 40 12 T 60 8 T 80 15 T 100 5" fill="none" stroke="#5925f4" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
-              <path d="M0 18 Q 20 15, 40 12 T 60 8 T 80 15 T 100 5 V 20 H 0 Z" fill="url(#grad-states)"/>
-            </svg>
+          <div className="swa-stat-card__value">{issueCount}</div>
+          <div className="swa-stat-card__bottom">
+            <span className="swa-stat-card__delta">+12 this week</span>
+            <svg width="120" height="40" viewBox="0 0 120 40"><polyline fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points="0,30 10,12 20,35 35,18 50,22 65,10 80,28 95,8 110,20 120,14"/></svg>
           </div>
         </Link>
 
-        {/* Areas */}
-        <Link href="/admin/content" className="block p-6" style={cardStyle}>
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <p className="text-sm font-medium" style={{ color: 'var(--admin-text-subtle)' }}>Areas & Cities</p>
-              <h3 className="text-3xl font-bold mt-1" style={{ color: 'var(--admin-text-primary)' }}>{areaCount}</h3>
-            </div>
-            <span className="admin-badge admin-badge-red">{pageCount} pages</span>
+        <Link href="/admin/states" className="swa-stat-card">
+          <div className="swa-stat-card__top">
+            <span className="swa-stat-card__label">States & Territories</span>
+            <span className="swa-badge swa-badge--success">All active</span>
           </div>
-          <div className="h-12 w-full">
-            <svg className="w-full h-full" viewBox="0 0 100 20">
-              <path d="M0 5 Q 20 10, 40 5 T 60 15 T 80 12 T 100 18" fill="none" stroke="#f43f5e" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
-              <path d="M0 5 Q 20 10, 40 5 T 60 15 T 80 12 T 100 18 V 20 H 0 Z" fill="rgba(244,63,94,0.1)"/>
-            </svg>
+          <div className="swa-stat-card__value">{stateCount}</div>
+          <div className="swa-stat-card__bottom">
+            <span className="swa-stat-card__delta">Full coverage</span>
+            <svg width="120" height="40" viewBox="0 0 120 40"><polyline fill="none" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points="0,35 15,30 30,24 45,18 60,14 75,20 90,10 105,16 120,6"/></svg>
           </div>
         </Link>
-      </section>
 
-      {/* Main 2-col grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <Link href="/admin/content" className="swa-stat-card">
+          <div className="swa-stat-card__top">
+            <span className="swa-stat-card__label">Areas & Cities</span>
+            <span className="swa-badge swa-badge--warning">{pageCount} pages</span>
+          </div>
+          <div className="swa-stat-card__value">{areaCount}</div>
+          <div className="swa-stat-card__bottom">
+            <span className="swa-stat-card__delta">+5 added today</span>
+            <svg width="120" height="40" viewBox="0 0 120 40"><polyline fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points="0,10 15,18 30,8 45,25 60,14 75,30 90,22 105,35 120,28"/></svg>
+          </div>
+        </Link>
+      </div>
 
-        {/* Left col */}
-        <div className="lg:col-span-2 space-y-8">
-
-          {/* System Health */}
-          <div className="overflow-hidden" style={{ ...cardStyle, padding: 0 }}>
-            <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--admin-border)' }}>
-              <h3 className="font-semibold" style={{ fontSize: '0.9375rem', color: 'var(--admin-text-primary)' }}>System Health</h3>
-              <button aria-label="Refresh system health" className="text-sm font-semibold flex items-center gap-1" style={{ color: 'var(--admin-accent)', background: 'none', border: 'none', cursor: 'pointer' }}>
-                Refresh <span aria-hidden="true" className="material-symbols-outlined text-[18px]">sync</span>
-              </button>
-            </div>
-            <div className="p-6 flex flex-col md:flex-row items-center gap-10">
-              <div className="relative size-44 flex-shrink-0">
-                <svg className="size-full -rotate-90" viewBox="0 0 36 36">
-                  <path style={{ stroke: 'var(--admin-border)' }} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" strokeDasharray="100, 100" strokeLinecap="round" strokeWidth="3"/>
-                  <path stroke="#5925f4" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" strokeDasharray="84, 100" strokeLinecap="round" strokeWidth="3"/>
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <span className="text-4xl font-bold" style={{ color: 'var(--admin-text-primary)' }}>84%</span>
-                  <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--admin-text-subtle)' }}>Optimal</span>
+      {/* System Health */}
+      <div className="swa-card" style={{ marginBottom: 24 }}>
+        <div className="swa-card__header">
+          <span className="swa-card__title">System Health</span>
+          <button className="swa-btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>sync</span> Refresh
+          </button>
+        </div>
+        <div className="swa-health__body">
+          <svg width="140" height="140" viewBox="0 0 140 140" style={{ flexShrink: 0 }}>
+            <circle cx="70" cy="70" r="54" fill="none" stroke="#ede9fe" strokeWidth="10"/>
+            <circle cx="70" cy="70" r="54" fill="none" stroke="#7c3aed" strokeWidth="10"
+              strokeDasharray={`${2*Math.PI*54}`} strokeDashoffset={`${2*Math.PI*54 - (84/100)*2*Math.PI*54}`}
+              strokeLinecap="round" transform="rotate(-90 70 70)"/>
+            <text x="70" y="65" textAnchor="middle" fontSize="24" fontWeight="700" fill="#1e1040">84%</text>
+            <text x="70" y="83" textAnchor="middle" fontSize="11" fill="#9ca3af" letterSpacing="1">OPTIMAL</text>
+          </svg>
+          <div className="swa-health-grid">
+            {healthItems.map(h => (
+              <div key={h.label} className="swa-health-item">
+                <div className="swa-health-item__label">{h.label}</div>
+                <div className="swa-health-item__row">
+                  <div className="swa-health-item__dot" style={{ background: h.color }}/>
+                  <div className="swa-health-item__bar" style={{ background: h.color + '33' }}>
+                    <div className="swa-health-item__bar-fill" style={{ width: h.pct, background: h.color }}/>
+                  </div>
+                  <span className="swa-health-item__status" style={{ color: h.color }}>{h.status}</span>
                 </div>
               </div>
-              <div className="flex-1 grid grid-cols-2 gap-3 w-full">
-                <div style={metricTileStyle}>
-                  <p className="text-xs font-semibold mb-1.5" style={{ color: 'var(--admin-text-subtle)' }}>Supabase DB</p>
-                  <div className="flex items-center gap-2">
-                    <div className="h-1.5 flex-1 rounded-full overflow-hidden" style={{ background: 'var(--admin-border)' }}>
-                      <div className="h-full w-full" style={{ background: 'var(--admin-success)' }}></div>
-                    </div>
-                    <span className="text-xs font-bold" style={{ color: 'var(--admin-success)' }}>OK</span>
-                  </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Two-column: Activity + Quick Actions */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24 }}>
+
+        {/* Recent Activity */}
+        <div className="swa-card">
+          <div className="swa-card__header">
+            <span className="swa-card__title">Recent Activity</span>
+            <button className="swa-btn-ghost">View All</button>
+          </div>
+          <div>
+            {activity.map((a, i) => (
+              <div key={i} className="swa-activity-item">
+                <div className="swa-activity-item__icon" style={{ background: a.bg }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: 16, color: a.color }}>{a.ms}</span>
                 </div>
-                <div style={metricTileStyle}>
-                  <p className="text-xs font-semibold mb-1.5" style={{ color: 'var(--admin-text-subtle)' }}>Auth</p>
-                  <div className="flex items-center gap-2">
-                    <div className="h-1.5 flex-1 rounded-full overflow-hidden" style={{ background: 'var(--admin-border)' }}>
-                      <div className="h-full w-full" style={{ background: 'var(--admin-accent)' }}></div>
-                    </div>
-                    <span className="text-xs font-bold" style={{ color: 'var(--admin-accent)' }}>Active</span>
-                  </div>
+                <div className="swa-activity-item__text">
+                  <strong>{a.title}:</strong> {a.desc}
                 </div>
-                <div style={metricTileStyle}>
-                  <p className="text-xs font-semibold mb-1" style={{ color: 'var(--admin-text-subtle)' }}>AI Integration</p>
-                  <p className="text-sm font-bold mt-1" style={{ color: 'var(--admin-warning-light)' }}>Not set</p>
-                </div>
-                <div style={metricTileStyle}>
-                  <p className="text-xs font-semibold mb-1" style={{ color: 'var(--admin-text-subtle)' }}>Deployment</p>
-                  <p className="text-sm font-bold mt-1" style={{ color: 'var(--admin-success)' }}>Live</p>
+                <div className="swa-activity-item__time">
+                  <span className="material-symbols-outlined" style={{ fontSize: 12 }}>schedule</span>
+                  {a.time}
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Recent Activity */}
-          <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
-            <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--admin-border)' }}>
-              <h3 className="font-semibold" style={{ fontSize: '0.9375rem', color: 'var(--admin-text-primary)' }}>Recent Activity</h3>
-              <button className="text-sm font-medium" style={{ color: 'var(--admin-text-subtle)', background: 'none', border: 'none', cursor: 'pointer' }}>View All</button>
-            </div>
-            <div>
-              {[
-                { icon: 'article',     bg: 'rgba(59,130,246,0.1)', color: '#3b82f6', title: 'Issue published:',    body: 'New wellbeing issue went live.',          time: '2 minutes ago' },
-                { icon: 'analytics',   bg: 'rgba(16,185,129,0.1)', color: '#10b981', title: 'State data updated:', body: 'Victoria statistics refreshed.',           time: '45 minutes ago' },
-                { icon: 'location_on', bg: 'rgba(245,158,11,0.1)', color: '#f59e0b', title: 'New area added:',     body: 'Northern Beaches (NSW) created.',          time: '1 hour ago' },
-                { icon: 'update',      bg: 'rgba(139,92,246,0.1)', color: '#8b5cf6', title: 'CMS page edited:',    body: 'About page content updated.',              time: '3 hours ago' },
-              ].map((item, i) => (
-                <div key={i} className="flex items-start gap-4 px-6 py-4 transition-colors hover:bg-[var(--admin-bg-elevated)]"
-                  style={{ borderBottom: i < 3 ? '1px solid var(--admin-border)' : 'none' }}
-                >
-                  <div className="size-10 rounded-full flex items-center justify-center shrink-0" style={{ background: item.bg, color: item.color }}>
-                    <span aria-hidden="true" className="material-symbols-outlined text-[20px]">{item.icon}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm" style={{ color: 'var(--admin-text-secondary)' }}>
-                      <span className="font-semibold" style={{ color: 'var(--admin-text-primary)' }}>{item.title}</span> {item.body}
-                    </p>
-                    <p className="text-xs mt-1" style={{ color: 'var(--admin-text-faint)' }}>{item.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* Right col */}
-        <div className="space-y-8">
-
-          {/* Quick Actions */}
-          <div style={{ ...cardStyle, padding: 24 }}>
-            <h3 className="font-semibold mb-5" style={{ fontSize: '0.9375rem', color: 'var(--admin-text-primary)' }}>Quick Actions</h3>
-            <div className="space-y-2">
-              {QUICK_ACTIONS.map((item) => (
-                <Link key={item.href} href={item.href}
-                  className="w-full flex items-center justify-between p-3 rounded-xl group transition-all hover:bg-[var(--admin-accent-bg)]"
-                  style={{ border: '1px solid var(--admin-border)', textDecoration: 'none' }}
-                >
-                  <div className="flex items-center gap-3">
-                    <span aria-hidden="true" className="material-symbols-outlined" style={{ color: 'var(--admin-accent)', fontSize: 20 }}>{item.ms}</span>
-                    <span className="text-sm font-semibold" style={{ color: 'var(--admin-text-secondary)' }}>{item.label}</span>
-                  </div>
-                  <span aria-hidden="true" className="material-symbols-outlined" style={{ color: 'var(--admin-text-faint)', fontSize: 18 }}>chevron_right</span>
-                </Link>
-              ))}
-            </div>
+        {/* Right column: Quick Actions + Promo */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div className="swa-card">
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', letterSpacing: '0.08em', textTransform: 'uppercase' as const, marginBottom: 12 }}>QUICK ACTIONS</div>
+            {QUICK_ACTIONS.map(a => (
+              <Link key={a.href} href={a.href} className="swa-quick-action">
+                <div className="swa-quick-action__icon">
+                  <span className="material-symbols-outlined" style={{ fontSize: 15 }}>{a.ms}</span>
+                </div>
+                <span className="swa-quick-action__label">{a.label}</span>
+                <span className="material-symbols-outlined swa-quick-action__chevron" style={{ fontSize: 14 }}>chevron_right</span>
+              </Link>
+            ))}
           </div>
 
-          {/* Welcome / promo card */}
-          <div className="rounded-xl p-6 text-white relative overflow-hidden" style={{ background: 'var(--admin-accent-gradient)', boxShadow: '0 8px 24px rgba(89,37,244,0.25)' }}>
-            <div className="relative z-10">
-              <h4 className="text-base font-bold mb-2">
-                {userEmail ? <>Welcome, {userEmail.split('@')[0]}!</> : 'Pro Features'}
-              </h4>
-              <p className="text-sm mb-4" style={{ opacity: 0.88 }}>
-                {userEmail
-                  ? 'Keep content fresh to improve site rankings and user trust.'
-                  : 'Get unlimited access to advanced analytics modules.'}
-              </p>
-              <Link href="/admin/issues"
-                className="w-full block text-center py-2 font-bold rounded-lg text-sm transition-opacity hover:opacity-90"
-                style={{ background: '#fff', color: 'var(--admin-accent)' }}>
-                Manage Issues
-              </Link>
-            </div>
-            <span aria-hidden="true" className="material-symbols-outlined absolute -bottom-4 -right-4 pointer-events-none select-none" style={{ color: 'rgba(255,255,255,0.08)', fontSize: 120 }}>workspace_premium</span>
+          {/* Platform Status */}
+          <div className="swa-card">
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', letterSpacing: '0.08em', textTransform: 'uppercase' as const, marginBottom: 12 }}>PLATFORM STATUS</div>
+            {[
+              { l: 'API Response', v: '98ms',  c: '#10b981' },
+              { l: 'Uptime',      v: '99.9%', c: '#10b981' },
+              { l: 'Active Users',v: '1,204', c: '#7c3aed' },
+            ].map(s => (
+              <div key={s.l} className="swa-platform-row">
+                <span style={{ fontSize: 13, color: '#6b7280' }}>{s.l}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: s.c }}>{s.v}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Promo Banner */}
+          <div className="swa-promo">
+            <div className="swa-promo__title">Unlock Advanced Analytics</div>
+            <div className="swa-promo__body">Get real-time insights across all states and territories.</div>
+            <button className="swa-promo__btn">Upgrade Plan</button>
           </div>
         </div>
       </div>
