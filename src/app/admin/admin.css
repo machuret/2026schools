@@ -3,51 +3,41 @@
    Scoped to .admin-shell
 ═══════════════════════════════════════ */
 
-/* ── Design Tokens ── */
-.admin-shell {
-  /* Backgrounds */
+/* ── Legacy Design Tokens (used by existing admin-* rules below) ── */
+:root {
   --admin-bg-page:     #f6f5f8;
   --admin-bg-surface:  #ffffff;
   --admin-bg-elevated: #f8f7fc;
   --admin-bg-deep:     #f1f0f6;
-  /* Borders */
   --admin-border:        #e4e2ec;
   --admin-border-strong: #cbc8d9;
-  /* Text */
   --admin-text-primary:   #0f0e1a;
   --admin-text-secondary: #1e1b33;
   --admin-text-muted:     #4a4768;
   --admin-text-subtle:    #5c5a7a;
   --admin-text-faint:     #7b78a0;
-  /* Accent */
   --admin-accent:          #5925f4;
   --admin-accent-light:    #7c4ef7;
   --admin-accent-wash:     #a884fa;
   --admin-accent-bg:       rgba(89, 37, 244, 0.07);
   --admin-accent-gradient: linear-gradient(135deg, #5925f4, #7c4ef7);
-  /* Semantic — success */
   --admin-success:      #16a34a;
   --admin-success-light:#15803d;
   --admin-success-bg:   #f0fdf4;
   --admin-success-text: #166534;
-  /* Semantic — danger */
   --admin-danger:       #dc2626;
   --admin-danger-light: #b91c1c;
   --admin-danger-bg:    #fef2f2;
   --admin-danger-text:  #991b1b;
-  /* Semantic — warning */
   --admin-warning:      #d97706;
   --admin-warning-light:#92400e;
   --admin-warning-bg:   #fffbeb;
   --admin-warning-text: #92400e;
-  /* Shadows */
   --admin-shadow-card:  0 1px 4px rgba(89,37,244,0.06), 0 0 0 1px rgba(0,0,0,0.03);
   --admin-shadow-hover: 0 4px 16px rgba(89,37,244,0.12);
-  /* Radii */
   --admin-radius-sm: 6px;
   --admin-radius-md: 10px;
   --admin-radius-lg: 14px;
-  /* Spacing scale */
   --admin-space-1:  4px;
   --admin-space-2:  8px;
   --admin-space-3:  12px;
@@ -59,9 +49,10 @@
   --admin-space-9:  36px;
   --admin-space-10: 40px;
   --admin-space-12: 48px;
-  /* Transition */
   --admin-transition: 150ms ease-out;
+}
 
+.admin-shell {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: var(--admin-text-secondary);
   background: var(--admin-bg-page);

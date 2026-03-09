@@ -152,9 +152,9 @@
   color: #fff; font-size: 13px; font-weight: 700; flex-shrink: 0;
 }
 .swa-sidebar__user-name { color: #fff; font-size: 12px; font-weight: 600; line-height: 1.2; }
-.swa-sidebar__user-role { color: #6b7280; font-size: 11px; }
+.swa-sidebar__user-role { color: #9585c4; font-size: 11px; }
 .swa-sidebar__logout {
-  background: none; border: none; color: #6b7280;
+  background: none; border: none; color: #9585c4;
   padding: 4px; border-radius: 6px; display: flex; cursor: pointer;
   transition: all 0.12s ease;
 }
@@ -419,6 +419,10 @@
 }
 .swa-toggle.on { background: var(--color-primary); }
 .swa-toggle.on::after { transform: translateX(20px); }
+.swa-toggle:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
 
 /* ── Responsive ── */
 @media (max-width: 1200px) {
