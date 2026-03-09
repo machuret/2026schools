@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════
-   ADMIN SHELL — ModularAdmin Suite v2.0 Style
+   ADMIN SHELL — Design System v3.0
    Scoped to .admin-shell
 ═══════════════════════════════════════ */
 
@@ -17,9 +17,9 @@
   --admin-text-primary:   #0f0e1a;
   --admin-text-secondary: #1e1b33;
   --admin-text-muted:     #4a4768;
-  --admin-text-subtle:    #5c5a7a;  /* lifted from #6b6890 → 4.6:1 on white, WCAG AA pass */
-  --admin-text-faint:     #7b78a0;  /* lifted from #9895b0 → 4.5:1 on white, WCAG AA pass */
-  /* Accent — reference purple #5925f4 */
+  --admin-text-subtle:    #5c5a7a;
+  --admin-text-faint:     #7b78a0;
+  /* Accent */
   --admin-accent:          #5925f4;
   --admin-accent-light:    #7c4ef7;
   --admin-accent-wash:     #a884fa;
@@ -54,7 +54,7 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Force font inheritance on every element ── */
+/* ── Box sizing + font inheritance ── */
 .admin-shell *,
 .admin-shell *::before,
 .admin-shell *::after {
@@ -73,28 +73,45 @@
 }
 
 /* ── Typography ── */
-.admin-shell h1 { font-family: inherit; font-size: 1.5rem; line-height: 1.3; font-weight: 700; color: var(--admin-text-primary); margin: 0; letter-spacing: -0.025em; }
-.admin-shell h2 { font-family: inherit; font-size: 1rem; line-height: 1.4; font-weight: 600; color: var(--admin-text-primary); margin: 0; }
-.admin-shell h3 { font-family: inherit; font-size: 0.9375rem; line-height: 1.4; font-weight: 600; color: var(--admin-text-secondary); margin: 0; }
-.admin-shell h4 { font-family: inherit; font-size: 0.875rem; line-height: 1.4; font-weight: 600; color: var(--admin-text-muted); margin: 0; }
+.admin-shell h1 { font-size: 1.625rem; line-height: 1.25; font-weight: 700; color: var(--admin-text-primary); margin: 0; letter-spacing: -0.03em; }
+.admin-shell h2 { font-size: 1.0625rem; line-height: 1.4; font-weight: 600; color: var(--admin-text-primary); margin: 0; }
+.admin-shell h3 { font-size: 0.9375rem; line-height: 1.4; font-weight: 600; color: var(--admin-text-secondary); margin: 0; }
+.admin-shell h4 { font-size: 0.875rem;  line-height: 1.4; font-weight: 600; color: var(--admin-text-muted); margin: 0; }
 .admin-shell p  { font-size: inherit; line-height: inherit; margin: 0; }
 .admin-shell a  { color: inherit; text-decoration: none; }
 .admin-shell button { font-family: inherit; cursor: pointer; }
+
+/* ── Base input/textarea/select ── */
 .admin-shell input,
 .admin-shell textarea,
 .admin-shell select {
   font-family: inherit;
   font-size: 0.9375rem;
+  color: var(--admin-text-primary);
+  background: #fff;
+  border: 1.5px solid var(--admin-border-strong);
+  border-radius: var(--admin-radius-md);
+  padding: 10px 14px;
+  width: 100%;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  line-height: 1.5;
+}
+.admin-shell input:focus,
+.admin-shell textarea:focus,
+.admin-shell select:focus {
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 3px rgba(89,37,244,0.12);
 }
 .admin-shell input::placeholder,
 .admin-shell textarea::placeholder { color: var(--admin-text-faint); }
+.admin-shell textarea { resize: vertical; min-height: 80px; }
+.admin-shell select   { appearance: none; cursor: pointer; }
 
 /* ── Focus Accessibility ── */
 .admin-shell a:focus-visible,
-.admin-shell button:focus-visible,
-.admin-shell input:focus-visible,
-.admin-shell textarea:focus-visible,
-.admin-shell select:focus-visible {
+.admin-shell button:focus-visible {
   outline: 2px solid var(--admin-accent);
   outline-offset: 2px;
   box-shadow: 0 0 0 4px rgba(89,37,244,0.15);
@@ -109,7 +126,7 @@
   }
 }
 
-/* ── Panel fade-in animation ── */
+/* ── Animations ── */
 @keyframes adminFadeIn {
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -118,12 +135,12 @@
   animation: adminFadeIn 180ms ease-out both;
 }
 
-/* ── Danger confirm row (inline delete confirmation) ── */
+/* ── Danger confirm row ── */
 .admin-shell .admin-danger-confirm {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
+  gap: 10px;
+  padding: 10px 14px;
   border-radius: var(--admin-radius-md);
   background: var(--admin-danger-bg);
   border: 1px solid #fecaca;
@@ -145,13 +162,13 @@
   font-size: 0.75rem;
   color: var(--admin-danger);
   font-weight: 500;
-  margin-top: 4px;
+  margin-top: 6px;
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-/* ── Button Micro-interactions ── */
+/* ── Buttons ── */
 .admin-shell button:active:not(:disabled),
 .admin-shell .admin-btn:active {
   transform: scale(0.97);
@@ -160,55 +177,74 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 7px;
   font-weight: 600;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   border-radius: var(--admin-radius-md);
-  padding: 8px 16px;
+  padding: 10px 20px;
   cursor: pointer;
   border: none;
   text-decoration: none;
   white-space: nowrap;
+  line-height: 1;
 }
 .admin-shell .admin-btn-primary {
   background: var(--admin-accent-gradient);
   color: #fff;
   box-shadow: 0 1px 3px rgba(89,37,244,0.3);
 }
-.admin-shell .admin-btn-primary:hover { box-shadow: 0 4px 14px rgba(89,37,244,0.35); transform: translateY(-1px); }
+.admin-shell .admin-btn-primary:hover:not(:disabled) {
+  box-shadow: 0 4px 14px rgba(89,37,244,0.35);
+  transform: translateY(-1px);
+}
 .admin-shell .admin-btn-secondary {
   background: #fff;
   color: var(--admin-text-secondary);
-  border: 1px solid var(--admin-border-strong);
+  border: 1.5px solid var(--admin-border-strong);
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
-.admin-shell .admin-btn-secondary:hover { background: var(--admin-bg-elevated); border-color: var(--admin-accent); color: var(--admin-accent); }
+.admin-shell .admin-btn-secondary:hover:not(:disabled) {
+  background: var(--admin-bg-elevated);
+  border-color: var(--admin-accent);
+  color: var(--admin-accent);
+}
 .admin-shell .admin-btn-ghost {
   background: transparent;
   color: var(--admin-text-subtle);
+  border: 1.5px solid transparent;
 }
-.admin-shell .admin-btn-ghost:hover { background: var(--admin-border); color: var(--admin-text-secondary); }
+.admin-shell .admin-btn-ghost:hover:not(:disabled) {
+  background: var(--admin-bg-elevated);
+  color: var(--admin-text-secondary);
+  border-color: var(--admin-border);
+}
 .admin-shell .admin-btn-danger {
   background: var(--admin-danger);
   color: #fff;
   border: 1px solid var(--admin-danger);
   box-shadow: 0 1px 3px rgba(220,38,38,0.3);
 }
-.admin-shell .admin-btn-danger:hover { background: var(--admin-danger-light); border-color: var(--admin-danger-light); box-shadow: 0 4px 12px rgba(220,38,38,0.3); }
+.admin-shell .admin-btn-danger:hover:not(:disabled) {
+  background: var(--admin-danger-light);
+  border-color: var(--admin-danger-light);
+  box-shadow: 0 4px 12px rgba(220,38,38,0.3);
+}
+.admin-shell .admin-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
-/* ── Icon Buttons (square, for table actions) ── */
+/* ── Icon Buttons ── */
 .admin-shell .admin-icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--admin-radius-sm);
   background: transparent;
   color: var(--admin-text-faint);
   border: 1px solid transparent;
   cursor: pointer;
   text-decoration: none;
+  flex-shrink: 0;
 }
 .admin-shell .admin-icon-btn:hover {
   background: var(--admin-bg-elevated);
@@ -217,17 +253,33 @@
 }
 .admin-shell .admin-icon-btn:active { transform: scale(0.93); }
 
+/* ── Action Bar (bottom of forms) ── */
+.admin-shell .admin-action-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 0 0;
+  margin-top: 32px;
+  border-top: 1px solid var(--admin-border);
+  flex-wrap: wrap;
+}
+.admin-shell .admin-action-bar .admin-action-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
 /* ── Table ── */
 .admin-shell .admin-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.875rem; }
 .admin-shell .admin-table thead tr { background: var(--admin-bg-elevated); }
 .admin-shell .admin-table thead th {
   text-align: left;
   padding: 14px 20px;
-  font-family: inherit;
   font-size: 0.6875rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.07em;
   color: var(--admin-text-subtle);
   background: var(--admin-bg-elevated);
   border-bottom: 1px solid var(--admin-border);
@@ -247,7 +299,6 @@
   padding: 16px 20px;
   border-bottom: 1px solid var(--admin-border);
   vertical-align: middle;
-  font-family: inherit;
   font-size: 0.875rem;
   color: var(--admin-text-secondary);
   line-height: 1.5;
@@ -255,7 +306,6 @@
 .admin-shell .admin-table tbody td:last-child { text-align: right; }
 .admin-shell .admin-table tbody tr:last-child td { border-bottom: none; }
 .admin-shell .admin-table tbody tr:hover .admin-icon-btn { color: var(--admin-text-muted); }
-/* Table container — rounded wrapper */
 .admin-shell .admin-table-wrap {
   border-radius: var(--admin-radius-lg);
   overflow: hidden;
@@ -269,12 +319,13 @@
   align-items: center;
   gap: 4px;
   font-size: 0.6875rem;
-  font-weight: 600;
-  padding: 3px 9px;
+  font-weight: 700;
+  padding: 4px 10px;
   border-radius: 9999px;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
-.admin-shell .admin-badge-indigo { background: rgba(89,37,244,0.1); color: #5925f4; }
+.admin-shell .admin-badge-indigo { background: rgba(89,37,244,0.1);  color: #5925f4; }
 .admin-shell .admin-badge-green  { background: #dcfce7; color: #166534; }
 .admin-shell .admin-badge-red    { background: #fee2e2; color: #991b1b; }
 .admin-shell .admin-badge-yellow { background: #fef9c3; color: #854d0e; }
@@ -283,14 +334,15 @@
 /* ── Page Header ── */
 .admin-shell .admin-page-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  padding-bottom: 32px;
-  margin-bottom: 40px;
-  border-bottom: 1px solid var(--admin-border);
+  gap: 20px;
+  padding-bottom: 28px;
+  margin-bottom: 36px;
+  border-bottom: 1.5px solid var(--admin-border);
 }
 .admin-shell .admin-page-header h1 { display: flex; align-items: center; gap: 12px; }
+.admin-shell .admin-page-header p  { color: var(--admin-text-subtle); font-size: 0.9375rem; margin-top: 6px; }
 
 /* ── Empty State ── */
 .admin-shell .admin-empty {
@@ -298,24 +350,27 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 64px 24px;
+  padding: 72px 32px;
   background: #fff;
-  border: 1px solid var(--admin-border);
+  border: 1.5px dashed var(--admin-border-strong);
   border-radius: var(--admin-radius-lg);
   text-align: center;
-  box-shadow: var(--admin-shadow-card);
 }
-.admin-shell .admin-empty svg { color: var(--admin-text-faint); margin-bottom: 16px; }
-.admin-shell .admin-empty h3  { color: var(--admin-text-secondary); margin-bottom: 4px; }
-.admin-shell .admin-empty p   { color: var(--admin-text-subtle); font-size: 0.8125rem; margin-bottom: 20px; }
+.admin-shell .admin-empty svg { color: var(--admin-text-faint); margin-bottom: 20px; }
+.admin-shell .admin-empty h3  { color: var(--admin-text-secondary); margin-bottom: 8px; font-size: 1rem; }
+.admin-shell .admin-empty p   { color: var(--admin-text-subtle); font-size: 0.875rem; margin-bottom: 24px; max-width: 360px; }
 
 /* ── Alert Banners ── */
 .admin-shell .admin-alert {
-  padding: 12px 16px;
+  padding: 14px 18px;
   border-radius: var(--admin-radius-md);
   font-size: 0.875rem;
   font-weight: 500;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  line-height: 1.5;
 }
 .admin-shell .admin-alert-error   { background: var(--admin-danger-bg);  color: var(--admin-danger-text);  border: 1px solid #fecaca; }
 .admin-shell .admin-alert-success { background: var(--admin-success-bg); color: var(--admin-success-text); border: 1px solid #bbf7d0; }
@@ -325,7 +380,7 @@
   background: #fff;
   border: 1px solid var(--admin-border);
   border-radius: var(--admin-radius-lg);
-  padding: 36px 40px;
+  padding: 32px 36px;
   box-shadow: var(--admin-shadow-card);
 }
 
@@ -334,10 +389,10 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
-  margin-bottom: 40px;
+  margin-bottom: 36px;
 }
 .admin-shell .admin-form-section + .admin-form-section {
-  padding-top: 36px;
+  padding-top: 32px;
   border-top: 1px solid var(--admin-border);
 }
 .admin-shell .admin-field {
@@ -347,29 +402,44 @@
 }
 .admin-shell .admin-field label {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.07em;
   color: var(--admin-text-subtle);
+  margin-bottom: 2px;
 }
 .admin-shell .admin-field-hint {
   font-size: 0.75rem;
   color: var(--admin-text-faint);
-  margin-top: 6px;
+  margin-top: 5px;
+  line-height: 1.5;
 }
 
-/* ── Inline form panel (redirects style) ── */
+/* ── Inline form panel ── */
 .admin-shell .admin-form-panel {
   background: #fff;
   border: 1px solid var(--admin-border);
   border-radius: var(--admin-radius-lg);
-  padding: 36px 40px;
+  padding: 32px 36px;
   box-shadow: var(--admin-shadow-card);
 }
 .admin-shell .admin-form-panel h2 {
   font-size: 0.9375rem;
   font-weight: 700;
   color: var(--admin-text-primary);
+  margin-bottom: 20px;
+}
+
+/* ── Section divider label ── */
+.admin-shell .admin-section-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--admin-text-faint);
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--admin-border);
 }
 
 /* ── Screen-reader only utility ── */
