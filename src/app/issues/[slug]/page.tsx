@@ -1,36 +1,20 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import InnerNav from "@/components/InnerNav";
-import { createClient, createStaticClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server";
+import { createClient as createBrowserClient } from "@supabase/supabase-js";
 
 export async function generateStaticParams() {
-  const sb = createStaticClient();
-  if (!sb) return [];
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return [];
+  const sb = createBrowserClient(url, key);
   const { data } = await sb.from("issues").select("slug").order("rank");
   return (data ?? []).map((i) => ({ slug: i.slug }));
 }
 
 interface Props {
   params: Promise<{ slug: string }>;
-}
-
-export async function generateMetadata({ params }: Props) {
-  const { slug } = await params;
-  const sb = await createClient();
-  const { data } = await sb.from("issues").select("title, short_desc, seo_title, seo_desc, og_image").eq("slug", slug).single();
-  if (!data) return { title: "Issue Not Found" };
-  const title = data.seo_title || `${data.title} — Schools Wellbeing`;
-  const description = data.seo_desc || data.short_desc;
-  return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      ...(data.og_image ? { images: [{ url: data.og_image }] } : {}),
-    },
-    twitter: { card: "summary_large_image", title, description },
-  };
 }
 
 export default async function IssuePage({ params }: Props) {

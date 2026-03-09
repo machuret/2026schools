@@ -1,15 +1,8 @@
 /**
- * Shared domain types for admin client components.
- * Import from here instead of re-declaring per file.
+ * Shared TypeScript types used across admin client components.
  */
 
-export interface AdminUser {
-  id: string;
-  email: string;
-  created_at: string;
-  last_sign_in_at: string | null;
-}
-
+/** Row shape returned by the api_keys table. */
 export interface AdminApiKey {
   id: string;
   label: string;
@@ -19,6 +12,10 @@ export interface AdminApiKey {
   created_at: string;
 }
 
+/** Generic field-level validation errors keyed by field name. */
+export type FieldErrors = Record<string, string>;
+
+/** Row shape returned by the redirects table. */
 export interface AdminRedirect {
   id: string;
   from_path: string;
@@ -29,6 +26,15 @@ export interface AdminRedirect {
   created_at: string;
 }
 
+/** User shape returned by Supabase auth admin. */
+export interface AdminUser {
+  id: string;
+  email: string;
+  created_at: string;
+  last_sign_in_at: string | null;
+}
+
+/** Row shape returned by the vault_sources table. */
 export interface AdminVaultSource {
   id: string;
   url: string;
@@ -40,5 +46,13 @@ export interface AdminVaultSource {
   created_at: string;
 }
 
-/** Generic field-error map used by all form validators. */
-export type FieldErrors = Record<string, string>;
+/** Row shape for a prompt template. */
+export interface PromptTemplate {
+  id: string;
+  page_type: string;
+  section_key: string;
+  label: string;
+  prompt: string;
+  model: string;
+  updated_at: string;
+}

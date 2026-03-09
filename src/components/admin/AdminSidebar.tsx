@@ -5,50 +5,113 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
-const SECTIONS = [
+const NAV_ITEMS = [
   {
-    title: null,
-    items: [
-      { label: 'Dashboard', href: '/admin', ms: 'dashboard' },
-    ],
+    label: 'Dashboard',
+    href: '/admin',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
+        <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+      </svg>
+    ),
   },
   {
-    title: 'CONTENT',
-    items: [
-      { label: 'Issues',     href: '/admin/issues',        ms: 'warning' },
-      { label: 'States',     href: '/admin/states',        ms: 'analytics' },
-      { label: 'Areas',      href: '/admin/content',       ms: 'location_on' },
-    ],
+    label: 'Issues',
+    href: '/admin/issues',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" />
+      </svg>
+    ),
   },
   {
-    title: 'CMS',
-    items: [
-      { label: 'Overview',   href: '/admin/cms',           ms: 'public' },
-      { label: 'Pages',      href: '/admin/cms/pages',     ms: 'article' },
-      { label: 'Navigation', href: '/admin/cms/menu',      ms: 'menu' },
-      { label: 'Redirects',  href: '/admin/cms/redirects', ms: 'alt_route' },
-    ],
+    label: 'States & Data',
+    href: '/admin/states',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+      </svg>
+    ),
   },
   {
-    title: 'AI',
-    items: [
-      { label: 'Prompts',    href: '/admin/prompts',       ms: 'prompt_suggestion' },
-      { label: 'Vault',      href: '/admin/vault/sources', ms: 'lock' },
-    ],
+    label: 'Areas',
+    href: '/admin/content',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+      </svg>
+    ),
   },
   {
-    title: 'SYSTEM',
-    items: [
-      { label: 'Users',      href: '/admin/users',         ms: 'group' },
-      { label: 'API Keys',   href: '/admin/api',           ms: 'key' },
-      { label: 'Settings',   href: '/admin/settings',      ms: 'settings' },
-    ],
+    label: 'Pages',
+    href: '/admin/cms/pages',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Menu',
+    href: '/admin/cms/menu',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="18" x2="21" y2="18" />
+      </svg>
+    ),
+  },
+  {
+    label: 'The Vault',
+    href: '/admin/vault/sources',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        <circle cx="12" cy="16" r="1" fill="currentColor" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Users',
+    href: '/admin/users',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    ),
+  },
+  {
+    label: 'API Management',
+    href: '/admin/api',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
+        <line x1="12" y1="2" x2="12" y2="22" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Settings',
+    href: '/admin/settings',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      </svg>
+    ),
   },
 ];
 
 export default function AdminSidebar({ userEmail }: { userEmail: string }) {
   const pathname = usePathname();
-  const router   = useRouter();
+  const router = useRouter();
   const [signingOut, setSigningOut] = useState(false);
 
   async function handleSignOut() {
@@ -60,61 +123,94 @@ export default function AdminSidebar({ userEmail }: { userEmail: string }) {
   }
 
   return (
-    <aside className="swa-sidebar">
-      {/* Brand */}
-      <div className="swa-sidebar__logo">
-        <div className="swa-sidebar__logo-icon">S</div>
-        <div>
-          <div className="swa-sidebar__logo-title">SWA Admin</div>
-          <div className="swa-sidebar__logo-sub">Schools Wellbeing AU</div>
+    <aside
+      className="w-56 flex-shrink-0 flex flex-col"
+      style={{ background: '#161B22', borderRight: '1px solid #21262D' }}
+    >
+      {/* Logo */}
+      <div className="h-14 flex items-center px-5" style={{ borderBottom: '1px solid #21262D' }}>
+        <div className="flex items-center gap-2.5">
+          <div
+            className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0"
+            style={{ background: '#1C7ED6' }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" fill="white" />
+              <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+            </svg>
+          </div>
+          <span className="text-sm font-semibold" style={{ color: '#E6EDF3' }}>
+            SWA Admin
+          </span>
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="swa-sidebar__nav" aria-label="Admin navigation">
-        {SECTIONS.map((section, sIdx) => (
-          <div key={sIdx}>
-            {section.title && (
-              <div className="swa-sidebar__section-label">{section.title}</div>
-            )}
-            {section.items.map((item) => {
-              const isActive = item.href === '/admin'
-                ? pathname === '/admin'
-                : pathname.startsWith(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  aria-current={isActive ? 'page' : undefined}
-                  className={`swa-sidebar__nav-item${isActive ? ' active' : ''}`}
-                >
-                  <span aria-hidden="true" className="material-symbols-outlined">{item.ms}</span>
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
-        ))}
+      <nav className="flex-1 p-3 space-y-0.5">
+        {NAV_ITEMS.map((item) => {
+          const isActive = item.href === '/admin'
+            ? pathname === '/admin'
+            : pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors"
+              style={{
+                background: isActive ? '#1C7ED620' : 'transparent',
+                color: isActive ? '#1C7ED6' : '#8B949E',
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) (e.currentTarget as HTMLElement).style.color = '#E6EDF3';
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) (e.currentTarget as HTMLElement).style.color = '#8B949E';
+              }}
+            >
+              <span style={{ color: isActive ? '#1C7ED6' : 'inherit' }}>{item.icon}</span>
+              {item.label}
+            </Link>
+          );
+        })}
       </nav>
 
-      {/* Footer */}
-      <div className="swa-sidebar__footer">
-        <div className="swa-sidebar__user">
-          <div className="swa-sidebar__avatar">
-            {(userEmail || 'A')[0].toUpperCase()}
-          </div>
-          <div>
-            <div className="swa-sidebar__user-name">{userEmail ? userEmail.split('@')[0] : 'Admin'}</div>
-            <div className="swa-sidebar__user-role">Admin Account</div>
-          </div>
+      {/* View site link */}
+      <div className="px-3 pb-2">
+        <a
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors w-full"
+          style={{ color: '#6E7681' }}
+          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#E6EDF3')}
+          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = '#6E7681')}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+            <polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+          </svg>
+          View site
+        </a>
+      </div>
+
+      {/* Sign out */}
+      <div className="p-3 pt-0" style={{ borderTop: '1px solid #21262D' }}>
+        <div className="px-3 py-2 mb-1">
+          <p className="text-xs truncate" style={{ color: '#484F58' }}>{userEmail}</p>
         </div>
         <button
           onClick={handleSignOut}
           disabled={signingOut}
-          aria-label="Sign out"
-          className="swa-sidebar__logout"
+          className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm w-full transition-colors"
+          style={{ color: '#6E7681' }}
+          onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#F85149')}
+          onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = '#6E7681')}
         >
-          <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 15 }}>logout</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          {signingOut ? 'Signing out…' : 'Sign out'}
         </button>
       </div>
     </aside>
