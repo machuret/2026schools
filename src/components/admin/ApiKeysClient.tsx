@@ -24,6 +24,7 @@ const PROVIDER_BADGE: Record<string, string> = {
   openai:    "swa-badge--success",
   anthropic: "swa-badge--primary",
   google:    "swa-badge--warning",
+  firecrawl: "swa-badge--error",
   other:     "swa-badge--info",
 };
 
@@ -222,6 +223,7 @@ export default function ApiKeysClient({ initialKeys }: { initialKeys: AdminApiKe
                 <option value="openai">OpenAI</option>
                 <option value="anthropic">Anthropic</option>
                 <option value="google">Google</option>
+                <option value="firecrawl">Firecrawl</option>
                 <option value="other">Other</option>
               </select>
             </AdminField>

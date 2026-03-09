@@ -46,6 +46,8 @@ export default function VaultSourcesClient({ initialSources }: { initialSources:
   const [addTitle, setAddTitle] = useState("");
   const [addDesc, setAddDesc]   = useState("");
   const [addCat, setAddCat]     = useState("general");
+  const [crawling, setCrawling] = useState(false);
+  const [crawlMsg, setCrawlMsg] = useState("");
 
   // ── Edit-form state ──
   const [editSource, setEditSource]           = useState<AdminVaultSource | null>(null);
@@ -67,7 +69,32 @@ export default function VaultSourcesClient({ initialSources }: { initialSources:
   function closeAddPanel() {
     setShowAdd(false);
     setAddUrl(""); setAddTitle(""); setAddDesc(""); setAddCat("general");
+    setCrawling(false); setCrawlMsg("");
     setFieldErrors({}); clearMessages();
+  }
+
+  async function crawlUrl(url: string) {
+    try { new URL(url); } catch { return; }
+    setCrawling(true); setCrawlMsg("Crawling page…");
+    try {
+      const res = await fetch("/api/admin/firecrawl/crawl", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setCrawlMsg(json.error || "Crawl failed.");
+        return;
+      }
+      if (json.title && !addTitle) setAddTitle(json.title);
+      if (json.description && !addDesc) setAddDesc(json.description);
+      setCrawlMsg("Crawled successfully!");
+    } catch {
+      setCrawlMsg("Network error during crawl.");
+    } finally {
+      setCrawling(false);
+    }
   }
 
   function closeEditPanel() {
@@ -216,21 +243,44 @@ export default function VaultSourcesClient({ initialSources }: { initialSources:
           />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <AdminField id="vault-url" label="URL — paste here" error={fieldErrors.url} className="md:col-span-2">
-              <textarea
-                id="vault-url"
-                rows={2}
-                className={INPUT_CLS}
-                style={{
-                  ...inputStyle(!!fieldErrors.url),
-                  resize: "none",
-                  fontFamily: "monospace",
-                  fontSize: "0.8rem",
-                }}
-                value={addUrl}
-                onChange={e => { setAddUrl(e.target.value); setFieldErrors(f => ({ ...f, url: "" })); }}
-                placeholder="https://www.aihw.gov.au/reports/mental-health/..."
-                autoFocus
-              />
+              <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                <textarea
+                  id="vault-url"
+                  rows={2}
+                  className={INPUT_CLS}
+                  style={{
+                    ...inputStyle(!!fieldErrors.url),
+                    resize: "none",
+                    fontFamily: "monospace",
+                    fontSize: "0.8rem",
+                    flex: 1,
+                  }}
+                  value={addUrl}
+                  onChange={e => { setAddUrl(e.target.value); setFieldErrors((f: Record<string, string>) => ({ ...f, url: "" })); setCrawlMsg(""); }}
+                  placeholder="https://www.aihw.gov.au/reports/mental-health/..."
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => crawlUrl(addUrl.trim())}
+                  disabled={crawling || !addUrl.trim()}
+                  className="swa-btn swa-btn-primary"
+                  style={{ whiteSpace: "nowrap", opacity: (crawling || !addUrl.trim()) ? 0.6 : 1, marginTop: 2 }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: 16 }}>{crawling ? "hourglass_top" : "travel_explore"}</span>
+                  {crawling ? "Crawling…" : "Crawl"}
+                </button>
+              </div>
+              {crawlMsg && (
+                <div style={{
+                  fontSize: 12,
+                  marginTop: 6,
+                  color: crawlMsg.includes("successfully") ? "var(--color-success)" : crawlMsg.includes("Crawling") ? "var(--color-primary)" : "var(--color-error)",
+                  fontWeight: 500,
+                }}>
+                  {crawlMsg}
+                </div>
+              )}
             </AdminField>
             <AdminField
               id="vault-title"
