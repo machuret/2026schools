@@ -33,7 +33,7 @@ export default function Hero() {
         </div>
 
         <h1>
-          Data is how we understand
+          DataX is how we understand
           <br />
           <span
             style={{
