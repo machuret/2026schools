@@ -21,7 +21,7 @@ const L = "block text-xs font-semibold mb-2 uppercase tracking-wider";
 const LS: React.CSSProperties = { color: "var(--admin-text-subtle)" };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div className="mb-4"><label className={L} style={LS}>{label}</label>{children}</div>;
+  return <div className="mb-6"><label className={L} style={LS}>{label}</label>{children}</div>;
 }
 
 function parseJsonArray<T>(raw: unknown, fallback: T[]): T[] {
@@ -186,7 +186,7 @@ export default function StateEditForm({ state }: { state: State | null }) {
         confirmLabel="Delete State" onConfirm={handleDelete} onCancel={() => setShowDeleteModal(false)} />
 
       {/* Tab bar */}
-      <div className="flex gap-1 mb-8 p-1 rounded-xl" style={{ background: "var(--admin-bg-elevated)", border: "1px solid var(--admin-border)" }}>
+      <div className="flex gap-1 mb-10 p-1.5 rounded-xl" style={{ background: "var(--admin-bg-elevated)", border: "1px solid var(--admin-border)" }}>
         {TABS.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium flex-1 justify-center"
@@ -213,15 +213,15 @@ export default function StateEditForm({ state }: { state: State | null }) {
       {/* ── Tab: Basic Info ── */}
       {tab === "info" && (
         <div className="admin-card">
-          <div className="grid grid-cols-2 gap-5 mb-1">
+          <div className="grid grid-cols-2 gap-6 mb-2">
             <Field label="Icon (emoji)"><input className={I} style={IS} value={form.icon} onChange={e => set("icon", e.target.value)} placeholder="🏫" /></Field>
             <Field label="Slug"><input className={I} style={IS} value={form.slug} onChange={e => set("slug", e.target.value)} placeholder="e.g. nsw" /></Field>
           </div>
           <Field label="Name">
             <input className={I} style={{ ...IS, fontSize: "1rem", fontWeight: 600 }} value={form.name} onChange={e => set("name", e.target.value)} placeholder="e.g. New South Wales" />
           </Field>
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
               <label className={L} style={{ ...LS, margin: 0 }}>Subtitle</label>
               {!isNew && <RegenBtn label="Subtitle" onClick={() => handleRegen(["subtitle"])} busy={regen.busy === "subtitle"} />}
             </div>
@@ -271,15 +271,15 @@ export default function StateEditForm({ state }: { state: State | null }) {
       )}
 
       {/* Actions bar */}
-      <div className="mt-8">
-        {error && <div className="admin-alert admin-alert-error mb-4">{error}</div>}
+      <div className="mt-10">
+        {error && <div className="admin-alert admin-alert-error mb-5">{error}</div>}
         {success && (
-          <div className="admin-alert admin-alert-success mb-4 flex items-center gap-2">
+          <div className="admin-alert admin-alert-success mb-5 flex items-center gap-2">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
             Saved successfully
           </div>
         )}
-        <div className="flex items-center gap-3 pt-6" style={{ borderTop: "1px solid var(--admin-border)" }}>
+        <div className="flex items-center gap-4 pt-8" style={{ borderTop: "1px solid var(--admin-border)" }}>
           <button onClick={handleSave} disabled={saving} className="admin-btn admin-btn-primary" style={{ minWidth: "130px", opacity: saving ? 0.7 : 1 }}>
             {saving ? "Saving…" : isNew ? "Create State" : "Save Changes"}
           </button>
