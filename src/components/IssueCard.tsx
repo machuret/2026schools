@@ -1,15 +1,10 @@
 import Link from "next/link";
 import { Issue } from "@/lib/types";
+import { SEVERITY_LABEL } from "@/lib/colors";
 
 interface Props {
   issue: Issue;
 }
-
-const SEVERITY_LABEL: Record<string, string> = {
-  critical: "⚠ Critical",
-  high: "↑ Elevated",
-  notable: "● Notable",
-};
 
 export default function IssueCard({ issue }: Props) {
   return (

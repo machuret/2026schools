@@ -18,37 +18,37 @@ const playfair = Playfair_Display({
 
 export const metadata: Metadata = {
   title: {
-    default: "Schools Wellbeing Australia — The State of Our Students",
-    template: "%s | Schools Wellbeing Australia",
+    default: "National Check-in Week — Student Wellbeing for Australian Schools",
+    template: "%s | National Check-in Week",
   },
   description:
-    "Data-driven analysis of mental health and wellbeing challenges facing Australian school children. Covering anxiety, bullying, cyberbullying, school refusal, attendance, and more — backed by AIHW, Mission Australia, eSafety Commissioner, and RoGS 2026 data.",
+    "National Check-in Week (NCIW) is a FREE initiative tackling the student wellbeing crisis in Australian schools. Access free webinars, expert panels, and resources to support your whole school community.",
   keywords: [
+    "National Check-in Week",
+    "NCIW",
     "Australian schools wellbeing",
-    "child mental health Australia",
-    "school bullying data",
-    "cyberbullying Australia",
-    "school refusal",
-    "youth anxiety",
-    "AIHW",
-    "Mission Australia",
-    "student mental health",
-    "school attendance",
+    "student mental health Australia",
+    "school wellbeing assessment",
+    "student check-in",
+    "school leader wellbeing tools",
+    "emotional literacy schools",
+    "student voice",
+    "school wellbeing data",
   ],
   metadataBase: new URL("https://schoolswellbeing.com.au"),
   openGraph: {
     type: "website",
     locale: "en_AU",
-    siteName: "Schools Wellbeing Australia",
-    title: "Schools Wellbeing Australia — The State of Our Students",
+    siteName: "National Check-in Week",
+    title: "National Check-in Week — Student Wellbeing for Australian Schools",
     description:
-      "One in seven Australian children has a mental disorder. Track the 15 priority wellbeing issues facing students across every state and territory.",
+      "A FREE national initiative empowering school leaders with real-time wellbeing data, expert webinars, and resources to ensure no child falls through the gaps.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Schools Wellbeing Australia — The State of Our Students",
+    title: "National Check-in Week — Student Wellbeing for Australian Schools",
     description:
-      "Data on mental health, bullying, cyberbullying, school refusal, attendance and more across Australian schools.",
+      "Free webinars, expert panels, and wellbeing resources for Australian schools. Join the national movement for student wellbeing.",
   },
 };
 

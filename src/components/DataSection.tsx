@@ -24,13 +24,13 @@ export default function DataSection() {
         <div className="data-box">
           <div className="data-box-title">Data Limitations</div>
           <p>
-            <strong style={{ color: "rgba(246,239,228,0.85)" }}>Bullying:</strong> No single national prevalence rate due to inconsistent collection across jurisdictions.
+            <strong>Bullying:</strong> No single national prevalence rate due to inconsistent collection across jurisdictions.
           </p>
           <p>
-            <strong style={{ color: "rgba(246,239,228,0.85)" }}>Regional data:</strong> Not all issues have sub-state datasets. Where gaps exist, national or remoteness-level data is used.
+            <strong>Regional data:</strong> Not all issues have sub-state datasets. Where gaps exist, national or remoteness-level data is used.
           </p>
           <p>
-            <strong style={{ color: "rgba(246,239,228,0.85)" }}>Survey years:</strong> Some sources date from 2013–14. The most recent available data is used throughout.
+            <strong>Survey years:</strong> Some sources date from 2013–14. The most recent available data is used throughout.
           </p>
         </div>
       </div>

@@ -1,0 +1,86 @@
+/* ═══════════════════════════════════════
+   DESIGN TOKENS + RESET + BASE TYPOGRAPHY
+═══════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --navy:        #0B1D35;
+  --navy-mid:    #132848;
+  --navy-light:  #1E3A5F;
+  --teal:        #0E7490;
+  --teal-light:  #22D3EE;
+  --accent:      #E05D25;
+  --accent-light:#F97316;
+  --green:       #15803D;
+  --green-bg:    #DCFCE7;
+  --amber:       #B45309;
+  --amber-bg:    #FEF3C7;
+  --red:         #B91C1C;
+  --red-bg:      #FEE2E2;
+  --gray-50:     #F8FAFC;
+  --gray-100:    #F1F5F9;
+  --gray-200:    #E2E8F0;
+  --gray-300:    #CBD5E1;
+  --gray-500:    #64748B;
+  --gray-700:    #334155;
+  --gray-900:    #0F172A;
+  --white:       #FFFFFF;
+  --text:        #0F172A;
+  --text-mid:    #334155;
+  --text-light:  #64748B;
+  --border:      #E2E8F0;
+}
+
+/* Spacing tokens */
+:root {
+  --sp-xs: 4px;
+  --sp-sm: 8px;
+  --sp-md: 16px;
+  --sp-lg: 24px;
+  --sp-xl: 32px;
+  --sp-2xl: 48px;
+  --sp-3xl: 64px;
+  --sp-4xl: 96px;
+}
+
+html { scroll-behavior: smooth; }
+
+/* Skip-to-content link (WCAG 2.1 Level A) */
+.skip-link {
+  position: absolute; left: -9999px; top: auto;
+  width: 1px; height: 1px; overflow: hidden;
+  z-index: 9999;
+  background: var(--accent); color: var(--white);
+  font-size: 0.9rem; font-weight: 700;
+  padding: 12px 24px; border-radius: 0 0 8px 0;
+  text-decoration: none;
+}
+.skip-link:focus {
+  position: fixed; left: 0; top: 0;
+  width: auto; height: auto;
+  outline: 2px solid var(--teal); outline-offset: 2px;
+}
+
+/* Global focus ring for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+body {
+  font-family: var(--font-inter, 'Inter'), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--white);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1 { font-family: var(--font-playfair, 'Playfair Display'), Georgia, serif; font-size: clamp(2.4rem, 5vw, 4rem); line-height: 1.1; font-weight: 800; }
+h2 { font-family: var(--font-playfair, 'Playfair Display'), Georgia, serif; font-size: clamp(1.8rem, 3vw, 2.6rem); line-height: 1.15; font-weight: 700; }
+h3 { font-size: 1.2rem; line-height: 1.4; font-weight: 700; font-family: var(--font-inter, 'Inter'), sans-serif; }
+h4 { font-size: 1rem; font-weight: 700; font-family: var(--font-inter, 'Inter'), sans-serif; }
+p  { font-size: 0.975rem; line-height: 1.75; }

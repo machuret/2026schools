@@ -1,21 +1,18 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+
+const WORDS = ["suicide", "anxiety", "self-harm", "loneliness", "burnout"];
 
 export default function Hero() {
   const [titleNumber, setTitleNumber] = useState(0);
 
-  const words = useMemo(
-    () => ["suicide", "anxiety", "self-harm", "loneliness", "burnout"],
-    []
-  );
-
   useEffect(() => {
     const id = setTimeout(() => {
-      setTitleNumber(n => (n === words.length - 1 ? 0 : n + 1));
+      setTitleNumber(n => (n === WORDS.length - 1 ? 0 : n + 1));
     }, 2200);
     return () => clearTimeout(id);
-  }, [titleNumber, words]);
+  }, [titleNumber]);
 
   const stats = [
     { num: "Suicide", suffix: "", label: "is the leading cause of death for Australians aged 15–24" },
@@ -48,13 +45,13 @@ export default function Hero() {
             }}
           >
             &nbsp;
-            {words.map((word, index) => (
+            {WORDS.map((word, index) => (
               <motion.span
                 key={index}
                 style={{
                   position: "absolute",
                   fontStyle: "italic",
-                  color: "var(--teal-light)",
+                  color: "var(--teal)",
                 }}
                 initial={{ opacity: 0, y: 80 }}
                 transition={{ type: "spring", stiffness: 60, damping: 18 }}

@@ -61,32 +61,15 @@ export default function PartnersCarousel() {
   const items = [...partners, ...partners];
 
   return (
-    <section style={{
-      background: "var(--gray-50)", borderTop: "1px solid var(--border)",
-      borderBottom: "1px solid var(--border)", padding: "40px 0", overflow: "hidden",
-    }}>
-      <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 48px" }}>
-        <div style={{
-          fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase",
-          color: "var(--teal)", marginBottom: 20, textAlign: "center",
-        }}>
-          Our Partners
-        </div>
+    <section className="partners-carousel">
+      <div className="partners-carousel__header">
+        <div className="partners-carousel__label">Our Partners</div>
       </div>
-      <div style={{ overflow: "hidden" }}>
-        <div ref={trackRef} style={{ display: "flex", alignItems: "center", gap: 48, width: "max-content" }}>
+      <div className="partners-carousel__track-wrap">
+        <div ref={trackRef} className="partners-carousel__track">
           {items.map((p, i) => (
-            <Link key={`${p.id}-${i}`} href={`/partners/${p.slug}`}
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center",
-                width: 140, height: 60, flexShrink: 0, opacity: 0.6,
-                transition: "opacity 0.2s", textDecoration: "none",
-              }}
-              onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
-              onMouseLeave={e => (e.currentTarget.style.opacity = "0.6")}
-            >
-              <Image src={p.logoUrl!} alt={p.name} width={140} height={60}
-                style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} unoptimized />
+            <Link key={`${p.id}-${i}`} href={`/partners/${p.slug}`} className="partners-carousel__item">
+              <Image src={p.logoUrl!} alt={p.name} width={140} height={60} unoptimized />
             </Link>
           ))}
         </div>

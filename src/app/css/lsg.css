@@ -1,0 +1,34 @@
+/* ═══════════════════════════════════════
+   LIFE SKILLS GO SECTION
+═══════════════════════════════════════ */
+
+.lsg-section { padding: 96px 80px; background: var(--gray-50); border-top: 1px solid var(--border); }
+.lsg-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; max-width: 1200px; margin: 0 auto; }
+.lsg-eyebrow { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.lsg-eyebrow::before { content: ''; width: 24px; height: 2px; background: var(--teal); }
+.lsg-headline { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(1.6rem, 2.5vw, 2.2rem); font-weight: 700; color: var(--navy); line-height: 1.2; margin-bottom: 20px; }
+.lsg-headline em { font-style: normal; color: var(--teal); }
+.lsg-body { font-size: 1rem; color: var(--text-mid); line-height: 1.8; margin-bottom: 32px; }
+.lsg-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 36px; }
+.lsg-stat-box { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; }
+.lsg-stat-num { font-size: 1.8rem; font-weight: 800; color: var(--navy); line-height: 1; font-family: 'Inter', sans-serif; }
+.lsg-stat-label { font-size: 0.875rem; color: var(--text-light); margin-top: 4px; line-height: 1.4; }
+.lsg-cta { display: inline-flex; align-items: center; gap: 10px; background: var(--accent); color: #FFFFFF; font-weight: 700; font-size: 1rem; padding: 15px 30px; border-radius: 8px; text-decoration: none; transition: background 0.2s, transform 0.15s; box-shadow: 0 4px 16px rgba(224,93,37,0.3); }
+.lsg-cta:hover { background: #c94e1a; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(224,93,37,0.4); }
+.lsg-cta-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.lsg-cta-ghost { display: inline-flex; align-items: center; gap: 8px; background: transparent; color: var(--teal); font-weight: 600; font-size: 0.9rem; padding: 14px 22px; border-radius: 8px; text-decoration: none; border: 1.5px solid var(--teal); transition: background 0.2s; }
+.lsg-cta-ghost:hover { background: rgba(14,116,144,0.08); }
+.lsg-visual { position: relative; }
+.lsg-card { background: var(--white); border: 1px solid var(--border); border-radius: 16px; padding: 32px; box-shadow: 0 4px 24px rgba(11,29,53,0.08); }
+.lsg-card-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-light); margin-bottom: 20px; }
+.lsg-flow { display: flex; flex-direction: column; gap: 4px; }
+.lsg-flow-step { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 8px; }
+.lsg-flow-step.active { background: rgba(14,116,144,0.07); border: 1px solid rgba(14,116,144,0.15); }
+.lsg-flow-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+.lsg-flow-icon.blue { background: rgba(14,116,144,0.12); }
+.lsg-flow-icon.amber { background: var(--amber-bg); }
+.lsg-flow-icon.green { background: var(--green-bg); }
+.lsg-flow-text-title { font-size: 0.95rem; font-weight: 700; color: var(--navy); }
+.lsg-flow-text-sub { font-size: 0.875rem; color: var(--text-light); margin-top: 2px; }
+.lsg-flow-arrow { text-align: center; color: var(--gray-300); font-size: 1rem; padding: 2px 0; }
+.lsg-disclaimer { font-size: 0.85rem; color: var(--text-light); margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); line-height: 1.65; }

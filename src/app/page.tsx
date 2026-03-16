@@ -1,5 +1,6 @@
 import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
+import IntroSection from "@/components/IntroSection";
 import NewsTicker from "@/components/NewsTicker";
 import StatTicker from "@/components/StatTicker";
 import MapSection from "@/components/MapSection";
@@ -14,17 +15,21 @@ import Footer from "@/components/Footer";
 export default function Home() {
   return (
     <>
+      <a href="#main-content" className="skip-link">Skip to main content</a>
       <Nav />
       <NewsTicker />
       <Hero />
+      <IntroSection />
       <StatTicker />
-      <MapSection />
-      <IssuesSection />
-      <LifeSkillsSection />
-      <ResearchSection />
-      <DataSection />
-      <PartnersCarousel />
-      <FinalCTA />
+      <main id="main-content">
+        <MapSection />
+        <IssuesSection />
+        <LifeSkillsSection />
+        <ResearchSection />
+        <DataSection />
+        <PartnersCarousel />
+        <FinalCTA />
+      </main>
       <Footer />
     </>
   );

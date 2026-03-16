@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface NavLink {
   id: string;
@@ -12,14 +12,41 @@ interface NavLink {
 
 export default function NavClient({ links }: { links: NavLink[] }) {
   const [open, setOpen] = useState(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
 
-  function close() { setOpen(false); }
+  const close = useCallback(() => setOpen(false), []);
+
+  /* Close on Escape key */
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, close]);
+
+  /* Trap focus inside drawer when open */
+  useEffect(() => {
+    if (!open || !drawerRef.current) return;
+    const drawer = drawerRef.current;
+    const focusable = drawer.querySelectorAll<HTMLElement>("a, button, [tabindex]");
+    if (focusable.length) focusable[0].focus();
+
+    const onTab = (e: KeyboardEvent) => {
+      if (e.key !== "Tab" || !focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
+    document.addEventListener("keydown", onTab);
+    return () => document.removeEventListener("keydown", onTab);
+  }, [open]);
 
   return (
     <>
       <nav className="nav">
         <Link href="/" className="nav-logo" onClick={close}>
-          <span>Schools</span>Wellbeing.com.au
+          <span>National</span> Check-in Week
         </Link>
 
         {/* Desktop links */}
@@ -48,8 +75,8 @@ export default function NavClient({ links }: { links: NavLink[] }) {
 
       {/* Mobile drawer */}
       {open && (
-        <div className="nav-drawer" onClick={close}>
-          <div className="nav-drawer-inner" onClick={(e) => e.stopPropagation()}>
+        <div className="nav-drawer" onClick={close} role="dialog" aria-modal="true" aria-label="Navigation menu">
+          <div ref={drawerRef} className="nav-drawer-inner" onClick={(e) => e.stopPropagation()}>
             {links.map((l) => (
               <a
                 key={l.id}

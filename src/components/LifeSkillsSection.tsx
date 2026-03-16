@@ -42,7 +42,7 @@ export default function LifeSkillsSection() {
               className="lsg-cta"
             >
               See Life Skills GO in Action
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M7 17L17 7M17 7H7M17 7v10"/>
               </svg>
             </a>

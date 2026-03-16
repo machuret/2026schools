@@ -6,31 +6,35 @@ export default function Footer() {
       </div>
       <div className="footer-grid">
         <div>
-          <div className="footer-brand"><span>Schools</span>Wellbeing.com.au</div>
+          <div className="footer-brand"><span>National</span> Check-in Week</div>
           <p className="footer-brand-sub">
-            A data-driven platform illuminating the mental health and wellbeing challenges facing Australian school children. Built on credible government and peer-reviewed sources.
+            A FREE national initiative empowering Australian school leaders with real-time student wellbeing data, expert webinars, and resources to ensure no child falls through the gaps.
           </p>
         </div>
         <div className="footer-col">
           <h4>Top Issues</h4>
-          <a href="#issues">Anxiety &amp; Depression</a>
-          <a href="#issues">Self-Harm &amp; Suicidality</a>
-          <a href="#issues">Bullying</a>
-          <a href="#issues">Cyberbullying</a>
-          <a href="#issues">School Belonging</a>
-          <a href="#issues">View all 15 →</a>
+          <ul className="footer-list">
+            <li><a href="/issues/anxiety-depression">Anxiety &amp; Depression</a></li>
+            <li><a href="/issues/self-harm-suicidality">Self-Harm &amp; Suicidality</a></li>
+            <li><a href="/issues/bullying">Bullying</a></li>
+            <li><a href="/issues/cyberbullying">Cyberbullying</a></li>
+            <li><a href="/issues/school-belonging">School Belonging</a></li>
+            <li><a href="/#issues">View all 15 →</a></li>
+          </ul>
         </div>
         <div className="footer-col">
           <h4>Key Sources</h4>
-          <a href="https://www.aihw.gov.au" target="_blank" rel="noopener noreferrer">AIHW.gov.au</a>
-          <a href="https://www.esafety.gov.au" target="_blank" rel="noopener noreferrer">eSafety Commissioner</a>
-          <a href="https://www.pc.gov.au" target="_blank" rel="noopener noreferrer">Productivity Commission</a>
-          <a href="https://www.missionaustralia.com.au" target="_blank" rel="noopener noreferrer">Mission Australia</a>
-          <a href="https://youngmindsmatter.thekids.org.au" target="_blank" rel="noopener noreferrer">Young Minds Matter</a>
+          <ul className="footer-list">
+            <li><a href="https://www.aihw.gov.au" target="_blank" rel="noopener noreferrer">AIHW.gov.au</a></li>
+            <li><a href="https://www.esafety.gov.au" target="_blank" rel="noopener noreferrer">eSafety Commissioner</a></li>
+            <li><a href="https://www.pc.gov.au" target="_blank" rel="noopener noreferrer">Productivity Commission</a></li>
+            <li><a href="https://www.missionaustralia.com.au" target="_blank" rel="noopener noreferrer">Mission Australia</a></li>
+            <li><a href="https://youngmindsmatter.thekids.org.au" target="_blank" rel="noopener noreferrer">Young Minds Matter</a></li>
+          </ul>
         </div>
       </div>
       <div className="footer-bottom">
-        <p>© 2025 SchoolsWellbeing.com.au · For informational and advocacy purposes only. Not clinical advice.</p>
+        <p>© 2026 National Check-in Week · For informational and advocacy purposes only. Not clinical advice.</p>
       </div>
     </footer>
   );

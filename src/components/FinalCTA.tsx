@@ -3,7 +3,7 @@ export default function FinalCTA() {
     <section className="final-cta">
       <div className="final-cta-inner">
         <div className="final-cta-tag">
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--teal-light)", display: "inline-block" }} />
+          <span className="final-cta-tag-dot" aria-hidden="true" />
           Take Action
         </div>
 
@@ -24,7 +24,7 @@ export default function FinalCTA() {
             className="final-cta-btn-primary"
           >
             See How Schools Measure Wellbeing
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M7 17L17 7M17 7H7M17 7v10"/>
             </svg>
           </a>

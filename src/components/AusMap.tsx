@@ -1,40 +1,9 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { SEVERITY } from "@/lib/colors";
+import { STATE_SEVERITY, STATE_ABBR } from "@/lib/data/states";
 
 const W = 800, H = 560;
-
-const STATE_SEVERITY: Record<string, "critical" | "high" | "notable"> = {
-  "New South Wales":              "high",
-  "Victoria":                     "high",
-  "Queensland":                   "critical",
-  "South Australia":              "high",
-  "Western Australia":            "critical",
-  "Tasmania":                     "high",
-  "Northern Territory":           "critical",
-  "Australian Capital Territory": "notable",
-};
-
-const SEVERITY_COLOR: Record<string, string> = {
-  critical: "#DC2626",
-  high:     "#D97706",
-  notable:  "#059669",
-};
-const SEVERITY_HOVER: Record<string, string> = {
-  critical: "#B91C1C",
-  high:     "#B45309",
-  notable:  "#047857",
-};
-
-const STATE_ABBR: Record<string, string> = {
-  "New South Wales":              "NSW",
-  "Victoria":                     "VIC",
-  "Queensland":                   "QLD",
-  "South Australia":              "SA",
-  "Western Australia":            "WA",
-  "Tasmania":                     "TAS",
-  "Northern Territory":           "NT",
-  "Australian Capital Territory": "ACT",
-};
 
 /* Major cities with approximate [lon, lat] */
 const CITIES: { name: string; lon: number; lat: number; state: string }[] = [
@@ -124,28 +93,14 @@ export default function AusMap({ onSelectState, selectedState }: Props) {
       <div className="map-hint">Click any state or territory to explore its regional data</div>
 
       {loading && !error && (
-        <div style={{
-          width: "100%",
-          aspectRatio: "800/560",
-          background: "linear-gradient(90deg, #BFDBFE 25%, #DBEAFE 50%, #BFDBFE 75%)",
-          backgroundSize: "200% 100%",
-          animation: "mapSkeleton 1.4s ease-in-out infinite",
-          borderRadius: "8px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexDirection: "column",
-          gap: "12px",
-        }}>
-          <div style={{ width: 32, height: 32, border: "3px solid #93C5FD", borderTopColor: "#1E40AF", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-          <span style={{ fontSize: "0.82rem", color: "#1E40AF", fontWeight: 600 }}>Loading map…</span>
+        <div className="map-skeleton">
+          <div className="map-skeleton__spinner" />
+          <span className="map-skeleton__text">Loading map…</span>
         </div>
       )}
 
       {error && (
-        <div style={{ textAlign: "center", padding: "40px", color: "#64748B" }}>
-          Map unavailable. Please refresh the page.
-        </div>
+        <div className="map-error">Map unavailable. Please refresh the page.</div>
       )}
 
       {!loading && !error && (
@@ -161,7 +116,8 @@ export default function AusMap({ onSelectState, selectedState }: Props) {
           {/* State paths */}
           {shapes.map(s => {
             const sev  = STATE_SEVERITY[s.name] ?? "notable";
-            const fill = hovered === s.name ? SEVERITY_HOVER[sev] : SEVERITY_COLOR[sev];
+            const sevCfg = SEVERITY[sev];
+            const fill = hovered === s.name ? sevCfg.hover : sevCfg.color;
             return (
               <path
                 key={s.name}
@@ -179,8 +135,11 @@ export default function AusMap({ onSelectState, selectedState }: Props) {
                   const rect = svg.getBoundingClientRect();
                   const scaleX = W / rect.width;
                   const scaleY = H / rect.height;
-                  const mx = (e.clientX - rect.left) * scaleX;
-                  const my = (e.clientY - rect.top)  * scaleY;
+                  let mx = (e.clientX - rect.left) * scaleX;
+                  let my = (e.clientY - rect.top)  * scaleY;
+                  const ttW = s.name.length * 7 + 26;
+                  if (mx + ttW > W) mx = mx - ttW - 10;
+                  if (my - 22 < 0) my = 30;
                   setTooltip({ name: s.name, x: mx, y: my });
                 }}
                 onMouseLeave={() => { setHovered(null); setTooltip(null); }}

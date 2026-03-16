@@ -87,7 +87,7 @@ const THEMES = [
 
 export default function ResearchSection() {
   return (
-    <section className="section" id="research" style={{ background: "var(--white)" }}>
+    <section className="section" id="research">
       <div className="section-inner">
       <div className="section-tag">National Research Overview</div>
       <h2>What the Evidence Shows</h2>
@@ -99,7 +99,7 @@ export default function ResearchSection() {
         {THEMES.map((theme) => (
           <div key={theme.id} className={`research-card ${theme.color}`}>
             <div className="research-card-header">
-              <span className="research-icon">{theme.icon}</span>
+              <span className="research-icon" aria-hidden="true">{theme.icon}</span>
               <h3 className="research-card-title">{theme.title}</h3>
             </div>
             <div className="research-findings">
