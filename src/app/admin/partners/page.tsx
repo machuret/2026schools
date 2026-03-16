@@ -203,63 +203,69 @@ export default function AdminPartnersPage() {
             </thead>
             <tbody>
               {partners.map(p => (
-                <tr key={p.id} style={{ opacity: p.active ? 1 : 0.5 }}>
-                  <td>
-                    <div style={{ width: 32, height: 32, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--color-border)', background: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4 }}>
-                      {p.logoUrl ? (
-                        <Image src={p.logoUrl} alt={p.name} width={24} height={24} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} unoptimized />
-                      ) : (
-                        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-faint)' }}>{p.name.split(' ').map(n => n[0]).join('').slice(0, 2)}</span>
-                      )}
-                    </div>
-                  </td>
-                  <td>
-                    <div style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{p.name}</div>
-                    {p.url && <div style={{ fontSize: 12, color: 'var(--color-text-faint)' }}>{p.url}</div>}
-                  </td>
-                  <td><span style={{ fontSize: 12, fontFamily: 'monospace', color: 'var(--color-text-muted)' }}>{p.slug}</span></td>
-                  <td style={{ textAlign: 'center' }}><span className="swa-badge swa-badge--primary">#{p.sortOrder}</span></td>
-                  <td>
-                    <button onClick={() => toggleActive(p)} className={`swa-badge ${p.active ? 'swa-badge--success' : ''}`}
-                      style={{ cursor: 'pointer', border: 'none', background: p.active ? undefined : 'rgba(156,163,175,0.1)', color: p.active ? undefined : 'var(--color-text-faint)' }}>
-                      {p.active ? 'Active' : 'Hidden'}
-                    </button>
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                      <button onClick={() => setEditId(editId === p.id ? null : p.id)} className="swa-btn-ghost" title="Edit" style={{ padding: 4 }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: 16 }}>edit</span>
+                <>
+                  <tr key={p.id} style={{ opacity: p.active ? 1 : 0.5 }}>
+                    <td>
+                      <div style={{ width: 32, height: 32, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--color-border)', background: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4 }}>
+                        {p.logoUrl ? (
+                          <Image src={p.logoUrl} alt={p.name} width={24} height={24} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} unoptimized />
+                        ) : (
+                          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-text-faint)' }}>{p.name.split(' ').map(n => n[0]).join('').slice(0, 2)}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{p.name}</div>
+                      {p.url && <div style={{ fontSize: 12, color: 'var(--color-text-faint)' }}>{p.url}</div>}
+                    </td>
+                    <td><span style={{ fontSize: 12, fontFamily: 'monospace', color: 'var(--color-text-muted)' }}>{p.slug}</span></td>
+                    <td style={{ textAlign: 'center' }}><span className="swa-badge swa-badge--primary">#{p.sortOrder}</span></td>
+                    <td>
+                      <button onClick={() => toggleActive(p)} className={`swa-badge ${p.active ? 'swa-badge--success' : ''}`}
+                        style={{ cursor: 'pointer', border: 'none', background: p.active ? undefined : 'rgba(156,163,175,0.1)', color: p.active ? undefined : 'var(--color-text-faint)' }}>
+                        {p.active ? 'Active' : 'Hidden'}
                       </button>
-                      <Link href={`/partners/${p.slug}`} className="swa-btn-ghost" title="View" style={{ padding: 4 }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: 16 }}>open_in_new</span>
-                      </Link>
-                      <button onClick={() => handleDelete(p.id, p.name)} className="swa-btn-ghost" title="Delete" style={{ padding: 4, color: 'var(--color-error)' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete</span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                        <button onClick={() => setEditId(editId === p.id ? null : p.id)} className="swa-btn-ghost" title="Edit"
+                          style={{ padding: 4, color: editId === p.id ? 'var(--color-primary)' : undefined }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: 16 }}>{editId === p.id ? 'expand_less' : 'edit'}</span>
+                        </button>
+                        <Link href={`/partners/${p.slug}`} className="swa-btn-ghost" title="View" style={{ padding: 4 }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: 16 }}>open_in_new</span>
+                        </Link>
+                        <button onClick={async () => {
+                          try { await handleDelete(p.id, p.name); }
+                          catch (err) { setError(err instanceof Error ? err.message : 'Delete failed'); }
+                        }} className="swa-btn-ghost" title="Delete" style={{ padding: 4, color: 'var(--color-error)' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  {editId === p.id && (
+                    <tr key={`${p.id}-edit`}>
+                      <td colSpan={6} style={{ padding: '0 0 8px 0', background: '#FAFAFA', borderTop: 'none' }}>
+                        <div style={{ padding: '16px 20px', borderLeft: '3px solid var(--color-primary)', margin: '0 4px 4px' }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14, color: 'var(--color-text-primary)' }}>Edit: {p.name}</div>
+                          <PartnerForm
+                            initial={{ name: p.name, description: p.description ?? '', logoUrl: p.logoUrl ?? '', url: p.url ?? '', slug: p.slug, sortOrder: p.sortOrder, active: p.active }}
+                            onSave={d => handleUpdate(p.id, d)}
+                            onCancel={() => setEditId(null)}
+                            saving={creating}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </>
               ))}
             </tbody>
           </table>
         </div>
       )}
 
-      {editId && (() => {
-        const p = partners.find(x => x.id === editId);
-        if (!p) return null;
-        return (
-          <div className="swa-card" style={{ marginTop: 16, borderColor: 'var(--color-primary-light)' }}>
-            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: 'var(--color-text-primary)' }}>Edit: {p.name}</div>
-            <PartnerForm
-              initial={{ name: p.name, description: p.description ?? '', logoUrl: p.logoUrl ?? '', url: p.url ?? '', slug: p.slug, sortOrder: p.sortOrder, active: p.active }}
-              onSave={d => handleUpdate(p.id, d)}
-              onCancel={() => setEditId(null)}
-              saving={false}
-            />
-          </div>
-        );
-      })()}
 
       {!loading && partners.length > 0 && (
         <div style={{ marginTop: 16, display: 'flex', gap: 16, fontSize: 12, color: 'var(--color-text-faint)' }}>

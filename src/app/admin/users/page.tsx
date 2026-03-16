@@ -2,11 +2,10 @@ import { createClient as adminClient } from "@supabase/supabase-js";
 import UsersClient from "@/components/admin/UsersClient";
 
 async function getUsers() {
-  const sb = adminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
+  const url  = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key  = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return [];
+  const sb = adminClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
   const { data, error } = await sb.auth.admin.listUsers();
   if (error) return [];
   return data.users.map(u => ({

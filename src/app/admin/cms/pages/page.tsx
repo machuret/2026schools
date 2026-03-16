@@ -1,83 +1,111 @@
-import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+"use client";
 
-export default async function CmsPagesPage() {
-  const sb = await createClient();
-  const { data: pages } = await sb
-    .from("pages")
-    .select("id, slug, title, description, status, show_in_menu, updated_at")
-    .order("updated_at", { ascending: false });
+import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
+
+interface Page {
+  id: string; slug: string; title: string; status: string;
+  show_in_menu: boolean; updated_at: string;
+}
+
+export default function CmsPagesPage() {
+  const [pages, setPages]   = useState<Page[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]   = useState("");
+
+  const fetchPages = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/cms/pages");
+      const d = await res.json();
+      setPages(Array.isArray(d) ? d : (d.pages ?? []));
+    } catch { setError("Failed to load pages."); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchPages(); }, [fetchPages]);
+
+  async function deletePage(id: string, title: string) {
+    if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+    const prev = pages;
+    setPages(p => p.filter(x => x.id !== id));
+    const res = await fetch(`/api/admin/cms/pages/${id}`, { method: "DELETE" });
+    if (!res.ok) { setPages(prev); setError("Failed to delete page."); }
+  }
 
   return (
     <div>
-      <div className="admin-page-header">
-        <div className="flex items-center gap-4">
-          <h1>CMS Pages</h1>
-          <span className="admin-badge admin-badge-indigo">{pages?.length ?? 0} records</span>
+      <div className="swa-page-header">
+        <div>
+          <h1 className="swa-page-title">CMS Pages</h1>
+          <p className="swa-page-subtitle">
+            {loading ? "Loading…" : `${pages.length} page${pages.length !== 1 ? "s" : ""}`} · static content pages
+          </p>
         </div>
-        <Link href="/admin/cms/pages/new" className="admin-btn admin-btn-primary">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <Link href="/admin/cms/pages/new" className="swa-btn swa-btn--primary" style={{ textDecoration: "none" }}>
+          <span className="material-symbols-outlined" style={{ fontSize: 16 }}>add</span>
           New Page
         </Link>
       </div>
 
-      {(!pages || pages.length === 0) ? (
-        <div className="admin-empty">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-          </svg>
-          <h3>No pages yet</h3>
-          <p>Create your first page and add it to the front-end menu.</p>
-          <Link href="/admin/cms/pages/new" className="admin-btn admin-btn-primary">Create a page</Link>
+      {error && <div className="swa-alert swa-alert--error" style={{ marginBottom: 20 }}>{error}</div>}
+
+      {!loading && pages.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "80px 24px", color: "#9CA3AF" }}>
+          <span className="material-symbols-outlined" style={{ fontSize: 48, display: "block", marginBottom: 16 }}>article</span>
+          <h3 style={{ color: "#1E1040", marginBottom: 8 }}>No pages yet</h3>
+          <p style={{ marginBottom: 20 }}>Create your first CMS page to add it to the site.</p>
+          <Link href="/admin/cms/pages/new" className="swa-btn swa-btn--primary" style={{ textDecoration: "none" }}>Create a page</Link>
         </div>
       ) : (
-        <div className="admin-table-wrap">
-          <table className="admin-table">
+        <div className="swa-card" style={{ padding: 0, overflowX: "auto" }}>
+          <table className="swa-table">
             <thead>
               <tr>
                 <th>Title</th>
                 <th>Status</th>
-                <th className="hidden md:table-cell">In Menu</th>
-                <th className="hidden md:table-cell">Updated</th>
-                <th>Actions</th>
+                <th>In Menu</th>
+                <th>Updated</th>
+                <th style={{ textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
+              {loading && (
+                <tr><td colSpan={5} style={{ textAlign: "center", padding: "40px", color: "var(--color-text-faint)" }}>Loading…</td></tr>
+              )}
               {pages.map((page) => (
                 <tr key={page.id}>
                   <td>
-                    <div className="text-[15px] font-semibold" style={{ color: "var(--admin-text-primary)" }}>{page.title}</div>
-                    <div className="text-xs mt-1" style={{ color: "var(--admin-text-faint)" }}>/{page.slug}</div>
+                    <div style={{ fontWeight: 600, color: "var(--color-text-primary)" }}>{page.title}</div>
+                    <div style={{ fontSize: 11, color: "var(--color-text-faint)", marginTop: 2 }}>/{page.slug}</div>
                   </td>
                   <td>
-                    <span className={`admin-badge ${page.status === "published" ? "admin-badge-green" : "admin-badge-slate"}`}>
+                    <span className={`swa-badge ${page.status === "published" ? "swa-badge--success" : "swa-badge--primary"}`}>
                       {page.status === "published" ? "Published" : "Draft"}
                     </span>
                   </td>
-                  <td className="hidden md:table-cell">
-                    <span className={`admin-badge ${page.show_in_menu ? "admin-badge-indigo" : "admin-badge-slate"}`}>
+                  <td>
+                    <span className={`swa-badge ${page.show_in_menu ? "swa-badge--info" : ""}`}
+                      style={!page.show_in_menu ? { background: "#F3F4F6", color: "#9CA3AF" } : {}}>
                       {page.show_in_menu ? "In menu" : "Hidden"}
                     </span>
                   </td>
-                  <td className="hidden md:table-cell">
-                    <span className="text-sm" style={{ color: "var(--admin-text-muted)" }}>
-                      {new Date(page.updated_at).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}
-                    </span>
+                  <td style={{ fontSize: 12, color: "var(--color-text-faint)" }}>
+                    {new Date(page.updated_at).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}
                   </td>
-                  <td>
-                    <div className="flex items-center justify-end gap-1">
+                  <td style={{ textAlign: "right" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
                       {page.status === "published" && (
-                        <Link href={`/pages/${page.slug}`} target="_blank" className="admin-icon-btn" title="View on site">
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-                          </svg>
+                        <Link href={`/pages/${page.slug}`} target="_blank" className="swa-icon-btn" title="View on site">
+                          <span className="material-symbols-outlined" style={{ fontSize: 17 }}>open_in_new</span>
                         </Link>
                       )}
-                      <Link href={`/admin/cms/pages/${page.id}`} className="admin-icon-btn" title="Edit">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                        </svg>
+                      <Link href={`/admin/cms/pages/${page.id}`} className="swa-icon-btn" title="Edit">
+                        <span className="material-symbols-outlined" style={{ fontSize: 17 }}>edit</span>
                       </Link>
+                      <button onClick={() => deletePage(page.id, page.title)} className="swa-icon-btn" title="Delete"
+                        style={{ color: "#EF4444" }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 17 }}>delete</span>
+                      </button>
                     </div>
                   </td>
                 </tr>

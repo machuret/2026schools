@@ -47,9 +47,23 @@ function parseBody(raw: string): Block[] {
   return blocks;
 }
 
-export default function EventBodyRenderer({ content }: { content: string }) {
-  const blocks = parseBody(content);
+function isHtml(s: string) {
+  return /^\s*</.test(s);
+}
 
+export default function EventBodyRenderer({ content }: { content: string }) {
+  if (!content?.trim()) return null;
+
+  if (isHtml(content)) {
+    return (
+      <div
+        className="event-body event-body--html"
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
+    );
+  }
+
+  const blocks = parseBody(content);
   return (
     <div className="event-body">
       {blocks.map((block, i) => {

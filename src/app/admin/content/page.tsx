@@ -1,80 +1,156 @@
+"use client";
+
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/client";
 
-export default async function AdminContentPage() {
-  const sb = await createClient();
-  const { data: areas } = await sb
-    .from("areas")
-    .select("id, slug, name, state, type, issues, updated_at")
-    .order("state")
-    .order("name");
+interface Area {
+  id: string; slug: string; name: string; state: string;
+  type: string; issues: unknown; updated_at: string;
+  seo_title?: string;
+}
 
-  const count = areas?.length ?? 0;
+export default function AdminContentPage() {
+  const [areas, setAreas]   = useState<Area[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch]   = useState("");
+  const [stateFilter, setStateFilter] = useState("all");
+
+  useEffect(() => {
+    const sb = createClient();
+    sb.from("areas")
+      .select("id, slug, name, state, type, issues, updated_at, seo_title")
+      .order("state").order("name")
+      .then(({ data }) => { setAreas((data ?? []) as Area[]); setLoading(false); });
+  }, []);
+
+  const states = useMemo(() =>
+    ["all", ...Array.from(new Set(areas.map(a => a.state))).sort()],
+  [areas]);
+
+  const filtered = useMemo(() => areas.filter(a => {
+    const matchSearch = !search ||
+      a.name.toLowerCase().includes(search.toLowerCase()) ||
+      a.slug.toLowerCase().includes(search.toLowerCase()) ||
+      a.state.toLowerCase().includes(search.toLowerCase());
+    const matchState = stateFilter === "all" || a.state === stateFilter;
+    return matchSearch && matchState;
+  }), [areas, search, stateFilter]);
 
   return (
     <div>
-      {/* Page header — button inside the header, not floating */}
       <div className="swa-page-header">
         <div>
-          <h1>Areas</h1>
-          <p>{count} cities, regions and LGAs with wellbeing reports.</p>
+          <h1 className="swa-page-title">Areas</h1>
+          <p className="swa-page-subtitle">
+            {loading ? "Loading…" : `${areas.length} cities, regions and LGAs`}
+          </p>
         </div>
-        <Link href="/admin/content/new" className="swa-btn swa-btn-primary" style={{ textDecoration: 'none' }}>
+        <Link href="/admin/content/new" className="swa-btn swa-btn--primary" style={{ textDecoration: "none" }}>
           <span className="material-symbols-outlined" style={{ fontSize: 16 }}>add</span>
           New Area
         </Link>
       </div>
 
-      {/* Table card with horizontal scroll to prevent clipping */}
-      <div className="swa-card" style={{ padding: 0, overflowX: 'auto' }}>
-        <table className="swa-table" style={{ minWidth: 900 }}>
+      {/* Filters row */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
+        {/* Search */}
+        <div style={{ position: "relative", flex: "1 1 240px", maxWidth: 340 }}>
+          <span className="material-symbols-outlined" style={{
+            position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
+            fontSize: 17, color: "#9CA3AF", pointerEvents: "none",
+          }}>search</span>
+          <input
+            type="search"
+            placeholder="Search areas…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="swa-form-input"
+            style={{ paddingLeft: 36 }}
+          />
+        </div>
+
+        {/* State filter */}
+        <select
+          value={stateFilter}
+          onChange={e => setStateFilter(e.target.value)}
+          className="swa-form-input"
+          style={{ width: "auto", minWidth: 180 }}
+        >
+          {states.map(s => (
+            <option key={s} value={s}>
+              {s === "all" ? "All states" : s}
+            </option>
+          ))}
+        </select>
+
+        <span style={{ fontSize: 12, color: "var(--color-text-faint)", marginLeft: "auto" }}>
+          {loading ? "Loading…" : `${filtered.length} of ${areas.length}`}
+        </span>
+      </div>
+
+      {/* Table */}
+      <div className="swa-card" style={{ padding: 0, overflowX: "auto" }}>
+        <table className="swa-table" style={{ minWidth: 860 }}>
           <thead>
             <tr>
               <th>Area</th>
               <th>State</th>
               <th>Type</th>
               <th>Issues</th>
-              <th style={{ textAlign: 'right' }}>Actions</th>
+              <th>SEO</th>
+              <th>Updated</th>
+              <th style={{ textAlign: "right" }}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {(areas ?? []).map((area) => {
+            {loading && (
+              <tr>
+                <td colSpan={7} style={{ textAlign: "center", padding: "40px 16px", color: "var(--color-text-faint)" }}>
+                  Loading…
+                </td>
+              </tr>
+            )}
+            {!loading && filtered.length === 0 && (
+              <tr>
+                <td colSpan={7} style={{ textAlign: "center", padding: "40px 16px", color: "var(--color-text-faint)" }}>
+                  No areas match your filters.
+                </td>
+              </tr>
+            )}
+            {filtered.map((area) => {
               const issueCount = Array.isArray(area.issues) ? area.issues.length : 0;
               const typeLabel = area.type === "city" ? "City" : area.type === "lga" ? "LGA" : "Region";
               const typeBadge = area.type === "city" ? "swa-badge--warning"
                 : area.type === "lga" ? "swa-badge--primary" : "swa-badge--info";
+              const hasSeo = !!(area.seo_title?.trim());
+              const updatedDate = area.updated_at
+                ? new Date(area.updated_at).toLocaleDateString("en-AU", { day: "numeric", month: "short" })
+                : "—";
               return (
                 <tr key={area.id}>
                   <td>
-                    <span style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{area.name}</span>
-                    <div style={{ fontSize: 12, color: 'var(--color-text-faint)', marginTop: 2 }}>/areas/{area.slug}</div>
+                    <span style={{ fontWeight: 600, color: "var(--color-text-primary)" }}>{area.name}</span>
+                    <div style={{ fontSize: 11, color: "var(--color-text-faint)", marginTop: 2 }}>/areas/{area.slug}</div>
                   </td>
-                  <td>{area.state}</td>
+                  <td style={{ fontSize: 13, color: "var(--color-text-body)" }}>{area.state}</td>
+                  <td><span className={`swa-badge ${typeBadge}`}>{typeLabel}</span></td>
+                  <td><span className="swa-badge swa-badge--info">{issueCount}</span></td>
                   <td>
-                    <span className={`swa-badge ${typeBadge}`}>{typeLabel}</span>
+                    {hasSeo
+                      ? <span className="swa-badge swa-badge--success">✓ Set</span>
+                      : <Link href="/admin/seo" className="swa-badge" style={{ background: "#FEF3C7", color: "#D97706", textDecoration: "none", fontSize: 11 }}>Missing</Link>
+                    }
                   </td>
-                  <td>
-                    <span className="swa-badge swa-badge--info">{issueCount}</span>
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
-                      <Link
-                        href={`/areas/${area.slug}`}
-                        target="_blank"
-                        style={{
-                          fontSize: 12, fontWeight: 600, padding: '5px 10px',
-                          borderRadius: 'var(--radius-sm)', textDecoration: 'none',
-                          border: '1px solid var(--color-border)', color: 'var(--color-text-muted)',
-                          background: 'var(--color-card)',
-                        }}
-                      >
+                  <td style={{ fontSize: 12, color: "var(--color-text-faint)" }}>{updatedDate}</td>
+                  <td style={{ textAlign: "right" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
+                      <Link href={`/areas/${area.slug}`} target="_blank" className="swa-btn swa-btn--ghost"
+                        style={{ fontSize: 12, padding: "5px 10px", textDecoration: "none" }}>
                         View ↗
                       </Link>
-                      <Link
-                        href={`/admin/content/${area.id}`}
-                        className="swa-btn swa-btn-primary"
-                        style={{ fontSize: 12, padding: '5px 12px', textDecoration: 'none' }}
-                      >
+                      <Link href={`/admin/content/${area.id}`} className="swa-btn swa-btn--primary"
+                        style={{ fontSize: 12, padding: "5px 12px", textDecoration: "none" }}>
                         Edit
                       </Link>
                     </div>

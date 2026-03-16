@@ -298,8 +298,8 @@ export default function EventEditForm({ event }: Props) {
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
               <label className="swa-form-label" style={{ marginBottom: 0 }}>About the Event (short description)</label>
-              <span style={{ fontSize: "0.72rem", color: form.description.length > 400 ? "#EF4444" : "#9CA3AF" }}>
-                {form.description.length} / 500 chars
+              <span style={{ fontSize: "0.72rem", color: form.description.replace(/<[^>]*>/g, "").length > 400 ? "#EF4444" : "#9CA3AF" }}>
+                {form.description.replace(/<[^>]*>/g, "").length} / 500 chars
               </span>
             </div>
             <RichTextEditor

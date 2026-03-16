@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-type TableKey = "events" | "areas" | "issues";
+type TableKey = "events" | "areas" | "issues" | "states";
 
 interface Row {
   id: string;
@@ -15,10 +15,18 @@ interface Row {
 }
 
 const TABLE_CONFIG: Record<TableKey, { label: string; select: string; labelField: string }> = {
-  events: { label: "Events",      select: "id, title, seo_title, seo_desc",       labelField: "title" },
-  areas:  { label: "Areas",       select: "id, name, seo_title, seo_desc",        labelField: "name"  },
-  issues: { label: "Issues",      select: "id, title, seo_title, seo_desc",       labelField: "title" },
+  events: { label: "Events",  select: "id, title, seo_title, seo_desc", labelField: "title" },
+  areas:  { label: "Areas",   select: "id, name, seo_title, seo_desc",  labelField: "name"  },
+  issues: { label: "Issues",  select: "id, title, seo_title, seo_desc", labelField: "title" },
+  states: { label: "States",  select: "id, name, seo_title, seo_desc",  labelField: "name"  },
 };
+
+function charColor(len: number, max: number): string {
+  if (len === 0) return "var(--color-text-faint)";
+  if (len > max) return "#EF4444";
+  if (len > max * 0.9) return "#F59E0B";
+  return "#10B981";
+}
 
 const MISSING_ONLY_LABEL = "Missing SEO only";
 
@@ -222,8 +230,8 @@ export default function AdminSeoPage() {
                 />
               </th>
               <th>Record</th>
-              <th>SEO Title</th>
-              <th>SEO Description</th>
+              <th>SEO Title <span style={{ fontWeight: 400, color: 'var(--color-text-faint)', fontSize: 11 }}>(max 60)</span></th>
+              <th>SEO Description <span style={{ fontWeight: 400, color: 'var(--color-text-faint)', fontSize: 11 }}>(max 160)</span></th>
               <th>Status</th>
             </tr>
           </thead>
@@ -259,16 +267,28 @@ export default function AdminSeoPage() {
                   </span>
                 </td>
                 <td style={{ padding: "12px 16px" }}>
-                  {row.seo_title
-                    ? <span style={{ fontSize: 12, color: "var(--color-text-body)" }}>{row.seo_title}</span>
-                    : <span style={{ fontSize: 12, color: "var(--color-text-faint)", fontStyle: "italic" }}>—</span>
-                  }
+                  {row.seo_title ? (
+                    <>
+                      <span style={{ fontSize: 12, color: "var(--color-text-body)", display: "block" }}>{row.seo_title}</span>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: charColor(row.seo_title.length, 60) }}>
+                        {row.seo_title.length}/60
+                      </span>
+                    </>
+                  ) : (
+                    <span style={{ fontSize: 12, color: "var(--color-text-faint)", fontStyle: "italic" }}>—</span>
+                  )}
                 </td>
                 <td style={{ padding: "12px 16px" }}>
-                  {row.seo_desc
-                    ? <span style={{ fontSize: 12, color: "var(--color-text-body)" }}>{row.seo_desc}</span>
-                    : <span style={{ fontSize: 12, color: "var(--color-text-faint)", fontStyle: "italic" }}>—</span>
-                  }
+                  {row.seo_desc ? (
+                    <>
+                      <span style={{ fontSize: 12, color: "var(--color-text-body)", display: "block" }}>{row.seo_desc}</span>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: charColor(row.seo_desc.length, 160) }}>
+                        {row.seo_desc.length}/160
+                      </span>
+                    </>
+                  ) : (
+                    <span style={{ fontSize: 12, color: "var(--color-text-faint)", fontStyle: "italic" }}>—</span>
+                  )}
                 </td>
                 <td style={{ padding: "12px 16px" }}>
                   {row.status === "idle" && (

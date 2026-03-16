@@ -174,51 +174,57 @@ export default function AdminFaqPage() {
             </thead>
             <tbody>
               {faqs.map(f => (
-                <tr key={f.id} style={{ opacity: f.active ? 1 : 0.5 }}>
-                  <td>
-                    <div style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{f.question}</div>
-                    <div style={{ fontSize: 12, color: 'var(--color-text-faint)', marginTop: 2, display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{f.answer}</div>
-                  </td>
-                  <td><span className="swa-badge swa-badge--info">{f.category || 'General'}</span></td>
-                  <td style={{ textAlign: 'center' }}><span className="swa-badge swa-badge--primary">#{f.sortOrder}</span></td>
-                  <td>
-                    <button onClick={() => toggleActive(f)} className={`swa-badge ${f.active ? 'swa-badge--success' : ''}`}
-                      style={{ cursor: 'pointer', border: 'none', background: f.active ? undefined : 'rgba(156,163,175,0.1)', color: f.active ? undefined : 'var(--color-text-faint)' }}>
-                      {f.active ? 'Active' : 'Hidden'}
-                    </button>
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-                      <button onClick={() => setEditId(editId === f.id ? null : f.id)} className="swa-btn-ghost" title="Edit" style={{ padding: 4 }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: 16 }}>edit</span>
+                <>
+                  <tr key={f.id} style={{ opacity: f.active ? 1 : 0.5 }}>
+                    <td>
+                      <div style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{f.question}</div>
+                      <div style={{ fontSize: 12, color: 'var(--color-text-faint)', marginTop: 2, display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{f.answer}</div>
+                    </td>
+                    <td><span className="swa-badge swa-badge--info">{f.category || 'General'}</span></td>
+                    <td style={{ textAlign: 'center' }}><span className="swa-badge swa-badge--primary">#{f.sortOrder}</span></td>
+                    <td>
+                      <button onClick={() => toggleActive(f)} className={`swa-badge ${f.active ? 'swa-badge--success' : ''}`}
+                        style={{ cursor: 'pointer', border: 'none', background: f.active ? undefined : 'rgba(156,163,175,0.1)', color: f.active ? undefined : 'var(--color-text-faint)' }}>
+                        {f.active ? 'Active' : 'Hidden'}
                       </button>
-                      <button onClick={() => handleDelete(f.id, f.question)} className="swa-btn-ghost" title="Delete" style={{ padding: 4, color: 'var(--color-error)' }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete</span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
+                        <button onClick={() => setEditId(editId === f.id ? null : f.id)} className="swa-btn-ghost" title="Edit"
+                          style={{ padding: 4, color: editId === f.id ? 'var(--color-primary)' : undefined }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: 16 }}>{editId === f.id ? 'expand_less' : 'edit'}</span>
+                        </button>
+                        <button onClick={async () => {
+                          try { await handleDelete(f.id, f.question); }
+                          catch (err) { setError(err instanceof Error ? err.message : 'Delete failed'); }
+                        }} className="swa-btn-ghost" title="Delete" style={{ padding: 4, color: 'var(--color-error)' }}>
+                          <span className="material-symbols-outlined" style={{ fontSize: 16 }}>delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  {editId === f.id && (
+                    <tr key={`${f.id}-edit`}>
+                      <td colSpan={5} style={{ padding: '0 0 8px 0', background: '#FAFAFA', borderTop: 'none' }}>
+                        <div style={{ padding: '16px 20px', borderLeft: '3px solid var(--color-primary)', margin: '0 4px 4px' }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14, color: 'var(--color-text-primary)' }}>Edit FAQ</div>
+                          <FaqForm
+                            initial={{ question: f.question, answer: f.answer, category: f.category ?? '', sortOrder: f.sortOrder, active: f.active }}
+                            onSave={d => handleUpdate(f.id, d)}
+                            onCancel={() => setEditId(null)}
+                            saving={false}
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </>
               ))}
             </tbody>
           </table>
         </div>
       )}
 
-      {editId && (() => {
-        const f = faqs.find(x => x.id === editId);
-        if (!f) return null;
-        return (
-          <div className="swa-card" style={{ marginTop: 16, borderColor: 'var(--color-primary-light)' }}>
-            <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: 'var(--color-text-primary)' }}>Edit FAQ</div>
-            <FaqForm
-              initial={{ question: f.question, answer: f.answer, category: f.category ?? '', sortOrder: f.sortOrder, active: f.active }}
-              onSave={d => handleUpdate(f.id, d)}
-              onCancel={() => setEditId(null)}
-              saving={false}
-            />
-          </div>
-        );
-      })()}
 
       {!loading && faqs.length > 0 && (
         <div style={{ marginTop: 16, display: 'flex', gap: 16, fontSize: 12, color: 'var(--color-text-faint)' }}>

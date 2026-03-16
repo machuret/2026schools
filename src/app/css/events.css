@@ -281,6 +281,32 @@
   margin-top: 2px;
 }
 
+/* ── Event body HTML prose (RTE output) ── */
+.event-body--html { display: block; }
+.event-body--html h2 {
+  font-size: 1.15rem; font-weight: 700; color: var(--navy);
+  margin: 28px 0 10px; line-height: 1.4;
+}
+.event-body--html h2:first-child { margin-top: 0; }
+.event-body--html h3 {
+  font-size: 1.02rem; font-weight: 700; color: var(--navy);
+  margin: 22px 0 8px; line-height: 1.4;
+}
+.event-body--html p {
+  font-size: 1rem; line-height: 1.85; color: var(--text-body); margin-bottom: 16px;
+}
+.event-body--html p:last-child { margin-bottom: 0; }
+.event-body--html ul, .event-body--html ol {
+  margin: 0 0 18px 0; padding-left: 24px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.event-body--html li { font-size: 0.97rem; line-height: 1.75; color: var(--text-body); }
+.event-body--html ol { list-style: decimal; }
+.event-body--html ul { list-style: disc; }
+.event-body--html strong { font-weight: 700; }
+.event-body--html em { font-style: italic; }
+.event-body--html a { color: var(--teal); text-decoration: underline; }
+
 /* ── Recording callout ── */
 .event-recording-callout {
   background: #F0FDF4;

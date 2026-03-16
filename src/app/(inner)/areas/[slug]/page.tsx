@@ -70,7 +70,11 @@ export default async function AreaPage({ params }: Props) {
         </div>
 
         <h1>{area.name}</h1>
-        <p className="area-hero-sub">{area.overview}</p>
+        {/^\s*</.test(area.overview ?? "") ? (
+          <div className="area-hero-sub" dangerouslySetInnerHTML={{ __html: area.overview }} />
+        ) : (
+          <p className="area-hero-sub">{area.overview}</p>
+        )}
 
         <div className="area-stats-row">
           <div className="area-stat-box">
@@ -117,7 +121,11 @@ export default async function AreaPage({ params }: Props) {
           <h2>How Data Changes Outcomes</h2>
           <div className="area-prevention">
             <div className="area-prevention__eyebrow">Prevention Insight</div>
-            <p>{area.prevention}</p>
+            {/^\s*</.test(area.prevention ?? "") ? (
+              <div dangerouslySetInnerHTML={{ __html: area.prevention }} />
+            ) : (
+              <p>{area.prevention}</p>
+            )}
             <a href="https://www.lifeskillsgroup.com.au/" target="_blank" rel="noopener noreferrer" className="area-prevention__cta">
               Explore Life Skills GO →
             </a>

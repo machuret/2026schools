@@ -25,6 +25,7 @@ export default function AdminEventsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState("");
   const [search, setSearch]   = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   useEffect(() => {
     fetch("/api/admin/events")
@@ -33,26 +34,47 @@ export default function AdminEventsPage() {
       .catch((e) => { setError(e.message); setLoading(false); });
   }, []);
 
-  const filtered = events.filter(
-    (e) =>
-      !search ||
+  const filtered = events.filter((e) => {
+    const matchSearch = !search ||
       e.title.toLowerCase().includes(search.toLowerCase()) ||
-      e.slug.toLowerCase().includes(search.toLowerCase())
-  );
+      e.slug.toLowerCase().includes(search.toLowerCase());
+    const matchStatus = statusFilter === "all" ||
+      (statusFilter === "published" && e.published) ||
+      (statusFilter === "draft" && !e.published) ||
+      e.status === statusFilter;
+    return matchSearch && matchStatus;
+  });
+
+  const STATUS_TABS = [
+    { id: "all",       label: "All",       count: events.length },
+    { id: "published", label: "Published", count: events.filter(e => e.published).length },
+    { id: "draft",     label: "Drafts",    count: events.filter(e => !e.published).length },
+    { id: "upcoming",  label: "Upcoming",  count: events.filter(e => e.status === "upcoming").length },
+    { id: "past",      label: "Past",      count: events.filter(e => e.status === "past").length },
+  ];
 
   async function togglePublish(id: string, current: boolean) {
-    await fetch(`/api/admin/events/${id}`, {
+    setEvents((evs) => evs.map((e) => (e.id === id ? { ...e, published: !current } : e)));
+    const res = await fetch(`/api/admin/events/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ published: !current }),
     });
-    setEvents((evs) => evs.map((e) => (e.id === id ? { ...e, published: !current } : e)));
+    if (!res.ok) {
+      setEvents((evs) => evs.map((e) => (e.id === id ? { ...e, published: current } : e)));
+      setError("Failed to update publish status. Please try again.");
+    }
   }
 
   async function deleteEvent(id: string, title: string) {
     if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
-    await fetch(`/api/admin/events/${id}`, { method: "DELETE" });
+    const prev = events;
     setEvents((evs) => evs.filter((e) => e.id !== id));
+    const res = await fetch(`/api/admin/events/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      setEvents(prev);
+      setError("Failed to delete event. Please try again.");
+    }
   }
 
   return (
@@ -69,6 +91,30 @@ export default function AdminEventsPage() {
       </div>
 
       {error && <div className="swa-alert swa-alert--error" style={{ marginBottom: 20 }}>{error}</div>}
+
+      {/* Status filter tabs */}
+      <div style={{ display: "flex", gap: 4, marginBottom: 16, borderBottom: "1px solid #E5E7EB", paddingBottom: 0 }}>
+        {STATUS_TABS.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setStatusFilter(t.id)}
+            style={{
+              padding: "8px 14px", fontSize: 13, fontWeight: statusFilter === t.id ? 700 : 500,
+              border: "none", background: "transparent", cursor: "pointer",
+              color: statusFilter === t.id ? "var(--color-primary)" : "var(--color-text-muted)",
+              borderBottom: statusFilter === t.id ? "2px solid var(--color-primary)" : "2px solid transparent",
+              marginBottom: -1, display: "flex", alignItems: "center", gap: 6,
+            }}
+          >
+            {t.label}
+            <span style={{
+              fontSize: 11, padding: "1px 6px", borderRadius: 100, fontWeight: 700,
+              background: statusFilter === t.id ? "var(--color-primary)" : "#F3F4F6",
+              color: statusFilter === t.id ? "#fff" : "var(--color-text-muted)",
+            }}>{t.count}</span>
+          </button>
+        ))}
+      </div>
 
       {/* Search */}
       <div style={{ position: "relative", maxWidth: 360, marginBottom: 20 }}>
