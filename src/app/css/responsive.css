@@ -29,12 +29,12 @@
   .hero-sub { font-size: 1rem; margin-bottom: 40px; }
   .hero-stats {
     display: grid; grid-template-columns: 1fr 1fr;
-    gap: 0; padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.12);
+    gap: 0; padding-top: 32px; border-top: 1px solid var(--border);
   }
   .hero-stat {
     padding: 20px 16px; margin: 0;
-    border-right: 1px solid rgba(255,255,255,0.1);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
   }
   .hero-stat:nth-child(even) { border-right: none; }
   .hero-stat:nth-last-child(-n+2) { border-bottom: none; }
@@ -93,6 +93,11 @@
   /* Research */
   .research-grid { grid-template-columns: 1fr; gap: 20px; }
   .research-finding-stat { min-width: 48px; font-size: 1rem; }
+
+  /* Intro section */
+  .intro-section { padding: 48px 20px; }
+  .intro-block-primary, .intro-block-secondary { padding: 28px 24px; }
+  .intro-pillars { gap: 10px; }
 
   /* Data section */
   .data-grid { grid-template-columns: 1fr; gap: 16px; }
