@@ -22,8 +22,8 @@ export default async function AdminUsersPage() {
     <div>
       <div className="swa-page-header">
         <div>
-          <h1>User Management</h1>
-          <p>Create, edit or delete admin users who have access to the backend.</p>
+          <h1 className="swa-page-title">User Management</h1>
+          <p className="swa-page-subtitle">Create, edit or delete admin users who have access to the backend.</p>
         </div>
       </div>
       <UsersClient initialUsers={users} />

@@ -11,7 +11,6 @@ const VAL: React.CSSProperties = { fontSize: 13, color: 'var(--color-text-muted)
 export default async function AdminSettingsPage() {
   let apiKeyCount = 0;
   let promptCount = 0;
-  let userCount   = 0;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '—';
   const openaiSet   = !!(process.env.OPENAI_API_KEY);
   const serviceSet  = !!(process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -24,7 +23,7 @@ export default async function AdminSettingsPage() {
     ]);
     apiKeyCount  = keys.count    ?? 0;
     promptCount  = prompts.count ?? 0;
-  } catch { /* env vars may be missing at build time */ }
+  } catch (e) { console.error('Settings fetch error:', e); }
 
   const badge = (ok: boolean, yes = 'Set', no = 'Missing') => (
     <span className={`swa-badge ${ok ? 'swa-badge--success' : 'swa-badge--error'}`}

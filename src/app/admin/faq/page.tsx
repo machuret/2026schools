@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 
 interface Faq {
@@ -76,6 +76,7 @@ export default function AdminFaqPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
@@ -102,11 +103,18 @@ export default function AdminFaqPage() {
   };
 
   const handleUpdate = async (id: string, patch: Partial<Faq> | FormData) => {
-    const res = await fetch(`/api/admin/faq/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) });
-    const d = await res.json();
-    if (!res.ok) throw new Error(d.error || 'Update failed');
-    setFaqs(prev => prev.map(f => f.id === id ? d.faq : f));
-    setEditId(null);
+    setUpdatingId(id);
+    try {
+      const res = await fetch(`/api/admin/faq/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Update failed');
+      setFaqs(prev => prev.map(f => f.id === id ? d.faq : f));
+      setEditId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Update failed');
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
   const handleDelete = async (id: string, question: string) => {
@@ -131,7 +139,7 @@ export default function AdminFaqPage() {
           <Link href="/faq" className="swa-btn" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', color: 'var(--color-text-body)', textDecoration: 'none' }}>
             <span className="material-symbols-outlined" style={{ fontSize: 15 }}>open_in_new</span> View Page
           </Link>
-          <button onClick={() => setShowCreate(true)} className="swa-btn swa-btn-primary">
+          <button onClick={() => setShowCreate(true)} className="swa-btn swa-btn--primary">
             <span className="material-symbols-outlined" style={{ fontSize: 15 }}>add</span> Add FAQ
           </button>
         </div>
@@ -147,7 +155,7 @@ export default function AdminFaqPage() {
       {showCreate && (
         <div className="swa-card" style={{ marginBottom: 20, borderColor: 'var(--color-primary-light)' }}>
           <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 16, color: 'var(--color-text-primary)' }}>New FAQ</div>
-          <FaqForm initial={emptyForm} onSave={handleCreate} onCancel={() => setShowCreate(false)} saving={creating} />
+          <FaqForm initial={emptyForm} onSave={d => handleCreate(d)} onCancel={() => setShowCreate(false)} saving={creating} />
         </div>
       )}
 
@@ -174,8 +182,8 @@ export default function AdminFaqPage() {
             </thead>
             <tbody>
               {faqs.map(f => (
-                <>
-                  <tr key={f.id} style={{ opacity: f.active ? 1 : 0.5 }}>
+                <React.Fragment key={f.id}>
+                  <tr style={{ opacity: f.active ? 1 : 0.5 }}>
                     <td>
                       <div style={{ fontWeight: 600, color: 'var(--color-text-primary)' }}>{f.question}</div>
                       <div style={{ fontSize: 12, color: 'var(--color-text-faint)', marginTop: 2, display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{f.answer}</div>
@@ -204,7 +212,7 @@ export default function AdminFaqPage() {
                     </td>
                   </tr>
                   {editId === f.id && (
-                    <tr key={`${f.id}-edit`}>
+                    <tr>
                       <td colSpan={5} style={{ padding: '0 0 8px 0', background: '#FAFAFA', borderTop: 'none' }}>
                         <div style={{ padding: '16px 20px', borderLeft: '3px solid var(--color-primary)', margin: '0 4px 4px' }}>
                           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14, color: 'var(--color-text-primary)' }}>Edit FAQ</div>
@@ -212,13 +220,13 @@ export default function AdminFaqPage() {
                             initial={{ question: f.question, answer: f.answer, category: f.category ?? '', sortOrder: f.sortOrder, active: f.active }}
                             onSave={d => handleUpdate(f.id, d)}
                             onCancel={() => setEditId(null)}
-                            saving={false}
+                            saving={updatingId === f.id}
                           />
                         </div>
                       </td>
                     </tr>
                   )}
-                </>
+                </React.Fragment>
               ))}
             </tbody>
           </table>

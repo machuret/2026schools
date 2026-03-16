@@ -179,12 +179,29 @@ export default function AdminEventsPage() {
                       </span>
                     )}
                   </div>
-                  <div style={{ fontSize: "0.78rem", color: "#9CA3AF", display: "flex", gap: 12, flexWrap: "wrap" }}>
-                    <span>📅 {formatDateShort(ev.event_date)}</span>
-                    {ev.event_time && <span>🕐 {ev.event_time}</span>}
-                    <span>📋 {FORMAT_LABEL[ev.format] ?? ev.format}</span>
-                    <span>{ev.is_free ? "🆓 Free" : `💳 ${ev.price}`}</span>
-                    <span style={{ color: "#C4B5FD" }}>/events/{ev.slug}</span>
+                  <div style={{ fontSize: "0.78rem", color: "#9CA3AF", display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 13 }}>calendar_today</span>
+                      {formatDateShort(ev.event_date)}
+                    </span>
+                    {ev.event_time && (
+                      <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 13 }}>schedule</span>
+                        {ev.event_time}
+                      </span>
+                    )}
+                    <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 13 }}>category</span>
+                      {FORMAT_LABEL[ev.format] ?? ev.format}
+                    </span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 13 }}>{ev.is_free ? "redeem" : "payments"}</span>
+                      {ev.is_free ? "Free" : ev.price}
+                    </span>
+                    <span style={{ color: "#C4B5FD", display: "flex", alignItems: "center", gap: 3 }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 13 }}>link</span>
+                      /events/{ev.slug}
+                    </span>
                   </div>
                 </div>
 

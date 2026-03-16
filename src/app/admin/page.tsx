@@ -48,36 +48,34 @@ export default async function AdminDashboard() {
     publishedEventCount = eventsPublished.count ?? 0;
     seoMissingCount = seoMissing.count ?? 0;
 
-    // Build real activity feed by merging and sorting the three tables
+    // Build real activity feed — carry raw timestamp for correct sort
     type RawRow = { id: string; title?: string; name?: string; state?: string; updated_at: string };
-    const rows: ActivityRow[] = [
+    type ActivityRowWithTs = ActivityRow & { _ts: string };
+    const rows: ActivityRowWithTs[] = [
       ...((recentIssues.data ?? []) as RawRow[]).map(r => ({
         ms: 'warning', bg: '#fef3c7', color: '#d97706',
         title: 'Issue updated', desc: r.title ?? '—',
         time: timeAgo(r.updated_at), href: `/admin/issues/${r.id}`,
+        _ts: r.updated_at,
       })),
       ...((recentAreas.data ?? []) as RawRow[]).map(r => ({
         ms: 'location_on', bg: '#ede9fe', color: '#7c3aed',
         title: 'Area updated', desc: `${r.name ?? '—'}, ${r.state ?? ''}`,
         time: timeAgo(r.updated_at), href: `/admin/content/${r.id}`,
+        _ts: r.updated_at,
       })),
       ...((recentEvents.data ?? []) as RawRow[]).map(r => ({
         ms: 'event', bg: '#e0f2fe', color: '#0284c7',
         title: 'Event updated', desc: r.title ?? '—',
         time: timeAgo(r.updated_at), href: `/admin/events/${r.id}`,
+        _ts: r.updated_at,
       })),
     ];
-    rows.sort((a, b) => {
-      const ta = recentIssues.data?.find((x: RawRow) => a.desc === x.title)?.updated_at
-        ?? recentAreas.data?.find((x: RawRow) => a.desc?.startsWith(x.name ?? ''))?.updated_at
-        ?? recentEvents.data?.find((x: RawRow) => a.desc === x.title)?.updated_at ?? '';
-      const tb = recentIssues.data?.find((x: RawRow) => b.desc === x.title)?.updated_at
-        ?? recentAreas.data?.find((x: RawRow) => b.desc?.startsWith(x.name ?? ''))?.updated_at
-        ?? recentEvents.data?.find((x: RawRow) => b.desc === x.title)?.updated_at ?? '';
-      return tb.localeCompare(ta);
-    });
-    activity = rows.slice(0, 6);
-  } catch { /* middleware ensures auth */ }
+    rows.sort((a, b) => b._ts.localeCompare(a._ts));
+    activity = rows.slice(0, 6).map(({ _ts: _, ...rest }) => rest);
+  } catch (e) {
+    console.error('Dashboard fetch error:', e);
+  }
 
   const today = new Date().toLocaleDateString('en-AU', { weekday: 'long', month: 'long', day: 'numeric' });
 

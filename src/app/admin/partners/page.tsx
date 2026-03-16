@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -99,6 +99,7 @@ function PartnerForm({ initial, onSave, onCancel, saving }: {
 }
 
 export default function AdminPartnersPage() {
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
@@ -130,11 +131,18 @@ export default function AdminPartnersPage() {
   };
 
   const handleUpdate = async (id: string, patch: Partial<Partner> | FormData) => {
-    const res = await fetch(`/api/admin/partners/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) });
-    const d = await res.json();
-    if (!res.ok) throw new Error(d.error || 'Update failed');
-    setPartners(prev => prev.map(p => p.id === id ? d.partner : p));
-    setEditId(null);
+    setUpdatingId(id);
+    try {
+      const res = await fetch(`/api/admin/partners/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Update failed');
+      setPartners(prev => prev.map(p => p.id === id ? d.partner : p));
+      setEditId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Update failed');
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
   const handleDelete = async (id: string, name: string) => {
@@ -203,8 +211,8 @@ export default function AdminPartnersPage() {
             </thead>
             <tbody>
               {partners.map(p => (
-                <>
-                  <tr key={p.id} style={{ opacity: p.active ? 1 : 0.5 }}>
+                <React.Fragment key={p.id}>
+                  <tr style={{ opacity: p.active ? 1 : 0.5 }}>
                     <td>
                       <div style={{ width: 32, height: 32, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--color-border)', background: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 4 }}>
                         {p.logoUrl ? (
@@ -245,7 +253,7 @@ export default function AdminPartnersPage() {
                     </td>
                   </tr>
                   {editId === p.id && (
-                    <tr key={`${p.id}-edit`}>
+                    <tr>
                       <td colSpan={6} style={{ padding: '0 0 8px 0', background: '#FAFAFA', borderTop: 'none' }}>
                         <div style={{ padding: '16px 20px', borderLeft: '3px solid var(--color-primary)', margin: '0 4px 4px' }}>
                           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14, color: 'var(--color-text-primary)' }}>Edit: {p.name}</div>
@@ -253,13 +261,13 @@ export default function AdminPartnersPage() {
                             initial={{ name: p.name, description: p.description ?? '', logoUrl: p.logoUrl ?? '', url: p.url ?? '', slug: p.slug, sortOrder: p.sortOrder, active: p.active }}
                             onSave={d => handleUpdate(p.id, d)}
                             onCancel={() => setEditId(null)}
-                            saving={creating}
+                            saving={updatingId === p.id}
                           />
                         </div>
                       </td>
                     </tr>
                   )}
-                </>
+                </React.Fragment>
               ))}
             </tbody>
           </table>

@@ -3,8 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import StatesClient from "@/components/admin/StatesClient";
 
 export default async function AdminStatesPage() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let states: any[] | null = null;
+  let states: { id: string; slug: string; name: string; icon: string; subtitle: string; issues: string[] | null; updated_at: string }[] | null = null;
   let fetchError = "";
   try {
     const sb = await createClient();
@@ -23,17 +22,17 @@ export default async function AdminStatesPage() {
       {/* Page header */}
       <div className="swa-page-header">
         <div>
-          <h1>States &amp; Territories</h1>
-          <p>Manage Australian states and territories with wellbeing issue tracking.</p>
+          <h1 className="swa-page-title">States &amp; Territories</h1>
+          <p className="swa-page-subtitle">Manage Australian states and territories with wellbeing issue tracking.</p>
         </div>
-        <Link href="/admin/states/new" className="swa-btn swa-btn-primary" style={{ textDecoration: 'none' }}>
+        <Link href="/admin/states/new" className="swa-btn swa-btn--primary" style={{ textDecoration: 'none' }}>
           <span className="material-symbols-outlined" style={{ fontSize: 16 }}>add</span>
           New State
         </Link>
       </div>
 
       {fetchError && (
-        <div className="admin-alert admin-alert-error" style={{ marginBottom: 24 }}>{fetchError}</div>
+        <div className="swa-alert swa-alert--error" style={{ marginBottom: 24 }}>{fetchError}</div>
       )}
 
       <StatesClient states={states ?? []} />

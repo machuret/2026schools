@@ -13,6 +13,7 @@ interface Area {
 export default function AdminContentPage() {
   const [areas, setAreas]   = useState<Area[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState("");
   const [search, setSearch]   = useState("");
   const [stateFilter, setStateFilter] = useState("all");
 
@@ -21,7 +22,11 @@ export default function AdminContentPage() {
     sb.from("areas")
       .select("id, slug, name, state, type, issues, updated_at, seo_title")
       .order("state").order("name")
-      .then(({ data }) => { setAreas((data ?? []) as Area[]); setLoading(false); });
+      .then(({ data, error }) => {
+        if (error) setFetchError(error.message);
+        else setAreas((data ?? []) as Area[]);
+        setLoading(false);
+      });
   }, []);
 
   const states = useMemo(() =>
@@ -51,6 +56,10 @@ export default function AdminContentPage() {
           New Area
         </Link>
       </div>
+
+      {fetchError && (
+        <div className="swa-alert swa-alert--error" style={{ marginBottom: 16 }}>{fetchError}</div>
+      )}
 
       {/* Filters row */}
       <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
