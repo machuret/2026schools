@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
-const WORDS = ["suicide", "anxiety", "self-harm", "loneliness", "burnout"];
+const WORDS = ["wellbeing", "resilience", "belonging", "engagement", "readiness"];
 
 export default function Hero() {
   const [titleNumber, setTitleNumber] = useState(0);
@@ -26,11 +26,11 @@ export default function Hero() {
       <div className="hero-inner">
         <div className="hero-tag">
           <span className="hero-tag-dot" />
-          Australian Schools Wellbeing Monitor · 2024–25
+          National Check-in Week · Australia 2026
         </div>
 
         <h1>
-          DataX is how we understand
+          Every student deserves to be
           <br />
           <span
             style={{
@@ -41,7 +41,7 @@ export default function Hero() {
               height: "1.2em",
               overflow: "hidden",
               verticalAlign: "bottom",
-              width: "clamp(180px, 50vw, 380px)",
+              width: "clamp(180px, 50vw, 420px)",
             }}
           >
             &nbsp;
@@ -66,16 +66,16 @@ export default function Hero() {
             ))}
           </span>
           <br />
-          before it becomes a tragedy
+          checked in on
         </h1>
 
         <p className="hero-sub">
-          Suicide. Anxiety. Self-harm. These are not school failures — they are complex challenges that schools, families and communities face together. What makes the difference is having the right data, early enough to act. This monitor exists to make that data visible.
+          National Check-in Week is a FREE initiative giving Australian school leaders the tools, data, and professional learning they need to support every student — before challenges become crises.
         </p>
 
         <div className="hero-cta-row">
-          <a href="#issues" className="hero-btn-primary">Explore the Issues</a>
-          <a href="#prevention" className="hero-btn-secondary">How Data Helps →</a>
+          <a href="#about" className="hero-btn-primary">Register for Free Webinars</a>
+          <a href="#issues" className="hero-btn-secondary">Explore the Issues →</a>
         </div>
 
         <div className="hero-stats">

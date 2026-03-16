@@ -4,7 +4,7 @@
 
 .section { padding: 96px 80px; }
 .section-alt { background: var(--gray-50); }
-.section-dark { background: var(--navy); }
+.section-dark { background: var(--gray-100); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .section-inner { max-width: 1280px; margin: 0 auto; }
 .section-tag {
   display: inline-block;
@@ -14,13 +14,13 @@
   border: 1px solid rgba(14,116,144,0.2);
 }
 .section-dark .section-tag {
-  color: var(--teal-light);
-  background: rgba(34,211,238,0.1); border-color: rgba(34,211,238,0.2);
+  color: var(--teal);
+  background: rgba(14,116,144,0.08); border-color: rgba(14,116,144,0.2);
 }
 .section h2 { color: var(--navy); margin-bottom: 16px; }
-.section-dark h2 { color: #FFFFFF; }
+.section-dark h2 { color: var(--navy); }
 .section-lead { font-size: 1.1rem; color: var(--text-mid); max-width: 680px; margin-bottom: 56px; line-height: 1.8; font-weight: 400; }
-.section-dark .section-lead { color: rgba(255,255,255,0.65); }
+.section-dark .section-lead { color: var(--text-mid); }
 
 /* ── Partners Carousel ── */
 .partners-carousel {

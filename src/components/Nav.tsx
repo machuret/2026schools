@@ -19,7 +19,14 @@ export default async function Nav() {
       .eq("is_active", true)
       .is("parent_id", null)
       .order("position");
-    if (data && data.length > 0) links = data;
+    if (data && data.length > 0) {
+      const seen = new Set<string>();
+      links = data.filter((l) => {
+        if (seen.has(l.href)) return false;
+        seen.add(l.href);
+        return true;
+      });
+    }
   } catch {
     // silently fall back to static links
   }
