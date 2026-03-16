@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { STATUS_BADGE, FORMAT_LABEL, formatDateShort } from "@/lib/events";
 
 interface Event {
   id: string;
@@ -17,19 +18,6 @@ interface Event {
   published: boolean;
   is_free: boolean;
   price: string;
-}
-
-const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
-  draft:     { bg: "#F9FAFB", color: "#6B7280" },
-  upcoming:  { bg: "#F0FDF4", color: "#16A34A" },
-  live:      { bg: "#FEF2F2", color: "#DC2626" },
-  past:      { bg: "#F9FAFB", color: "#6B7280" },
-  cancelled: { bg: "#FFF7ED", color: "#EA580C" },
-};
-
-function formatDate(d: string | null) {
-  if (!d) return "TBC";
-  return new Date(d).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
 }
 
 export default function AdminEventsPage() {
@@ -72,7 +60,7 @@ export default function AdminEventsPage() {
       <div className="swa-page-header">
         <div>
           <h1 className="swa-page-title">Events</h1>
-          <p className="swa-page-subtitle">{events.length} event{events.length !== 1 ? "s" : ""} · manage webinars, workshops and conferences</p>
+          <p className="swa-page-subtitle">{loading ? "Loading…" : `${events.length} event${events.length !== 1 ? "s" : ""}`} · manage webinars, workshops and conferences</p>
         </div>
         <Link href="/admin/events/new" className="swa-btn swa-btn--primary">
           <span className="material-symbols-outlined" style={{ fontSize: 16 }}>add</span>
@@ -146,9 +134,9 @@ export default function AdminEventsPage() {
                     )}
                   </div>
                   <div style={{ fontSize: "0.78rem", color: "#9CA3AF", display: "flex", gap: 12, flexWrap: "wrap" }}>
-                    <span>📅 {formatDate(ev.event_date)}</span>
+                    <span>📅 {formatDateShort(ev.event_date)}</span>
                     {ev.event_time && <span>🕐 {ev.event_time}</span>}
-                    <span style={{ textTransform: "capitalize" }}>📋 {ev.format}</span>
+                    <span>📋 {FORMAT_LABEL[ev.format] ?? ev.format}</span>
                     <span>{ev.is_free ? "🆓 Free" : `💳 ${ev.price}`}</span>
                     <span style={{ color: "#C4B5FD" }}>/events/{ev.slug}</span>
                   </div>
