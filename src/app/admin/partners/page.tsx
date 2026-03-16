@@ -88,7 +88,7 @@ function PartnerForm({ initial, onSave, onCancel, saving }: {
       </div>
       <div style={{ display: 'flex', gap: 8, paddingTop: 8 }}>
         <button onClick={() => onSave(form)} disabled={saving || !form.name || !form.slug}
-          className="swa-btn swa-btn-primary" style={{ opacity: saving || !form.name || !form.slug ? 0.5 : 1 }}>
+          className="swa-btn swa-btn--primary" style={{ opacity: saving || !form.name || !form.slug ? 0.5 : 1 }}>
           <span className="material-symbols-outlined" style={{ fontSize: 15 }}>{saving ? 'hourglass_empty' : 'save'}</span>
           {saving ? 'Saving...' : 'Save'}
         </button>
@@ -160,14 +160,14 @@ export default function AdminPartnersPage() {
     <>
       <div className="swa-page-header">
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>Partners</h1>
-          <p style={{ fontSize: 13, color: 'var(--color-text-faint)', margin: '2px 0 0' }}>Manage partner profiles</p>
+          <h1 className="swa-page-title">Partners</h1>
+          <p className="swa-page-subtitle">Manage partner profiles · {partners.length > 0 ? `${partners.length} total, ${partners.filter(p => p.active).length} active` : 'loading…'}</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <Link href="/partners" className="swa-btn" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', color: 'var(--color-text-body)', textDecoration: 'none' }}>
             <span className="material-symbols-outlined" style={{ fontSize: 15 }}>open_in_new</span> View Page
           </Link>
-          <button onClick={() => setShowCreate(true)} className="swa-btn swa-btn-primary">
+          <button onClick={() => setShowCreate(true)} className="swa-btn swa-btn--primary">
             <span className="material-symbols-outlined" style={{ fontSize: 15 }}>add</span> Add Partner
           </button>
         </div>

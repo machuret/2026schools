@@ -69,9 +69,6 @@ export default function CmsPagesPage() {
               </tr>
             </thead>
             <tbody>
-              {loading && (
-                <tr><td colSpan={5} style={{ textAlign: "center", padding: "40px", color: "var(--color-text-faint)" }}>Loading…</td></tr>
-              )}
               {pages.map((page) => (
                 <tr key={page.id}>
                   <td>

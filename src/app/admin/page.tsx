@@ -21,6 +21,7 @@ export default async function AdminDashboard() {
   let seoMissingCount = 0;
   type ActivityRow = { ms: string; bg: string; color: string; title: string; desc: string; time: string; href: string };
   let activity: ActivityRow[] = [];
+  let dashError = false;
 
   try {
     const supabase = await createClient();
@@ -75,6 +76,7 @@ export default async function AdminDashboard() {
     activity = rows.slice(0, 6).map(({ _ts: _, ...rest }) => rest);
   } catch (e) {
     console.error('Dashboard fetch error:', e);
+    dashError = true;
   }
 
   const today = new Date().toLocaleDateString('en-AU', { weekday: 'long', month: 'long', day: 'numeric' });
@@ -104,6 +106,12 @@ export default async function AdminDashboard() {
           New Event
         </Link>
       </div>
+
+      {dashError && (
+        <div className="swa-alert swa-alert--error" style={{ marginBottom: 20 }}>
+          Could not load dashboard data — check your Supabase connection.
+        </div>
+      )}
 
       {/* Stat Cards */}
       <div className="swa-stat-grid">
@@ -154,8 +162,8 @@ export default async function AdminDashboard() {
             <p style={{ fontSize: 13, color: 'var(--color-text-faint)', padding: '16px 0' }}>No recent activity.</p>
           ) : (
             <div>
-              {activity.map((a, i) => (
-                <Link key={i} href={a.href} className="swa-activity-item" style={{ textDecoration: 'none' }}>
+              {activity.map((a) => (
+                <Link key={`${a.href}-${a.desc}`} href={a.href} className="swa-activity-item" style={{ textDecoration: 'none' }}>
                   <div className="swa-activity-item__icon" style={{ background: a.bg }}>
                     <span className="material-symbols-outlined" style={{ fontSize: 16, color: a.color }}>{a.ms}</span>
                   </div>

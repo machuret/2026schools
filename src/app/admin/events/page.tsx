@@ -161,7 +161,9 @@ export default function AdminEventsPage() {
                   {ev.feature_image ? (
                     <Image src={ev.feature_image} alt={ev.title} width={72} height={52} style={{ objectFit: "cover", width: "100%", height: "100%" }} />
                   ) : (
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontSize: "1.4rem" }}>📅</div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: 24, color: "#D1D5DB" }}>event</span>
+                    </div>
                   )}
                 </div>
 

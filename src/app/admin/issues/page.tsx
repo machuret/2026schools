@@ -3,8 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import IssuesBulkRewrite from "@/components/admin/IssuesBulkRewrite";
 
 export default async function AdminIssuesPage() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let issues: any[] = [];
+  let issues: { id: string; rank: number; slug: string; icon: string; title: string; severity: string; anchor_stat: string }[] = [];
   let fetchError = "";
   try {
     const sb = await createClient();

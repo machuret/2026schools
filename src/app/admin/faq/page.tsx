@@ -60,7 +60,7 @@ function FaqForm({ initial, onSave, onCancel, saving }: {
       </div>
       <div style={{ display: 'flex', gap: 8, paddingTop: 8 }}>
         <button onClick={() => onSave(form)} disabled={saving || !form.question || !form.answer}
-          className="swa-btn swa-btn-primary" style={{ opacity: saving || !form.question || !form.answer ? 0.5 : 1 }}>
+          className="swa-btn swa-btn--primary" style={{ opacity: saving || !form.question || !form.answer ? 0.5 : 1 }}>
           <span className="material-symbols-outlined" style={{ fontSize: 15 }}>{saving ? 'hourglass_empty' : 'save'}</span>
           {saving ? 'Saving...' : 'Save'}
         </button>
@@ -132,8 +132,8 @@ export default function AdminFaqPage() {
     <>
       <div className="swa-page-header">
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>FAQ</h1>
-          <p style={{ fontSize: 13, color: 'var(--color-text-faint)', margin: '2px 0 0' }}>Manage frequently asked questions</p>
+          <h1 className="swa-page-title">FAQ</h1>
+          <p className="swa-page-subtitle">Manage frequently asked questions · {faqs.length > 0 ? `${faqs.length} total, ${faqs.filter(f => f.active).length} active` : 'loading…'}</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <Link href="/faq" className="swa-btn" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', color: 'var(--color-text-body)', textDecoration: 'none' }}>

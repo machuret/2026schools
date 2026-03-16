@@ -1,7 +1,6 @@
+import React from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-
-const SECTION: React.CSSProperties = { marginBottom: 28 };
 const LABEL: React.CSSProperties = { fontSize: 11, fontWeight: 700, color: 'var(--color-text-faint)', letterSpacing: '0.09em', textTransform: 'uppercase', marginBottom: 14 };
 const ROW: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--color-border)' };
 const ROW_LAST: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0' };
@@ -45,7 +44,7 @@ export default async function AdminSettingsPage() {
 
         {/* Environment */}
         <div className="swa-card">
-          <div style={SECTION}>
+          <div style={{ marginBottom: 28 }}>
             <div style={LABEL}>Environment Variables</div>
             <div style={ROW}>
               <span style={KEY}>NEXT_PUBLIC_SUPABASE_URL</span>
