@@ -15,10 +15,10 @@ import {
 export const revalidate = 60;
 
 export async function generateStaticParams() {
-  const sb = staticClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const url  = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anon) return [];
+  const sb = staticClient(url, anon);
   const { data } = await sb.from("events").select("slug").eq("published", true);
   return (data ?? []).map((e: { slug: string }) => ({ slug: e.slug }));
 }
@@ -27,10 +27,10 @@ export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> }
 ): Promise<Metadata> {
   const { slug } = await params;
-  const sb = staticClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const url  = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anon) return {};
+  const sb = staticClient(url, anon);
   const { data } = await sb
     .from("events")
     .select("title,tagline,seo_title,seo_desc,feature_image")
