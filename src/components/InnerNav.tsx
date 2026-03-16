@@ -9,12 +9,12 @@ export default function InnerNav({ backHref, backLabel }: Props) {
   return (
     <nav className="inner-nav">
       <Link href="/" className="nav-logo">
-        <span>Schools</span>Wellbeing.com.au
+        <span>National</span> Check-in Week
       </Link>
 
       <div className="inner-nav-right">
         <Link href="/#map" className="inner-nav-link">Map</Link>
-        <Link href="/#issues" className="inner-nav-link">Issues</Link>
+        <Link href="/issues" className="inner-nav-link">Issues</Link>
         <Link href="/faq" className="inner-nav-link">FAQ</Link>
         <Link href="/ambassadors" className="inner-nav-link">Ambassadors</Link>
         <Link href="/partners" className="inner-nav-link">Partners</Link>

@@ -19,7 +19,7 @@ export default function Footer() {
             <li><a href="/issues/bullying">Bullying</a></li>
             <li><a href="/issues/cyberbullying">Cyberbullying</a></li>
             <li><a href="/issues/school-belonging">School Belonging</a></li>
-            <li><a href="/#issues">View all 15 →</a></li>
+            <li><a href="/issues">View all issues →</a></li>
           </ul>
         </div>
         <div className="footer-col">
