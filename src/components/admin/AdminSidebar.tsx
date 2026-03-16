@@ -11,6 +11,7 @@ const SECTIONS = [
     items: [
       { label: 'Dashboard',     href: '/admin',              ms: 'dashboard' },
       { label: 'Issues',        href: '/admin/issues',       ms: 'description' },
+      { label: 'Votes & Feedback', href: '/admin/votes',      ms: 'thumbs_up_down' },
       { label: 'States & Data', href: '/admin/states',       ms: 'bar_chart' },
       { label: 'Areas',         href: '/admin/content',      ms: 'location_on' },
     ],
