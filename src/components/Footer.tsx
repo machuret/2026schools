@@ -30,6 +30,15 @@ export default function Footer() {
             <li><a href="https://www.pc.gov.au" target="_blank" rel="noopener noreferrer">Productivity Commission</a></li>
             <li><a href="https://www.missionaustralia.com.au" target="_blank" rel="noopener noreferrer">Mission Australia</a></li>
             <li><a href="https://youngmindsmatter.thekids.org.au" target="_blank" rel="noopener noreferrer">Young Minds Matter</a></li>
+            <li><a href="/sources"><strong>All sources &amp; references →</strong></a></li>
+          </ul>
+        </div>
+        <div className="footer-col">
+          <h4>Accountability</h4>
+          <ul className="footer-list">
+            <li><a href="/sources">Sources &amp; References</a></li>
+            <li><a href="/sources">Challenge our data</a></li>
+            <li><a href="/faq">FAQ</a></li>
           </ul>
         </div>
       </div>

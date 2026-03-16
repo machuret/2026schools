@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createBrowserClient } from "@supabase/supabase-js";
 import { SEVERITY, SEVERITY_ICON } from "@/lib/colors";
 import React from "react";
+import VoteFeedback from "@/components/VoteFeedback";
 
 interface DbSource {
   id: string; num: number; title: string; url: string;
@@ -188,6 +189,14 @@ export default async function IssuePage({ params }: Props) {
             Learn about data-led wellbeing tools ↗
           </a>
         </section>
+
+        {/* VOTE FEEDBACK */}
+        <VoteFeedback
+          entitySlug={issue.slug}
+          entityType="issue"
+          label={`the ${issue.title.toLowerCase()} data`}
+          sourcesHref="/sources"
+        />
 
         {/* SOURCES */}
         <section id="sources" className="inner-section">
