@@ -16,7 +16,7 @@ export default function PartnersCarousel() {
   const trackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch("/api/admin/partners")
+    fetch("/api/partners")
       .then((r) => r.json())
       .then((d) => setPartners((d.partners ?? []).filter((p: Partner) => p.logoUrl)))
       .catch(() => {});

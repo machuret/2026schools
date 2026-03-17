@@ -15,7 +15,7 @@ export default function EventsClient({ events }: Props) {
 
   const filtered = useMemo(() => events.filter((e) => {
     const q = search.toLowerCase();
-    const matchesSearch = !q || e.title.toLowerCase().includes(q) || e.tagline.toLowerCase().includes(q);
+    const matchesSearch = !q || e.title.toLowerCase().includes(q) || (e.tagline ?? "").toLowerCase().includes(q);
     const matchesFilter =
       filter === "all" ||
       (filter === "upcoming" && (e.status === "upcoming" || e.status === "live")) ||

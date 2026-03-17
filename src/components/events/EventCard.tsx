@@ -31,7 +31,7 @@ export default function EventCard({ ev }: { ev: EventListItem }) {
           <BadgePill
             bg={ev.is_free ? "#F0FDF4" : "#FFF7ED"}
             color={ev.is_free ? "#16A34A" : "#EA580C"}
-            label={ev.is_free ? "Free" : ev.price}
+            label={ev.is_free ? "Free" : (ev.price ?? "Paid")}
           />
         </div>
 
