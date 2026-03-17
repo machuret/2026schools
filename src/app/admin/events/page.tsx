@@ -37,6 +37,8 @@ export default function AdminEventsPage() {
       .catch((e) => { setError(e.message); setLoading(false); });
   }, []);
 
+  useEffect(() => { setPage(1); }, [search, statusFilter]);
+
   const filtered = useMemo(() => events.filter((e) => {
     const matchSearch = !search ||
       e.title.toLowerCase().includes(search.toLowerCase()) ||
