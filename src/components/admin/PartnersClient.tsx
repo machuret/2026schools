@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -35,8 +35,27 @@ function PartnerForm({ initial, onSave, onCancel, saving }: {
 }) {
   const [form, setForm] = useState<FormData>(initial);
   const [autoSlug, setAutoSlug] = useState(!initial.name);
+  const [uploading, setUploading] = useState(false);
+  const [uploadErr, setUploadErr] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const set = (k: keyof FormData, v: string | number | boolean) =>
     setForm(p => { const n = { ...p, [k]: v }; if (k === 'name' && autoSlug) n.slug = slugify(v as string); return n; });
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true); setUploadErr(null);
+    try {
+      const fd = new window.FormData();
+      fd.append('file', file);
+      fd.append('folder', 'partners');
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: fd });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Upload failed');
+      set('logoUrl', d.url);
+    } catch (err) { setUploadErr(err instanceof Error ? err.message : 'Upload failed'); }
+    finally { setUploading(false); if (fileRef.current) fileRef.current.value = ''; }
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -57,16 +76,29 @@ function PartnerForm({ initial, onSave, onCancel, saving }: {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div>
-          <label className="swa-form-label">Logo URL</label>
-          <input className="swa-form-input" value={form.logoUrl} onChange={e => set('logoUrl', e.target.value)} placeholder="https://example.com/logo.png" />
-          {form.logoUrl && (
-            <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--color-border)', background: 'var(--color-bg)', padding: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Image src={form.logoUrl} alt="Preview" width={28} height={28} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} unoptimized />
-              </div>
-              <span style={{ fontSize: 11, color: 'var(--color-text-faint)' }}>Preview</span>
+          <label className="swa-form-label">Logo</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 64, height: 64, borderRadius: 10, overflow: 'hidden', border: '2px solid var(--color-border)', background: 'var(--color-primary-pale)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: 6 }}>
+              {form.logoUrl ? (
+                <Image src={form.logoUrl} alt="Preview" width={52} height={52} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} unoptimized />
+              ) : (
+                <span className="material-symbols-outlined" style={{ fontSize: 28, color: 'var(--color-text-faint)' }}>business</span>
+              )}
             </div>
-          )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <input ref={fileRef} type="file" accept="image/*" onChange={handleUpload} style={{ display: 'none' }} />
+              <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
+                className="swa-btn" style={{ fontSize: 12, padding: '6px 12px', background: 'var(--color-card)', border: '1px solid var(--color-border)', color: 'var(--color-text-body)' }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>{uploading ? 'hourglass_empty' : 'upload'}</span>
+                {uploading ? 'Uploading...' : 'Upload Logo'}
+              </button>
+              {form.logoUrl && (
+                <button type="button" onClick={() => set('logoUrl', '')} style={{ fontSize: 11, color: 'var(--color-error)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>Remove logo</button>
+              )}
+              {uploadErr && <span style={{ fontSize: 11, color: 'var(--color-error)' }}>{uploadErr}</span>}
+              <input className="swa-form-input" value={form.logoUrl} onChange={e => set('logoUrl', e.target.value)} placeholder="Or paste URL..." style={{ fontSize: 11, padding: '4px 8px' }} />
+            </div>
+          </div>
         </div>
         <div>
           <label className="swa-form-label">Website URL</label>
@@ -89,8 +121,8 @@ function PartnerForm({ initial, onSave, onCancel, saving }: {
         </div>
       </div>
       <div style={{ display: 'flex', gap: 8, paddingTop: 8 }}>
-        <button onClick={() => onSave(form)} disabled={saving || !form.name || !form.slug}
-          className="swa-btn swa-btn--primary" style={{ opacity: saving || !form.name || !form.slug ? 0.5 : 1 }}>
+        <button onClick={() => onSave(form)} disabled={saving || uploading || !form.name || !form.slug}
+          className="swa-btn swa-btn--primary" style={{ opacity: saving || uploading || !form.name || !form.slug ? 0.5 : 1 }}>
           <span className="material-symbols-outlined" style={{ fontSize: 15 }}>{saving ? 'hourglass_empty' : 'save'}</span>
           {saving ? 'Saving...' : 'Save'}
         </button>
