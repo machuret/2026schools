@@ -4,36 +4,36 @@
 
 /* Stat ticker */
 .ticker {
-  background: var(--gray-50);
+  background: var(--white);
   padding: 0 48px;
   display: flex; overflow-x: auto;
   border-bottom: 1px solid var(--border);
   border-top: 1px solid var(--border);
 }
 .ticker::-webkit-scrollbar { height: 3px; }
-.ticker::-webkit-scrollbar-thumb { background: var(--teal); border-radius: 2px; }
+.ticker::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 2px; }
 .ticker-item {
   flex: 0 0 auto; padding: 32px 48px 32px 0;
   margin-right: 48px; border-right: 1px solid var(--border);
 }
 .ticker-item:last-child { border-right: none; }
-.ticker-num { font-size: 2.2rem; font-weight: 800; color: var(--teal); line-height: 1; font-family: 'Inter', sans-serif; }
-.ticker-desc { font-size: 0.95rem; color: var(--text-mid); margin-top: 8px; max-width: 220px; line-height: 1.6; font-weight: 400; }
-.ticker-src  { font-size: 0.82rem; color: var(--text-light); margin-top: 5px; font-style: italic; }
+.ticker-num { font-family: var(--font-primary); font-size: 2.2rem; font-weight: 900; color: var(--primary); line-height: 1; }
+.ticker-desc { font-family: var(--font-primary); font-size: 0.95rem; color: var(--text-mid); margin-top: 8px; max-width: 220px; line-height: 1.6; font-weight: 400; }
+.ticker-src  { font-family: var(--font-primary); font-size: 0.82rem; color: var(--text-light); margin-top: 5px; font-style: italic; }
 
 /* News ticker (scrolling alert bar) */
 .news-ticker {
   position: sticky;
-  top: 64px;
+  top: 68px;
   z-index: 800;
-  background: var(--teal);
+  background: var(--primary);
   border-top: none;
   border-bottom: 2px solid rgba(0,0,0,0.08);
   height: 40px;
   display: flex;
   align-items: center;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(14,116,144,0.2);
+  box-shadow: 0 2px 8px rgba(39,174,142,0.3);
 }
 .news-ticker-label {
   flex-shrink: 0;
@@ -72,6 +72,7 @@
   height: 100%;
 }
 .news-ticker-stat {
+  font-family: var(--font-primary);
   font-size: 0.8rem;
   font-weight: 800;
   color: #FFFFFF;
@@ -79,8 +80,9 @@
   text-transform: uppercase;
 }
 .news-ticker-detail {
+  font-family: var(--font-primary);
   font-size: 0.78rem;
-  font-weight: 500;
+  font-weight: 600;
   color: rgba(255,255,255,0.9);
   letter-spacing: 0.01em;
 }

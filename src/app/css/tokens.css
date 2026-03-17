@@ -1,46 +1,77 @@
 /* ═══════════════════════════════════════
    DESIGN TOKENS + RESET + BASE TYPOGRAPHY
+   Schools Wellbeing — Green Design System
 ═══════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --navy:        #0B1D35;
-  --teal:        #0E7490;
-  --teal-light:  #22D3EE;
-  --crisis-red:  #7F1D1D;
-  --accent:      #E05D25;
-  --accent-light:#F97316;
-  --green:       #15803D;
-  --green-bg:    #DCFCE7;
-  --amber:       #B45309;
-  --amber-bg:    #FEF3C7;
-  --red:         #B91C1C;
-  --red-bg:      #FEE2E2;
-  --gray-50:     #F8FAFC;
-  --gray-100:    #F1F5F9;
-  --gray-200:    #E2E8F0;
-  --gray-300:    #CBD5E1;
-  --gray-500:    #64748B;
-  --gray-700:    #334155;
-  --gray-900:    #0F172A;
-  --white:       #FFFFFF;
-  --text:        #0F172A;
-  --text-mid:    #334155;
-  --text-light:  #64748B;
-  --border:      #E2E8F0;
-}
+  /* ── Brand ── */
+  --primary:        #27AE8E;
+  --primary-dark:   #1E8C72;
+  --primary-light:  #E8F7F3;
+  --primary-mid:    #3EC9A7;
+  --accent:         #FFD166;
+  --dark:           #1A2E2B;
 
-/* Spacing tokens */
-:root {
-  --sp-xs: 4px;
-  --sp-sm: 8px;
-  --sp-md: 16px;
-  --sp-lg: 24px;
-  --sp-xl: 32px;
-  --sp-2xl: 48px;
-  --sp-3xl: 64px;
-  --sp-4xl: 96px;
+  /* ── Neutrals ── */
+  --white:          #FFFFFF;
+  --off-white:      #F7FAF9;
+  --section-tint:   #F0FAF7;
+  --muted-grey:     #718096;
+  --border:         #D1EAE3;
+  --border-strong:  #A8D5C8;
+
+  /* ── Semantic text ── */
+  --text:           #1A2E2B;
+  --text-mid:       #2D4A46;
+  --text-light:     #718096;
+
+  /* ── Semantic aliases (backward compat for inner pages) ── */
+  --navy:           #1A2E2B;
+  --teal:           #27AE8E;
+  --teal-light:     #E8F7F3;
+  --gray-50:        #F7FAF9;
+  --gray-100:       #F0FAF7;
+  --gray-200:       #D1EAE3;
+  --gray-300:       #A8D5C8;
+  --gray-500:       #718096;
+  --gray-700:       #2D4A46;
+  --gray-900:       #1A2E2B;
+
+  /* ── Status ── */
+  --green:          #16a34a;
+  --green-bg:       #DCFCE7;
+  --amber:          #B45309;
+  --amber-bg:       #FEF3C7;
+  --red:            #B91C1C;
+  --red-bg:         #FEE2E2;
+  --crisis-red:     #7F1D1D;
+
+  /* ── Typography ── */
+  --font-primary:   'Nunito', sans-serif;
+
+  /* ── Spacing ── */
+  --sp-xs:   4px;
+  --sp-sm:   8px;
+  --sp-md:   16px;
+  --sp-lg:   32px;
+  --sp-xl:   64px;
+  --sp-2xl:  96px;
+  --container-max: 1200px;
+  --section-padding: 80px 0;
+
+  /* ── Border Radius ── */
+  --radius-sm:   6px;
+  --radius-md:   12px;
+  --radius-lg:   20px;
+  --radius-pill: 999px;
+
+  /* ── Shadows ── */
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.07);
+  --shadow-nav:  0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
 html { scroll-behavior: smooth; }
@@ -50,7 +81,7 @@ html { scroll-behavior: smooth; }
   position: absolute; left: -9999px; top: auto;
   width: 1px; height: 1px; overflow: hidden;
   z-index: 9999;
-  background: var(--accent); color: var(--white);
+  background: var(--primary); color: var(--white);
   font-size: 0.9rem; font-weight: 700;
   padding: 12px 24px; border-radius: 0 0 8px 0;
   text-decoration: none;
@@ -58,28 +89,91 @@ html { scroll-behavior: smooth; }
 .skip-link:focus {
   position: fixed; left: 0; top: 0;
   width: auto; height: auto;
-  outline: 2px solid var(--teal); outline-offset: 2px;
+  outline: 2px solid var(--primary); outline-offset: 2px;
 }
 
-/* Global focus ring for keyboard navigation */
-:focus-visible {
-  outline: 2px solid var(--teal);
-  outline-offset: 2px;
-}
+/* Global focus ring */
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 :focus:not(:focus-visible) { outline: none; }
 
 body {
-  font-family: var(--font-inter, 'Inter'), -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-primary);
   font-size: 16px;
-  line-height: 1.6;
+  line-height: 1.7;
   color: var(--text);
-  background: var(--white);
+  background: var(--off-white);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
-h1 { font-family: var(--font-playfair, 'Playfair Display'), Georgia, serif; font-size: clamp(2.4rem, 5vw, 4rem); line-height: 1.1; font-weight: 800; }
-h2 { font-family: var(--font-playfair, 'Playfair Display'), Georgia, serif; font-size: clamp(1.8rem, 3vw, 2.6rem); line-height: 1.15; font-weight: 700; }
-h3 { font-size: 1.2rem; line-height: 1.4; font-weight: 700; font-family: var(--font-inter, 'Inter'), sans-serif; }
-h4 { font-size: 1rem; font-weight: 700; font-family: var(--font-inter, 'Inter'), sans-serif; }
-p  { font-size: 0.975rem; line-height: 1.75; }
+h1 {
+  font-family: var(--font-primary);
+  font-size: clamp(2.4rem, 5vw, 3.75rem);
+  line-height: 1.1;
+  font-weight: 900;
+  color: var(--dark);
+}
+h2 {
+  font-family: var(--font-primary);
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  line-height: 1.2;
+  font-weight: 800;
+  color: var(--dark);
+}
+h3 {
+  font-family: var(--font-primary);
+  font-size: 1.3rem;
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--dark);
+}
+h4 {
+  font-family: var(--font-primary);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--dark);
+}
+p { font-size: 1rem; line-height: 1.7; color: var(--text-mid); }
+
+/* ── Global button primitives ── */
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--primary); color: #fff;
+  border: none; border-radius: var(--radius-pill);
+  padding: 12px 32px;
+  font-family: var(--font-primary); font-weight: 700; font-size: 15px;
+  cursor: pointer; text-decoration: none;
+  transition: background 0.2s;
+}
+.btn-primary:hover { background: var(--primary-dark); }
+
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: transparent; color: var(--primary);
+  border: 2px solid var(--primary); border-radius: var(--radius-pill);
+  padding: 10px 28px;
+  font-family: var(--font-primary); font-weight: 700; font-size: 15px;
+  cursor: pointer; text-decoration: none;
+  transition: all 0.2s;
+}
+.btn-secondary:hover { background: var(--primary); color: #fff; }
+
+/* ── Generic card ── */
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 24px 28px;
+  box-shadow: var(--shadow-card);
+}
+.card-tint {
+  background: var(--primary-light);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+}
+
+/* ── Section background helpers ── */
+.section-white { background: var(--white); }
+.section-tint  { background: var(--section-tint); }
+.section-dark  { background: var(--dark); color: #fff; }
