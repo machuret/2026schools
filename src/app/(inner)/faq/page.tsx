@@ -15,7 +15,7 @@ export default function FaqPage() {
   const [openId, setOpenId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/admin/faq")
+    fetch("/api/faq")
       .then((r) => r.json())
       .then((d) => setFaqs(d.faqs ?? []))
       .catch(() => {})

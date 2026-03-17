@@ -22,7 +22,7 @@ export default async function EventsPage() {
       .from("events")
       .select("id,slug,title,tagline,event_date,event_time,event_end,format,feature_image,status,is_free,price,register_url")
       .eq("published", true)
-      .order("event_date", { ascending: true });
+      .order("event_date", { ascending: true, nullsFirst: false });
     events = (data ?? []) as EventListItem[];
   } catch {
     // render empty state gracefully
