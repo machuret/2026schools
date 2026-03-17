@@ -89,10 +89,11 @@ export async function POST(req: NextRequest) {
       results.push({ id, seo_title: parsed.seo_title ?? "", seo_desc: parsed.seo_desc ?? "" });
 
       // Write back to DB immediately
-      await admin.from(table).update({
+      const { error: updateErr } = await admin.from(table).update({
         seo_title: parsed.seo_title ?? "",
         seo_desc:  parsed.seo_desc  ?? "",
       }).eq("id", id);
+      if (updateErr) throw new Error(updateErr.message);
 
     } catch {
       results.push({ id, seo_title: "", seo_desc: "" });
