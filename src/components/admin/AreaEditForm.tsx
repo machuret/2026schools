@@ -187,7 +187,8 @@ export default function AreaEditForm({ area }: { area: Area | null }) {
   async function handleDelete() {
     if (!area) return;
     const sb = createClient();
-    await sb.from("areas").delete().eq("id", area.id);
+    const { error: delErr } = await sb.from("areas").delete().eq("id", area.id);
+    if (delErr) { setError(delErr.message); setShowDeleteModal(false); return; }
     router.push("/admin/content");
   }
 

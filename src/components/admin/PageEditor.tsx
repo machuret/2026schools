@@ -290,9 +290,10 @@ export default function PageEditor({ page }: { page: Page | null }) {
 
   async function handleDelete() {
     if (!page || !confirm(`Delete "${page.title}"? This cannot be undone.`)) return;
-    setDeleting(true);
+    setDeleting(true); setError("");
     const sb = createClient();
-    await sb.from("pages").delete().eq("id", page.id);
+    const { error: delErr } = await sb.from("pages").delete().eq("id", page.id);
+    if (delErr) { setError(delErr.message); setDeleting(false); return; }
     router.push("/admin/cms/pages");
     router.refresh();
   }

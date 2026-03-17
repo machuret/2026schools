@@ -243,7 +243,7 @@ export default function VaultContentClient({ initialContent }: { initialContent:
           </div>
 
           <div style={{ display: "flex", gap: 10 }}>
-            <button onClick={handleAdd} disabled={busy} className="swa-btn swa-btn-primary" style={{ opacity: busy ? 0.6 : 1 }}>
+            <button onClick={handleAdd} disabled={busy} className="swa-btn swa-btn--primary" style={{ opacity: busy ? 0.6 : 1 }}>
               {busy ? "Saving…" : "Add Content"}
             </button>
             <button
@@ -277,7 +277,7 @@ export default function VaultContentClient({ initialContent }: { initialContent:
             </AdminField>
           </div>
           <div style={{ display: "flex", gap: 10 }}>
-            <button onClick={handleEdit} disabled={busy} className="swa-btn swa-btn-primary" style={{ opacity: busy ? 0.6 : 1 }}>
+            <button onClick={handleEdit} disabled={busy} className="swa-btn swa-btn--primary" style={{ opacity: busy ? 0.6 : 1 }}>
               {busy ? "Saving…" : "Save Changes"}
             </button>
             <button onClick={closeEditPanel} style={{ padding: "9px 16px", fontSize: 13, fontWeight: 600, borderRadius: "var(--radius-md)", border: "1px solid var(--color-border)", background: "var(--color-card)", color: "var(--color-text-muted)", cursor: "pointer" }}>
@@ -307,7 +307,7 @@ export default function VaultContentClient({ initialContent }: { initialContent:
           </div>
           <button
             onClick={() => { setShowAdd(true); clearMessages(); setFieldErrors({}); }}
-            className="swa-btn swa-btn-primary"
+            className="swa-btn swa-btn--primary"
           >
             <span className="material-symbols-outlined" style={{ fontSize: 16 }}>add</span>
             Add Content Block
@@ -328,7 +328,7 @@ export default function VaultContentClient({ initialContent }: { initialContent:
               : `No results for "${search}"`}
           </div>
           {items.length === 0 && (
-            <button onClick={() => { setShowAdd(true); clearMessages(); }} className="swa-btn swa-btn-primary">
+            <button onClick={() => { setShowAdd(true); clearMessages(); }} className="swa-btn swa-btn--primary">
               Add your first content block
             </button>
           )}

@@ -248,7 +248,7 @@ export default function ApiKeysClient({ initialKeys }: { initialKeys: AdminApiKe
             <button
               onClick={handleCreate}
               disabled={busy}
-              className="swa-btn swa-btn-primary"
+              className="swa-btn swa-btn--primary"
               style={{ opacity: busy ? 0.6 : 1 }}
             >
               {busy ? "Saving…" : "Add Key"}
@@ -289,7 +289,7 @@ export default function ApiKeysClient({ initialKeys }: { initialKeys: AdminApiKe
           </div>
           <button
             onClick={() => { setShowCreate(true); clearMessages(); setFieldErrors({}); }}
-            className="swa-btn swa-btn-primary"
+            className="swa-btn swa-btn--primary"
           >
             <span className="material-symbols-outlined" style={{ fontSize: 16 }}>add</span>
             Add API Key
@@ -317,7 +317,7 @@ export default function ApiKeysClient({ initialKeys }: { initialKeys: AdminApiKe
           {keys.length === 0 && (
             <button
               onClick={() => { setShowCreate(true); clearMessages(); }}
-              className="swa-btn swa-btn-primary"
+              className="swa-btn swa-btn--primary"
             >
               Add your first key
             </button>

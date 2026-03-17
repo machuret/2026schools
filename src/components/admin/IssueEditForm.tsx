@@ -167,7 +167,8 @@ export default function IssueEditForm({ issue, initialSources = [] }: { issue: I
   async function handleDelete() {
     if (!issue) return;
     const sb = createClient();
-    await sb.from("issues").delete().eq("id", issue.id);
+    const { error: delErr } = await sb.from("issues").delete().eq("id", issue.id);
+    if (delErr) { setError(delErr.message); setShowDeleteModal(false); return; }
     router.push("/admin/issues"); router.refresh();
   }
 

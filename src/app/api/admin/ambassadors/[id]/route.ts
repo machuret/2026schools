@@ -18,14 +18,15 @@ export async function GET(
   const sb = adminClient();
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
-  let query = sb.from("Ambassador").select("*");
+  let data, error;
   if (isUuid) {
-    query = query.or(`slug.eq.${id},id.eq.${id}`);
+    ({ data, error } = await sb.from("Ambassador").select("*").eq("id", id).maybeSingle());
+    if (!data && !error) {
+      ({ data, error } = await sb.from("Ambassador").select("*").eq("slug", id).maybeSingle());
+    }
   } else {
-    query = query.eq("slug", id);
+    ({ data, error } = await sb.from("Ambassador").select("*").eq("slug", id).maybeSingle());
   }
-
-  const { data, error } = await query.maybeSingle();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!data) return NextResponse.json({ error: "Ambassador not found" }, { status: 404 });
   return NextResponse.json({ ambassador: data });

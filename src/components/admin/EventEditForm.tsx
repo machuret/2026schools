@@ -401,8 +401,9 @@ function SpeakerCard({ speaker, idx, onChange, onRemove }: {
       const d = await res.json();
       if (!res.ok) throw new Error(d.error ?? "Upload failed");
       onChange(idx, "photo", d.url);
-    } catch { /* ignore */ }
-    finally { setUploading(false); }
+    } catch (err) {
+      console.error("Speaker photo upload failed:", err);
+    } finally { setUploading(false); }
   }
 
   return (

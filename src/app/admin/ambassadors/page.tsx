@@ -145,7 +145,7 @@ function AmbassadorForm({ initial, onSave, onCancel, saving }: {
       {/* Actions */}
       <div style={{ display: 'flex', gap: 8, paddingTop: 8 }}>
         <button onClick={() => onSave(form)} disabled={saving || uploading || !form.name || !form.slug}
-          className="swa-btn swa-btn-primary" style={{ opacity: saving || !form.name || !form.slug ? 0.5 : 1 }}>
+          className="swa-btn swa-btn--primary" style={{ opacity: saving || !form.name || !form.slug ? 0.5 : 1 }}>
           <span className="material-symbols-outlined" style={{ fontSize: 15 }}>{saving ? 'hourglass_empty' : 'save'}</span>
           {saving ? 'Saving...' : 'Save'}
         </button>
@@ -278,7 +278,7 @@ export default function AdminAmbassadorsPage() {
           <Link href="/ambassadors" className="swa-btn" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', color: 'var(--color-text-body)', textDecoration: 'none' }}>
             <span className="material-symbols-outlined" style={{ fontSize: 15 }}>open_in_new</span> View Page
           </Link>
-          <button onClick={() => { setShowCreate(true); setEditId(null); }} className="swa-btn swa-btn-primary">
+          <button onClick={() => { setShowCreate(true); setEditId(null); }} className="swa-btn swa-btn--primary">
             <span className="material-symbols-outlined" style={{ fontSize: 15 }}>add</span> Add Ambassador
           </button>
         </div>

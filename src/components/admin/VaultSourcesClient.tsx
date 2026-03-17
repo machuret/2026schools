@@ -264,7 +264,7 @@ export default function VaultSourcesClient({ initialSources }: { initialSources:
                   type="button"
                   onClick={() => crawlUrl(addUrl.trim())}
                   disabled={crawling || !addUrl.trim()}
-                  className="swa-btn swa-btn-primary"
+                  className="swa-btn swa-btn--primary"
                   style={{ whiteSpace: "nowrap", opacity: (crawling || !addUrl.trim()) ? 0.6 : 1, marginTop: 2 }}
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: 16 }}>{crawling ? "hourglass_top" : "travel_explore"}</span>
@@ -421,7 +421,7 @@ export default function VaultSourcesClient({ initialSources }: { initialSources:
           </div>
           <button
             onClick={() => { setShowAdd(true); clearMessages(); setFieldErrors({}); }}
-            className="swa-btn swa-btn-primary"
+            className="swa-btn swa-btn--primary"
           >
             <span className="material-symbols-outlined" style={{ fontSize: 16 }}>add</span>
             Add Source
