@@ -85,7 +85,7 @@ export default async function AreaPage({ params }: Props) {
             <div className="area-stat-num">{area.schools}</div>
             <div className="area-stat-label">Approximate schools</div>
           </div>
-          {(area.key_stats as KeyStat[]).map((s, i) => (
+          {((area.key_stats ?? []) as KeyStat[]).map((s, i) => (
             <div key={i} className="area-stat-box">
               <div className="area-stat-num">{s.num}</div>
               <div className="area-stat-label">{s.label}</div>

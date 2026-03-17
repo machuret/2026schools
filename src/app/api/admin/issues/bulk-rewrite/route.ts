@@ -87,18 +87,21 @@ Task: ${fieldPrompt}
 Current text (use as context, improve upon it):
 ${currentValue}`;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user",   content: userPrompt },
-      ],
-      max_tokens: 400,
-      temperature: 0.7,
-    });
-
-    const rewritten = completion.choices[0]?.message?.content?.trim() ?? "";
-    if (rewritten) updates[field] = rewritten;
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user",   content: userPrompt },
+        ],
+        max_tokens: 400,
+        temperature: 0.7,
+      });
+      const rewritten = completion.choices[0]?.message?.content?.trim() ?? "";
+      if (rewritten) updates[field] = rewritten;
+    } catch {
+      // skip this field on API error; other fields still saved
+    }
   }
 
   if (!Object.keys(updates).length) {
