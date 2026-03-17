@@ -16,6 +16,7 @@ interface StateRow {
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
@@ -192,7 +193,7 @@ export default function StatesClient({ states }: { states: StateRow[] }) {
           {!search && (
             <Link
               href="/admin/states/new"
-              className="swa-btn swa-btn-primary"
+              className="swa-btn swa-btn--primary"
               style={{ marginTop: 16, display: "inline-flex", textDecoration: "none" }}
             >
               Create a state
@@ -396,7 +397,7 @@ export default function StatesClient({ states }: { states: StateRow[] }) {
                         </Link>
                         <Link
                           href={`/admin/states/${state.id}`}
-                          className="swa-btn swa-btn-primary"
+                          className="swa-btn swa-btn--primary"
                           style={{
                             fontSize: 12,
                             padding: "5px 12px",

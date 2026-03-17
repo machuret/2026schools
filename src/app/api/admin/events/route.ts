@@ -14,7 +14,7 @@ export async function GET() {
   const { data, error } = await sb
     .from("events")
     .select("id,slug,title,tagline,event_date,event_time,format,feature_image,status,published,is_free,price,register_url,created_at")
-    .order("event_date", { ascending: true });
+    .order("event_date", { ascending: false, nullsFirst: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }

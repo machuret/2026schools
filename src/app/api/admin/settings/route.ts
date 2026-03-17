@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+
+function adminClient() {
+  return createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+}
 
 export async function GET() {
   const sb = await createClient();
@@ -12,7 +21,7 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
   const body = await req.json() as Record<string, string>;
-  const sb = await createClient();
+  const sb = adminClient();
   const updates = Object.entries(body).map(([key, value]) =>
     sb.from("site_settings").upsert({ key, value, updated_at: new Date().toISOString() })
   );

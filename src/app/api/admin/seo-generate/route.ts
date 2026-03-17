@@ -40,8 +40,9 @@ export async function POST(req: NextRequest) {
   // Fetch records
   const admin = createClient(supabaseUrl, serviceKey);
   let selectFields = "id, title, tagline, description";
-  if (table === "areas")  selectFields = "id, name, state, overview";
-  if (table === "issues") selectFields = "id, title, anchor_stat, short_desc";
+  if (table === "areas")   selectFields = "id, name, state, overview";
+  if (table === "issues")  selectFields = "id, title, anchor_stat, short_desc";
+  if (table === "states")  selectFields = "id, name, subtitle";
 
   const { data: rawRecords, error: fetchErr } = await admin
     .from(table)
@@ -65,6 +66,8 @@ export async function POST(req: NextRequest) {
       context = `Area: "${rec.name ?? ""}", ${rec.state ?? ""}\nOverview: "${rec.overview ?? ""}"`;
     } else if (table === "issues") {
       context = `Issue: "${rec.title ?? ""}"\nKey stat: "${rec.anchor_stat ?? ""}"\nSummary: "${rec.short_desc ?? ""}"`;
+    } else if (table === "states") {
+      context = `Australian state/territory: "${rec.name ?? ""}"\nSubtitle: "${rec.subtitle ?? ""}"`;
     }
 
     try {

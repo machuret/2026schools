@@ -330,7 +330,15 @@ export default function IssuesBulkRewrite({ issues }: Props) {
                 Cancel
               </button>
               <button
-                onClick={async () => { await runRewrite(); setShowPanel(false); }}
+                onClick={async () => {
+                await runRewrite();
+                // Only auto-close if no errors
+                setResults(prev => {
+                  const hasErrors = Object.values(prev).some(r => !r.ok);
+                  if (!hasErrors) setShowPanel(false);
+                  return prev;
+                });
+              }}
                 disabled={running || fields.length === 0}
                 style={{
                   padding: "9px 20px", borderRadius: 8, border: "none",
