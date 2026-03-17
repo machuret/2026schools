@@ -1,51 +1,93 @@
+import Image from "next/image";
+
 export default function Footer() {
   return (
-    <footer id="about">
-      <div className="crisis-bar">
-        <strong>If you or someone you know needs support:</strong> Beyond Blue 1300 22 4636 · Kids Helpline 1800 55 1800 · Lifeline 13 11 14
-      </div>
-      <div className="footer-grid">
-        <div>
-          <div className="footer-brand"><span>National</span> Check-in Week</div>
-          <p className="footer-brand-sub">
-            A FREE national initiative empowering Australian school leaders with real-time student wellbeing data, expert webinars, and resources to ensure no child falls through the gaps.
-          </p>
-        </div>
-        <div className="footer-col">
-          <h4>Top Issues</h4>
-          <ul className="footer-list">
-            <li><a href="/issues/anxiety-depression">Anxiety &amp; Depression</a></li>
-            <li><a href="/issues/self-harm-suicidality">Self-Harm &amp; Suicidality</a></li>
-            <li><a href="/issues/bullying">Bullying</a></li>
-            <li><a href="/issues/cyberbullying">Cyberbullying</a></li>
-            <li><a href="/issues/school-belonging">School Belonging</a></li>
-            <li><a href="/issues">View all issues →</a></li>
-          </ul>
-        </div>
-        <div className="footer-col">
-          <h4>Key Sources</h4>
-          <ul className="footer-list">
-            <li><a href="https://www.aihw.gov.au" target="_blank" rel="noopener noreferrer">AIHW.gov.au</a></li>
-            <li><a href="https://www.esafety.gov.au" target="_blank" rel="noopener noreferrer">eSafety Commissioner</a></li>
-            <li><a href="https://www.pc.gov.au" target="_blank" rel="noopener noreferrer">Productivity Commission</a></li>
-            <li><a href="https://www.missionaustralia.com.au" target="_blank" rel="noopener noreferrer">Mission Australia</a></li>
-            <li><a href="https://youngmindsmatter.thekids.org.au" target="_blank" rel="noopener noreferrer">Young Minds Matter</a></li>
-            <li><a href="/sources"><strong>All sources &amp; references →</strong></a></li>
-          </ul>
-        </div>
-        <div className="footer-col">
-          <h4>Accountability</h4>
-          <ul className="footer-list">
-            <li><a href="/events">Events</a></li>
-            <li><a href="/sources">Sources &amp; References</a></li>
-            <li><a href="/sources">Challenge our data</a></li>
-            <li><a href="/faq">FAQ</a></li>
-          </ul>
+    <>
+      {/* Contact Us Banner */}
+      <div className="footer-contact-banner">
+        <div className="footer-contact-banner__inner">
+          <h2 className="footer-contact-banner__title">Contact Us</h2>
+          <a href="mailto:events@nationalcheckinweek.com" className="footer-contact-banner__email">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+            </svg>
+            events@nationalcheckinweek.com
+          </a>
         </div>
       </div>
-      <div className="footer-bottom">
-        <p>© 2026 National Check-in Week · For informational and advocacy purposes only. Not clinical advice.</p>
-      </div>
-    </footer>
+
+      {/* Main Footer */}
+      <footer id="about">
+        <div className="footer-main">
+          {/* Left: Logo */}
+          <div className="footer-logo-col">
+            <a href="/" className="footer-logo-link">
+              <Image
+                src="/nciw-logo.svg"
+                alt="National Check-in Week logo"
+                width={80}
+                height={96}
+                className="footer-logo-img"
+              />
+              <div className="footer-logo-text">
+                <span className="footer-logo-name">NATIONAL CHECK-IN WEEK</span>
+                <span className="footer-logo-tagline">EMPOWERING VOICES. BRIDGING GAPS. SUPPORTING EVERY CHILD</span>
+              </div>
+            </a>
+          </div>
+
+          {/* Right: Nav Links */}
+          <nav className="footer-nav-col" aria-label="Footer navigation">
+            <ul className="footer-nav-list">
+              <li><a href="/">Home</a></li>
+              <li><a href="/about">About</a></li>
+              <li><a href="/ambassadors">Meet Our Ambassadors</a></li>
+              <li><a href="/events">Events</a></li>
+              <li><a href="/partners">Partners</a></li>
+              <li><a href="/resources">Resources</a></li>
+              <li><a href="/faq">FAQ</a></li>
+              <li><a href="/contact">Contact Us</a></li>
+            </ul>
+          </nav>
+        </div>
+
+        {/* Bottom bar: social icons + copyright */}
+        <div className="footer-bottom-bar">
+          <div className="footer-social-row">
+            {/* Facebook */}
+            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label="Facebook">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+              </svg>
+            </a>
+            {/* X / Twitter */}
+            <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label="X (Twitter)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+            </a>
+            {/* Instagram */}
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label="Instagram">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+              </svg>
+            </a>
+            {/* LinkedIn */}
+            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="footer-social-link" aria-label="LinkedIn">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+                <rect x="2" y="9" width="4" height="12"/>
+                <circle cx="4" cy="4" r="2"/>
+              </svg>
+            </a>
+            <span className="footer-social-label">Follow us!</span>
+          </div>
+          <p className="footer-copyright">© 2026 National Check-in Week. &nbsp;All rights reserved.</p>
+        </div>
+      </footer>
+    </>
   );
 }

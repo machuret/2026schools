@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -46,7 +47,8 @@ export default function NavClient({ links }: { links: NavLink[] }) {
     <>
       <nav className="nav">
         <Link href="/" className="nav-logo" onClick={close}>
-          <span>National</span> Check-in Week
+          <Image src="/nciw-logo.svg" alt="National Check-in Week" width={36} height={44} style={{ display: 'block' }} />
+          <span className="nav-logo-text"><span>National</span> Check-in Week</span>
         </Link>
 
         {/* Desktop links */}

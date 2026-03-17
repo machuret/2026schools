@@ -51,7 +51,7 @@
   --crisis-red:     #7F1D1D;
 
   /* ── Typography ── */
-  --font-primary:   'Nunito', sans-serif;
+  --font-primary:   var(--font-nunito, 'Nunito'), sans-serif;
 
   /* ── Spacing ── */
   --sp-xs:   4px;

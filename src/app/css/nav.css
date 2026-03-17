@@ -11,11 +11,16 @@
   box-shadow: var(--shadow-nav);
 }
 .nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--font-primary);
   font-size: 1.1rem; font-weight: 800;
   color: var(--dark); text-decoration: none;
 }
-.nav-logo span { color: var(--primary); }
+.nav-logo-text { display: flex; flex-direction: column; line-height: 1.1; }
+.nav-logo-text span { color: var(--primary); }
+.nav-logo img { display: block; }
 .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
 .nav-links a {
   font-family: var(--font-primary);
