@@ -1,6 +1,6 @@
 export default function DataSection() {
   return (
-    <section className="section section-dark" id="data">
+    <section className="section section-alt" id="data">
       <div className="section-inner">
       <div className="section-tag">Methodology &amp; Data Sources</div>
       <h2>How This Site Uses Data</h2>
