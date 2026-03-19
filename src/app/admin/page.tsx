@@ -19,6 +19,7 @@ export default async function AdminDashboard() {
   let eventCount = 0;
   let publishedEventCount = 0;
   let seoMissingCount = 0;
+  let schoolCount = 0;
   type ActivityRow = { ms: string; bg: string; color: string; title: string; desc: string; time: string; href: string };
   let activity: ActivityRow[] = [];
   let dashError = false;
@@ -28,7 +29,7 @@ export default async function AdminDashboard() {
     const { data: { user } } = await supabase.auth.getUser();
     userEmail = user?.email ?? '';
 
-    const [issues, states, areas, events, eventsPublished, seoMissing,
+    const [issues, states, areas, events, eventsPublished, seoMissing, schools,
       recentIssues, recentAreas, recentEvents] = await Promise.all([
       supabase.from('issues').select('id', { count: 'exact', head: true }),
       supabase.from('states').select('id', { count: 'exact', head: true }),
@@ -37,6 +38,7 @@ export default async function AdminDashboard() {
       supabase.from('events').select('id', { count: 'exact', head: true }).eq('published', true),
       supabase.from('areas').select('id', { count: 'exact', head: true })
         .or('seo_title.is.null,seo_title.eq.'),
+      supabase.from('school_profiles').select('id', { count: 'exact', head: true }),
       supabase.from('issues').select('id, title, updated_at').order('updated_at', { ascending: false }).limit(3),
       supabase.from('areas').select('id, name, state, updated_at').order('updated_at', { ascending: false }).limit(3),
       supabase.from('events').select('id, title, updated_at').order('updated_at', { ascending: false }).limit(3),
@@ -48,6 +50,7 @@ export default async function AdminDashboard() {
     eventCount = events.count ?? 0;
     publishedEventCount = eventsPublished.count ?? 0;
     seoMissingCount = seoMissing.count ?? 0;
+    schoolCount = schools.count ?? 0;
 
     // Build real activity feed — carry raw timestamp for correct sort
     type RawRow = { id: string; title?: string; name?: string; state?: string; updated_at: string };
@@ -83,6 +86,7 @@ export default async function AdminDashboard() {
 
   const QUICK_ACTIONS = [
     { label: 'Manage Issues',  href: '/admin/issues',      ms: 'warning' },
+    { label: 'Schools',        href: '/admin/schools',     ms: 'school' },
     { label: 'Events',         href: '/admin/events',      ms: 'event' },
     { label: 'Areas & Cities', href: '/admin/content',     ms: 'location_on' },
     { label: 'SEO Manager',    href: '/admin/seo',         ms: 'travel_explore' },
@@ -145,6 +149,17 @@ export default async function AdminDashboard() {
           <div className="swa-stat-card__value">{areaCount}</div>
           <div className="swa-stat-card__bottom">
             <span className="swa-stat-card__delta">{stateCount} states</span>
+          </div>
+        </Link>
+
+        <Link href="/admin/schools" className="swa-stat-card">
+          <div className="swa-stat-card__top">
+            <span className="swa-stat-card__label">Schools</span>
+            <span className="swa-badge swa-badge--primary">ACARA</span>
+          </div>
+          <div className="swa-stat-card__value">{schoolCount.toLocaleString()}</div>
+          <div className="swa-stat-card__bottom">
+            <span className="swa-stat-card__delta">All Australian schools</span>
           </div>
         </Link>
       </div>

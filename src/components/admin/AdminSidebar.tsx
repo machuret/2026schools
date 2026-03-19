@@ -14,6 +14,7 @@ const SECTIONS = [
       { label: 'Votes & Feedback', href: '/admin/votes',      ms: 'thumbs_up_down' },
       { label: 'States & Data', href: '/admin/states',       ms: 'bar_chart' },
       { label: 'Areas',         href: '/admin/content',      ms: 'location_on' },
+      { label: 'Schools',       href: '/admin/schools',      ms: 'school' },
     ],
   },
   {
