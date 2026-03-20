@@ -1,38 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
-
-interface SchoolRow {
-  school_name:               string | null;
-  school_sector:             string | null;
-  school_type:               string | null;
-  geolocation:               string | null;
-  year_range:                string | null;
-  icsea:                     number | null;
-  total_enrolments:          number | null;
-  indigenous_enrolments_pct: number | null;
-  lbote_yes_pct:             number | null;
-  bottom_sea_quarter_pct:    number | null;
-}
-
-const SECTOR_COLORS: Record<string, string> = {
-  Government:  "#2563eb",
-  Catholic:    "#7c3aed",
-  Independent: "#0891b2",
-};
-
-const SECTOR_BG: Record<string, string> = {
-  Government:  "#eff6ff",
-  Catholic:    "#f5f3ff",
-  Independent: "#ecfeff",
-};
-
-function fmt(n: number) {
-  return n.toLocaleString("en-AU");
-}
-
-function pct(n: number | null) {
-  if (n == null) return "N/A";
-  return `${n.toFixed(1)}%`;
-}
+import {
+  SchoolRow, SECTOR_COLORS, SECTOR_BG,
+  MAX_SCHOOL_ROWS, fmt, pct, countBy, avgPct, icseaContext,
+} from "@/lib/schoolUtils";
 
 async function fetchAreaSchools(areaSlug: string): Promise<SchoolRow[] | null> {
   const sb = createClient(
@@ -47,26 +17,11 @@ async function fetchAreaSchools(areaSlug: string): Promise<SchoolRow[] | null> {
       "total_enrolments, indigenous_enrolments_pct, lbote_yes_pct, bottom_sea_quarter_pct"
     )
     .eq("area_slug", areaSlug)
-    .order("school_name");
+    .order("school_name")
+    .limit(MAX_SCHOOL_ROWS);
 
   if (error || !data || data.length === 0) return null;
   return data as unknown as SchoolRow[];
-}
-
-function avgPct(rows: SchoolRow[], key: keyof SchoolRow): number | null {
-  const valid = rows.filter((r) => r[key] != null);
-  if (valid.length === 0) return null;
-  const sum = valid.reduce((s, r) => s + (r[key] as number), 0);
-  return Math.round((sum / valid.length) * 10) / 10;
-}
-
-function countBy(rows: SchoolRow[], key: keyof SchoolRow): Record<string, number> {
-  const out: Record<string, number> = {};
-  for (const r of rows) {
-    const k = (r[key] as string | null) ?? "Unknown";
-    out[k] = (out[k] ?? 0) + 1;
-  }
-  return out;
 }
 
 export default async function AreaSchoolStatsPanel({ areaSlug, areaName }: { areaSlug: string; areaName: string }) {
@@ -80,17 +35,7 @@ export default async function AreaSchoolStatsPanel({ areaSlug, areaName }: { are
   const avg_icsea = icseaRows.length > 0
     ? Math.round(icseaRows.reduce((s, r) => s + r.icsea!, 0) / icseaRows.length)
     : null;
-  const icseaVsNational = avg_icsea != null ? avg_icsea - 1000 : null;
-  const icseaColor =
-    avg_icsea == null        ? "#6b7280"
-    : icseaVsNational! > 20  ? "#16a34a"
-    : icseaVsNational! < -20 ? "#dc2626"
-    : "#d97706";
-  const icseaLabel =
-    icseaVsNational == null  ? "national average is 1000"
-    : icseaVsNational > 20   ? `${Math.abs(icseaVsNational)} pts above national avg`
-    : icseaVsNational < -20  ? `${Math.abs(icseaVsNational)} pts below national avg`
-    : "near national average";
+  const { vsNational: icseaVsNational, color: icseaColor, label: icseaLabel } = icseaContext(avg_icsea);
 
   const sectors = countBy(rows, "school_sector");
   const indigenous_avg = avgPct(rows, "indigenous_enrolments_pct");
@@ -237,8 +182,9 @@ export default async function AreaSchoolStatsPanel({ areaSlug, areaName }: { are
         <div style={{ maxHeight: 340, overflowY: "auto" }}>
           {rows.map((school, i) => {
             const color = SECTOR_COLORS[school.school_sector ?? ""] ?? "#9ca3af";
+            const key = school.school_name ? `${school.school_name}-${i}` : String(i);
             return (
-              <div key={i} style={{
+              <div key={key} style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 padding: "10px 16px",
                 borderBottom: i < rows.length - 1 ? "1px solid var(--border)" : "none",

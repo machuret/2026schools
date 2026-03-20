@@ -1,48 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
-
-interface SchoolRow {
-  school_sector:             string | null;
-  school_type:               string | null;
-  geolocation:               string | null;
-  icsea:                     number | null;
-  total_enrolments:          number | null;
-  indigenous_enrolments_pct: number | null;
-  lbote_yes_pct:             number | null;
-  bottom_sea_quarter_pct:    number | null;
-}
-
-const STATE_CODES: Record<string, string> = {
-  victoria:                       "VIC",
-  "new-south-wales":              "NSW",
-  queensland:                     "QLD",
-  "western-australia":            "WA",
-  "south-australia":              "SA",
-  tasmania:                       "TAS",
-  "australian-capital-territory": "ACT",
-  "northern-territory":           "NT",
-};
-
-const SECTOR_COLORS: Record<string, string> = {
-  Government:  "#2563eb",
-  Catholic:    "#7c3aed",
-  Independent: "#0891b2",
-};
-
-const GEO_COLORS: Record<string, string> = {
-  Metropolitan: "#16a34a",
-  Provincial:   "#d97706",
-  Remote:       "#dc2626",
-  "Very Remote": "#991b1b",
-};
-
-function fmt(n: number) {
-  return n.toLocaleString("en-AU");
-}
-
-function pct(n: number | null) {
-  if (n == null) return "N/A";
-  return `${n.toFixed(1)}%`;
-}
+import {
+  SchoolRow, STATE_CODES, SECTOR_COLORS, GEO_COLORS,
+  MAX_SCHOOL_ROWS, fmt, pct, countBy, avgPct, icseaContext,
+} from "@/lib/schoolUtils";
 
 async function fetchSchoolStats(slug: string): Promise<SchoolRow[] | null> {
   const stateCode = STATE_CODES[slug];
@@ -60,26 +20,11 @@ async function fetchSchoolStats(slug: string): Promise<SchoolRow[] | null> {
       "total_enrolments, indigenous_enrolments_pct, lbote_yes_pct, " +
       "bottom_sea_quarter_pct"
     )
-    .eq("state", stateCode);
+    .eq("state", stateCode)
+    .limit(MAX_SCHOOL_ROWS);
 
   if (error || !data || data.length === 0) return null;
   return data as unknown as SchoolRow[];
-}
-
-function countBy(rows: SchoolRow[], key: keyof SchoolRow): Record<string, number> {
-  const out: Record<string, number> = {};
-  for (const r of rows) {
-    const k = (r[key] as string | null) ?? "Unknown";
-    out[k] = (out[k] ?? 0) + 1;
-  }
-  return out;
-}
-
-function avgPct(rows: SchoolRow[], key: keyof SchoolRow): number | null {
-  const valid = rows.filter((r) => r[key] != null);
-  if (valid.length === 0) return null;
-  const sum = valid.reduce((s, r) => s + (r[key] as number), 0);
-  return Math.round((sum / valid.length) * 10) / 10;
 }
 
 /* ── Stacked bar with row-per-segment layout ── */
@@ -160,17 +105,7 @@ export default async function SchoolStatsPanel({ slug, stateName }: { slug: stri
   const avg_icsea = icseaRows.length > 0
     ? Math.round(icseaRows.reduce((s, r) => s + r.icsea!, 0) / icseaRows.length)
     : null;
-  const icseaVsNational = avg_icsea != null ? avg_icsea - 1000 : null;
-  const icseaColor =
-    avg_icsea == null       ? "#6b7280"
-    : icseaVsNational! > 20  ? "#16a34a"
-    : icseaVsNational! < -20 ? "#dc2626"
-    : "#d97706";
-  const icseaLabel =
-    icseaVsNational == null  ? "Socio-educational advantage index"
-    : icseaVsNational > 20   ? `${Math.abs(icseaVsNational)} points above national average`
-    : icseaVsNational < -20  ? `${Math.abs(icseaVsNational)} points below national average`
-    : "Near national average (1000)";
+  const { vsNational: icseaVsNational, color: icseaColor, label: icseaLabel } = icseaContext(avg_icsea);
 
   const sectors      = countBy(rows, "school_sector");
   const geolocations = countBy(rows, "geolocation");

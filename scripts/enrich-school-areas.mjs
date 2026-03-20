@@ -25,6 +25,7 @@ const supabase = createClient(
 );
 
 const BATCH_SIZE = 500;
+const DRY_RUN = process.argv.includes('--dry-run');
 
 /** Convert any string to a URL-style slug */
 function slugify(str) {
@@ -187,27 +188,52 @@ if (updates.length === 0) {
   process.exit(0);
 }
 
-// ── 6. Write area_slug back to school_profiles ────────────────────
+if (DRY_RUN) {
+  console.log('\n[DRY RUN] No writes performed. Sample of updates that would occur:');
+  for (const u of updates.slice(0, 10)) {
+    console.log(`  school id=${u.id} → area_slug="${u.area_slug}"`);
+  }
+  if (updates.length > 10) console.log(`  ... and ${updates.length - 10} more`);
+  process.exit(0);
+}
+
+// ── 6. Write area_slug back to school_profiles (concurrent batches) ──
 console.log('\nWriting area_slug to school_profiles...');
 let written = 0;
 let writeErrors = 0;
 
+// Group updates by area_slug so we can use .in() for bulk updates
+const byArea = {};
 for (const u of updates) {
-  const { error } = await supabase
-    .from('school_profiles')
-    .update({ area_slug: u.area_slug })
-    .eq('id', u.id);
+  if (!byArea[u.area_slug]) byArea[u.area_slug] = [];
+  byArea[u.area_slug].push(u.id);
+}
 
-  if (error) {
-    writeErrors++;
-    if (writeErrors <= 3) console.error(`  Update error for id ${u.id}:`, error.message);
-  } else {
-    written++;
-    if (written % 100 === 0) process.stdout.write(`\r  Written ${written}/${updates.length}...`);
-  }
+const areaEntries = Object.entries(byArea);
+console.log(`  Updating ${areaEntries.length} area groups (${updates.length} schools total)...`);
+
+const CONCURRENCY = 5;
+for (let i = 0; i < areaEntries.length; i += CONCURRENCY) {
+  const chunk = areaEntries.slice(i, i + CONCURRENCY);
+  await Promise.all(chunk.map(async ([areaSlug, ids]) => {
+    const { error } = await supabase
+      .from('school_profiles')
+      .update({ area_slug: areaSlug })
+      .in('id', ids);
+    if (error) {
+      writeErrors++;
+      console.error(`  Error updating area "${areaSlug}":`, error.message);
+    } else {
+      written += ids.length;
+    }
+  }));
+  process.stdout.write(`\r  Written ${written}/${updates.length}...`);
 }
 
 console.log(`\n\nDone.`);
 console.log(`  ${written} schools enriched with area_slug.`);
-console.log(`  ${writeErrors} batch errors.`);
+console.log(`  ${writeErrors} group errors.`);
+if (DRY_RUN === false) {
+  console.log(`\nTip: Run with --dry-run to preview changes without writing.`);
+}
 console.log(`\nNext step: schools with area_slug can now be queried per /areas/[slug] page.`);

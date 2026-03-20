@@ -41,8 +41,8 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 do $$ begin
-  create policy "Auth write australian_postcodes"
-    on australian_postcodes for all using (auth.role() = 'authenticated');
+  create policy "Service role write australian_postcodes"
+    on australian_postcodes for all using (auth.role() = 'service_role');
 exception when duplicate_object then null; end $$;
 
 -- Indexes for the lookups we'll do

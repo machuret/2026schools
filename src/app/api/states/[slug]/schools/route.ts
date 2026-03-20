@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { STATE_CODES, MAX_SCHOOL_ROWS } from "@/lib/schoolUtils";
 
 interface SchoolRow {
   school_sector:              string | null;
@@ -11,17 +12,6 @@ interface SchoolRow {
   lbote_yes_pct:              number | null;
   bottom_sea_quarter_pct:     number | null;
 }
-
-const STATE_CODES: Record<string, string> = {
-  victoria:                    "VIC",
-  "new-south-wales":           "NSW",
-  queensland:                  "QLD",
-  "western-australia":         "WA",
-  "south-australia":           "SA",
-  tasmania:                    "TAS",
-  "australian-capital-territory": "ACT",
-  "northern-territory":        "NT",
-};
 
 export async function GET(
   _req: NextRequest,
@@ -45,7 +35,8 @@ export async function GET(
       "total_enrolments, indigenous_enrolments_pct, lbote_yes_pct, " +
       "bottom_sea_quarter_pct"
     )
-    .eq("state", stateCode);
+    .eq("state", stateCode)
+    .limit(MAX_SCHOOL_ROWS);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
