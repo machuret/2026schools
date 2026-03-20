@@ -32,7 +32,7 @@ const GEO_COLORS: Record<string, string> = {
   Metropolitan: "#16a34a",
   Provincial:   "#d97706",
   Remote:       "#dc2626",
-  "Very Remote": "#7c3aed",
+  "Very Remote": "#991b1b",
 };
 
 function fmt(n: number) {
@@ -82,46 +82,68 @@ function avgPct(rows: SchoolRow[], key: keyof SchoolRow): number | null {
   return Math.round((sum / valid.length) * 10) / 10;
 }
 
-interface ProportionBarProps {
-  counts: Record<string, number>;
-  total: number;
-  colorMap: Record<string, string>;
-}
-
-function ProportionBar({ counts, total, colorMap }: ProportionBarProps) {
+/* ── Stacked bar with row-per-segment layout ── */
+function BreakdownList({ counts, total, colorMap }: { counts: Record<string, number>; total: number; colorMap: Record<string, string> }) {
   const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
   return (
-    <div>
-      {/* Bar */}
-      <div style={{ display: "flex", height: 12, borderRadius: 6, overflow: "hidden", gap: 2, marginBottom: 12 }}>
-        {entries.map(([label, count]) => (
-          <div
-            key={label}
-            style={{
-              flex: count,
-              background: colorMap[label] ?? "#9ca3af",
-              minWidth: 4,
-            }}
-            title={`${label}: ${count} schools (${((count / total) * 100).toFixed(1)}%)`}
-          />
-        ))}
-      </div>
-      {/* Legend */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 20px" }}>
-        {entries.map(([label, count]) => (
-          <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{
-              width: 10, height: 10, borderRadius: 2,
-              background: colorMap[label] ?? "#9ca3af",
-              flexShrink: 0,
-              display: "inline-block",
-            }} />
-            <span style={{ fontSize: 12, color: "var(--text-mid)" }}>
-              {label} <strong style={{ color: "var(--dark)" }}>{((count / total) * 100).toFixed(0)}%</strong>
-              <span style={{ color: "var(--text-light)", marginLeft: 4 }}>({fmt(count)})</span>
-            </span>
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {entries.map(([label, count]) => {
+        const share = (count / total) * 100;
+        const color = colorMap[label] ?? "#9ca3af";
+        return (
+          <div key={label}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                <span style={{ width: 9, height: 9, borderRadius: 2, background: color, flexShrink: 0, display: "inline-block" }} />
+                <span style={{ fontSize: 13, color: "var(--text-mid)" }}>{label}</span>
+              </div>
+              <span style={{ fontSize: 13, fontWeight: 700, color: "var(--dark)" }}>
+                {share.toFixed(0)}%
+                <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-light)", marginLeft: 5 }}>({fmt(count)})</span>
+              </span>
+            </div>
+            <div style={{ height: 6, borderRadius: 3, background: "var(--border)", overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${share}%`, background: color, borderRadius: 3, transition: "width 0.3s" }} />
+            </div>
           </div>
-        ))}
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── ICSEA visual gauge ── */
+function IcseaGauge({ value, vsNational }: { value: number; vsNational: number }) {
+  // ICSEA range roughly 500–1300. Clamp position 0–100%.
+  const min = 500, max = 1300;
+  const pos = Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
+  const nationalPos = ((1000 - min) / (max - min)) * 100;
+  const color = vsNational > 20 ? "#16a34a" : vsNational < -20 ? "#dc2626" : "#d97706";
+
+  return (
+    <div style={{ marginTop: 8 }}>
+      <div style={{ position: "relative", height: 10, borderRadius: 5, background: "linear-gradient(to right, #fecaca, #fef9c3, #bbf7d0)", marginBottom: 20 }}>
+        {/* National avg marker */}
+        <div style={{
+          position: "absolute", left: `${nationalPos}%`, top: -4,
+          width: 2, height: 18, background: "#6b7280", borderRadius: 1,
+          transform: "translateX(-50%)"
+        }} />
+        {/* State value marker */}
+        <div style={{
+          position: "absolute", left: `${pos}%`, top: -6,
+          width: 12, height: 22, background: color, borderRadius: 3,
+          transform: "translateX(-50%)",
+          boxShadow: `0 0 0 2px white, 0 0 0 4px ${color}44`
+        }} />
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--text-light)" }}>
+        <span>500 — Most disadvantaged</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <span style={{ display: "inline-block", width: 8, height: 8, background: "#6b7280", borderRadius: 1 }} />
+          <span>National avg (1000)</span>
+        </div>
+        <span>1300 — Most advantaged</span>
       </div>
     </div>
   );
@@ -138,154 +160,187 @@ export default async function SchoolStatsPanel({ slug, stateName }: { slug: stri
   const avg_icsea = icseaRows.length > 0
     ? Math.round(icseaRows.reduce((s, r) => s + r.icsea!, 0) / icseaRows.length)
     : null;
+  const icseaVsNational = avg_icsea != null ? avg_icsea - 1000 : null;
+  const icseaColor =
+    avg_icsea == null       ? "#6b7280"
+    : icseaVsNational! > 20  ? "#16a34a"
+    : icseaVsNational! < -20 ? "#dc2626"
+    : "#d97706";
+  const icseaLabel =
+    icseaVsNational == null  ? "Socio-educational advantage index"
+    : icseaVsNational > 20   ? `${Math.abs(icseaVsNational)} points above national average`
+    : icseaVsNational < -20  ? `${Math.abs(icseaVsNational)} points below national average`
+    : "Near national average (1000)";
 
-  const sectors     = countBy(rows, "school_sector");
+  const sectors      = countBy(rows, "school_sector");
   const geolocations = countBy(rows, "geolocation");
 
   const indigenous_avg   = avgPct(rows, "indigenous_enrolments_pct");
   const lbote_avg        = avgPct(rows, "lbote_yes_pct");
   const bottom_qtr_avg   = avgPct(rows, "bottom_sea_quarter_pct");
 
-  // ICSEA context: national avg is 1000
-  const icseaVsNational = avg_icsea != null ? avg_icsea - 1000 : null;
-  const icseaLabel =
-    icseaVsNational == null ? null
-    : icseaVsNational > 20  ? "above national average"
-    : icseaVsNational < -20 ? "below national average"
-    : "near national average";
-
   return (
-    <section className="inner-section" style={{ marginBottom: 40 }}>
-      {/* Section heading */}
-      <h2 className="section-heading">Schools in {stateName}</h2>
-      <p className="inner-lead inner-lead--tight">
-        Real data from {fmt(total_schools)} schools across {stateName}, drawn from the ACARA National School Profile 2025.
-      </p>
+    <section className="inner-section" style={{
+      marginBottom: 48,
+      borderTop: "2px solid var(--border)",
+      paddingTop: 40,
+    }}>
 
-      {/* ── Headline stats ── */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(3, 1fr)",
-        gap: 16,
-        marginBottom: 28,
-      }}>
-        {[
-          {
-            value: fmt(total_schools),
-            label: "Schools",
-            sub: "across the state",
-            icon: "school",
-            color: "#2563eb",
-          },
-          {
-            value: fmt(total_enrolments),
-            label: "Students",
-            sub: "total enrolments",
-            icon: "groups",
-            color: "#7c3aed",
-          },
-          {
-            value: avg_icsea != null ? String(avg_icsea) : "N/A",
-            label: "Avg ICSEA",
-            sub: icseaLabel ?? "socio-educational advantage",
-            icon: "equalizer",
-            color: avg_icsea == null ? "#6b7280"
-              : icseaVsNational! > 20  ? "#16a34a"
-              : icseaVsNational! < -20 ? "#dc2626"
-              : "#d97706",
-          },
-        ].map((s) => (
-          <div key={s.label} className="card" style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 6,
-            padding: "20px 24px",
-            borderLeft: `4px solid ${s.color}`,
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 18, color: s.color }}>{s.icon}</span>
-              <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-mid)" }}>{s.label}</span>
-            </div>
-            <div style={{ fontSize: 30, fontWeight: 900, color: "var(--dark)", lineHeight: 1 }}>{s.value}</div>
-            <div style={{ fontSize: 12, color: "var(--text-light)" }}>{s.sub}</div>
-          </div>
-        ))}
+      {/* ── Section header ── */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginBottom: 8 }}>
+        <div>
+          <div className="eyebrow-tag" style={{ marginBottom: 8 }}>School Profile Data</div>
+          <h2 className="section-heading" style={{ marginBottom: 6 }}>Who attends school in {stateName}?</h2>
+          <p className="inner-lead inner-lead--tight" style={{ marginBottom: 0 }}>
+            {fmt(total_schools)} schools · {fmt(total_enrolments)} students — ACARA National School Profile 2025
+          </p>
+        </div>
       </div>
 
-      {/* ── Sector + Geolocation grid ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 28 }}>
+      {/* ── Row 1: 2 headline stats + ICSEA card ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 2fr", gap: 16, marginTop: 28, marginBottom: 24 }}>
 
-        {/* Sector */}
-        <div className="card">
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-            <span className="material-symbols-outlined" style={{ fontSize: 18, color: "#2563eb" }}>corporate_fare</span>
+        {/* Schools */}
+        <div className="card" style={{ padding: "20px 22px", borderTop: "3px solid #2563eb" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 17, color: "#2563eb" }}>school</span>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-mid)" }}>Total Schools</span>
+          </div>
+          <div style={{ fontSize: 36, fontWeight: 900, color: "#2563eb", lineHeight: 1 }}>{fmt(total_schools)}</div>
+          <div style={{ fontSize: 12, color: "var(--text-light)", marginTop: 6 }}>across {stateName}</div>
+        </div>
+
+        {/* Students */}
+        <div className="card" style={{ padding: "20px 22px", borderTop: "3px solid #7c3aed" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 10 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 17, color: "#7c3aed" }}>groups</span>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-mid)" }}>Total Students</span>
+          </div>
+          <div style={{ fontSize: 36, fontWeight: 900, color: "#7c3aed", lineHeight: 1 }}>{fmt(total_enrolments)}</div>
+          <div style={{ fontSize: 12, color: "var(--text-light)", marginTop: 6 }}>enrolled across all schools</div>
+        </div>
+
+        {/* ICSEA with gauge */}
+        <div className="card" style={{ padding: "20px 22px", borderTop: `3px solid ${icseaColor}` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 6 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 17, color: icseaColor }}>equalizer</span>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-mid)" }}>Average ICSEA Score</span>
+            <span style={{ fontSize: 11, color: "var(--text-light)", marginLeft: "auto" }}>Socio-educational advantage</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 4 }}>
+            <div style={{ fontSize: 36, fontWeight: 900, color: icseaColor, lineHeight: 1 }}>
+              {avg_icsea ?? "N/A"}
+            </div>
+            <div style={{ fontSize: 12, color: icseaColor, fontWeight: 600 }}>{icseaLabel}</div>
+          </div>
+          {avg_icsea != null && icseaVsNational != null && (
+            <IcseaGauge value={avg_icsea} vsNational={icseaVsNational} />
+          )}
+        </div>
+      </div>
+
+      {/* ── Row 2: Sector + Location breakdowns side by side ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 24 }}>
+
+        <div className="card" style={{ padding: "20px 22px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 18 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 17, color: "#2563eb" }}>corporate_fare</span>
             <span style={{ fontSize: 13, fontWeight: 700, color: "var(--dark)" }}>School Sector</span>
           </div>
-          <ProportionBar counts={sectors} total={total_schools} colorMap={SECTOR_COLORS} />
+          <BreakdownList counts={sectors} total={total_schools} colorMap={SECTOR_COLORS} />
         </div>
 
-        {/* Geolocation */}
-        <div className="card">
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-            <span className="material-symbols-outlined" style={{ fontSize: 18, color: "#16a34a" }}>map</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--dark)" }}>Location Type</span>
+        <div className="card" style={{ padding: "20px 22px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 18 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 17, color: "#16a34a" }}>map</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--dark)" }}>School Location</span>
           </div>
-          <ProportionBar counts={geolocations} total={total_schools} colorMap={GEO_COLORS} />
+          <BreakdownList counts={geolocations} total={total_schools} colorMap={GEO_COLORS} />
         </div>
       </div>
 
-      {/* ── Equity spotlight ── */}
-      <div className="card-tint" style={{ padding: "24px 28px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+      {/* ── Row 3: Equity — full width, hierarchical ── */}
+      <div style={{
+        background: "linear-gradient(135deg, #fff5f5 0%, #fffbeb 100%)",
+        border: "1px solid #fecaca",
+        borderRadius: "var(--radius-lg)",
+        padding: "24px 28px",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
           <span className="material-symbols-outlined" style={{ fontSize: 18, color: "#dc2626" }}>diversity_3</span>
-          <span style={{ fontSize: 13, fontWeight: 700, color: "var(--dark)" }}>Equity Indicators</span>
-          <span style={{ fontSize: 12, color: "var(--text-light)", marginLeft: 4 }}>— average across all schools in {stateName}</span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: "var(--dark)" }}>Equity & Inclusion Indicators</span>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-          {[
-            {
-              value: pct(bottom_qtr_avg),
-              label: "Lowest ICSEA quarter",
-              desc: "Students in the most disadvantaged socio-educational quarter",
-              icon: "social_leaderboard",
-              color: "#dc2626",
-            },
-            {
-              value: pct(indigenous_avg),
-              label: "Indigenous students",
-              desc: "Schools with higher proportions may need additional wellbeing support",
-              icon: "people",
-              color: "#d97706",
-            },
-            {
-              value: pct(lbote_avg),
-              label: "Language background other than English",
-              desc: "Students from non-English speaking backgrounds",
-              icon: "translate",
-              color: "#7c3aed",
-            },
-          ].map((stat) => (
-            <div key={stat.label} style={{
-              background: "var(--white)",
-              borderRadius: "var(--radius-md)",
-              padding: "16px 18px",
-              border: "0.5px solid var(--border)",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                <span className="material-symbols-outlined" style={{ fontSize: 16, color: stat.color }}>{stat.icon}</span>
-                <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-mid)" }}>{stat.label}</span>
-              </div>
-              <div style={{ fontSize: 26, fontWeight: 900, color: stat.color, lineHeight: 1, marginBottom: 6 }}>{stat.value}</div>
-              <p style={{ fontSize: 11, color: "var(--text-light)", margin: 0, lineHeight: 1.5 }}>{stat.desc}</p>
+        <p style={{ fontSize: 13, color: "var(--text-mid)", margin: "0 0 20px", lineHeight: 1.6 }}>
+          These indicators highlight student groups that research shows are at higher risk of wellbeing challenges and may require additional support. Averages are across all schools in {stateName}.
+        </p>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+          {/* Most critical — disadvantaged quarter */}
+          <div style={{
+            background: "#fff",
+            borderRadius: "var(--radius-md)",
+            padding: "18px 20px",
+            borderLeft: "4px solid #dc2626",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 15, color: "#dc2626" }}>social_leaderboard</span>
+              <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#dc2626" }}>Socioeconomic Disadvantage</span>
             </div>
-          ))}
+            <div style={{ fontSize: 32, fontWeight: 900, color: "#dc2626", lineHeight: 1, marginBottom: 6 }}>
+              {pct(bottom_qtr_avg)}
+            </div>
+            <p style={{ fontSize: 12, color: "var(--text-mid)", margin: 0, lineHeight: 1.6 }}>
+              of students in schools fall in the lowest quarter of socio-educational advantage nationally
+            </p>
+          </div>
+
+          {/* Indigenous students */}
+          <div style={{
+            background: "#fff",
+            borderRadius: "var(--radius-md)",
+            padding: "18px 20px",
+            borderLeft: "4px solid #d97706",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 15, color: "#d97706" }}>people</span>
+              <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#d97706" }}>Indigenous Students</span>
+            </div>
+            <div style={{ fontSize: 32, fontWeight: 900, color: "#d97706", lineHeight: 1, marginBottom: 6 }}>
+              {pct(indigenous_avg)}
+            </div>
+            <p style={{ fontSize: 12, color: "var(--text-mid)", margin: 0, lineHeight: 1.6 }}>
+              average proportion of Indigenous students across schools — a group with documented higher wellbeing needs
+            </p>
+          </div>
+
+          {/* LBOTE */}
+          <div style={{
+            background: "#fff",
+            borderRadius: "var(--radius-md)",
+            padding: "18px 20px",
+            borderLeft: "4px solid #7c3aed",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 15, color: "#7c3aed" }}>translate</span>
+              <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#7c3aed" }}>Language Background</span>
+            </div>
+            <div style={{ fontSize: 32, fontWeight: 900, color: "#7c3aed", lineHeight: 1, marginBottom: 6 }}>
+              {pct(lbote_avg)}
+            </div>
+            <p style={{ fontSize: 12, color: "var(--text-mid)", margin: 0, lineHeight: 1.6 }}>
+              of students have a language background other than English (LBOTE) — requiring culturally aware wellbeing approaches
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Source note */}
-      <p style={{ fontSize: 11, color: "var(--text-light)", marginTop: 12, marginBottom: 0 }}>
-        Source: ACARA National School Profile 2025. ICSEA (Index of Community Socio-Educational Advantage) national average is 1000.
-      </p>
+      {/* ── Source note ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 14 }}>
+        <span className="material-symbols-outlined" style={{ fontSize: 14, color: "var(--text-light)" }}>info</span>
+        <p style={{ fontSize: 11, color: "var(--text-light)", margin: 0 }}>
+          Source: ACARA National School Profile 2025. ICSEA (Index of Community Socio-Educational Advantage) ranges from ~500 to ~1300; national average is 1000. Equity figures are school-level averages, not student-weighted.
+        </p>
+      </div>
     </section>
   );
 }
