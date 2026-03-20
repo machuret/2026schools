@@ -1,17 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
-import { STATE_CODES, MAX_SCHOOL_ROWS } from "@/lib/schoolUtils";
-
-interface SchoolRow {
-  school_sector:              string | null;
-  school_type:                string | null;
-  geolocation:                string | null;
-  icsea:                      number | null;
-  total_enrolments:           number | null;
-  indigenous_enrolments_pct:  number | null;
-  lbote_yes_pct:              number | null;
-  bottom_sea_quarter_pct:     number | null;
-}
+import { STATE_CODES, MAX_SCHOOL_ROWS, SchoolRow, countBy, avgPct } from "@/lib/schoolUtils";
 
 export async function GET(
   _req: NextRequest,
@@ -48,52 +37,21 @@ export async function GET(
     return NextResponse.json({ empty: true }, { status: 200 });
   }
 
-  const total_schools = data.length;
+  const total_schools    = data.length;
+  const total_enrolments = data.reduce((s, r) => s + (r.total_enrolments ?? 0), 0);
 
-  // Total enrolments
-  const total_enrolments = data.reduce(
-    (s, r) => s + (r.total_enrolments ?? 0), 0
-  );
-
-  // Avg ICSEA (only rows that have a value)
   const icseaRows = data.filter((r) => r.icsea != null);
-  const avg_icsea =
-    icseaRows.length > 0
-      ? Math.round(icseaRows.reduce((s, r) => s + r.icsea!, 0) / icseaRows.length)
-      : null;
+  const avg_icsea = icseaRows.length > 0
+    ? Math.round(icseaRows.reduce((s, r) => s + r.icsea!, 0) / icseaRows.length)
+    : null;
 
-  // Sector breakdown
-  const sectors: Record<string, number> = {};
-  for (const r of data) {
-    const k = r.school_sector ?? "Unknown";
-    sectors[k] = (sectors[k] ?? 0) + 1;
-  }
+  const sectors    = countBy(data, "school_sector");
+  const types      = countBy(data, "school_type");
+  const geolocation = countBy(data, "geolocation");
 
-  // Type breakdown
-  const types: Record<string, number> = {};
-  for (const r of data) {
-    const k = r.school_type ?? "Unknown";
-    types[k] = (types[k] ?? 0) + 1;
-  }
-
-  // Geolocation breakdown
-  const geolocation: Record<string, number> = {};
-  for (const r of data) {
-    const k = r.geolocation ?? "Unknown";
-    geolocation[k] = (geolocation[k] ?? 0) + 1;
-  }
-
-  // Equity averages — weighted by schools that have data
-  function avgPct(field: keyof typeof data[0]) {
-    const valid = data.filter((r) => r[field] != null);
-    if (valid.length === 0) return null;
-    const sum = valid.reduce((s, r) => s + (r[field] as number), 0);
-    return Math.round((sum / valid.length) * 10) / 10;
-  }
-
-  const indigenous_avg_pct   = avgPct("indigenous_enrolments_pct");
-  const lbote_avg_pct        = avgPct("lbote_yes_pct");
-  const bottom_quarter_avg_pct = avgPct("bottom_sea_quarter_pct");
+  const indigenous_avg_pct     = avgPct(data, "indigenous_enrolments_pct");
+  const lbote_avg_pct          = avgPct(data, "lbote_yes_pct");
+  const bottom_quarter_avg_pct = avgPct(data, "bottom_sea_quarter_pct");
 
   return NextResponse.json(
     {

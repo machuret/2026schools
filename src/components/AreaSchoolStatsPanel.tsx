@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import {
   SchoolRow, SECTOR_COLORS, SECTOR_BG,
-  MAX_SCHOOL_ROWS, fmt, pct, countBy, avgPct, icseaContext,
+  MAX_SCHOOL_ROWS, fmt, pct, countBy, avgPct, calcAvgIcsea, icseaContext,
 } from "@/lib/schoolUtils";
 
 async function fetchAreaSchools(areaSlug: string): Promise<SchoolRow[] | null> {
@@ -31,10 +31,7 @@ export default async function AreaSchoolStatsPanel({ areaSlug, areaName }: { are
   const total        = rows.length;
   const totalStudents = rows.reduce((s, r) => s + (r.total_enrolments ?? 0), 0);
 
-  const icseaRows = rows.filter((r) => r.icsea != null);
-  const avg_icsea = icseaRows.length > 0
-    ? Math.round(icseaRows.reduce((s, r) => s + r.icsea!, 0) / icseaRows.length)
-    : null;
+  const avg_icsea = calcAvgIcsea(rows);
   const { vsNational: icseaVsNational, color: icseaColor, label: icseaLabel } = icseaContext(avg_icsea);
 
   const sectors = countBy(rows, "school_sector");
@@ -60,7 +57,7 @@ export default async function AreaSchoolStatsPanel({ areaSlug, areaName }: { are
           Schools in {areaName}
         </h2>
         <p style={{ margin: 0, fontSize: 14, color: "var(--text-mid)", lineHeight: 1.6 }}>
-          {fmt(total)} school{total !== 1 ? "s" : ""} · {fmt(totalStudents)} students enrolled
+          ACARA National School Profile 2025
         </p>
       </div>
 

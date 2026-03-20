@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import {
   SchoolRow, STATE_CODES, SECTOR_COLORS, GEO_COLORS,
-  MAX_SCHOOL_ROWS, fmt, pct, countBy, avgPct, icseaContext,
+  MAX_SCHOOL_ROWS, fmt, pct, countBy, avgPct, calcAvgIcsea, icseaContext,
 } from "@/lib/schoolUtils";
 
 async function fetchSchoolStats(slug: string): Promise<SchoolRow[] | null> {
@@ -48,7 +48,7 @@ function BreakdownList({ counts, total, colorMap }: { counts: Record<string, num
               </span>
             </div>
             <div style={{ height: 6, borderRadius: 3, background: "var(--border)", overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${share}%`, background: color, borderRadius: 3, transition: "width 0.3s" }} />
+              <div style={{ height: "100%", width: `${share}%`, background: color, borderRadius: 3 }} />
             </div>
           </div>
         );
@@ -101,10 +101,7 @@ export default async function SchoolStatsPanel({ slug, stateName }: { slug: stri
   const total_schools    = rows.length;
   const total_enrolments = rows.reduce((s, r) => s + (r.total_enrolments ?? 0), 0);
 
-  const icseaRows = rows.filter((r) => r.icsea != null);
-  const avg_icsea = icseaRows.length > 0
-    ? Math.round(icseaRows.reduce((s, r) => s + r.icsea!, 0) / icseaRows.length)
-    : null;
+  const avg_icsea = calcAvgIcsea(rows);
   const { vsNational: icseaVsNational, color: icseaColor, label: icseaLabel } = icseaContext(avg_icsea);
 
   const sectors      = countBy(rows, "school_sector");

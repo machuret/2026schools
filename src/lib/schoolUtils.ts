@@ -69,6 +69,12 @@ export function avgPct(rows: SchoolRow[], key: keyof SchoolRow): number | null {
   return Math.round((sum / valid.length) * 10) / 10;
 }
 
+export function calcAvgIcsea(rows: SchoolRow[]): number | null {
+  const valid = rows.filter((r) => r.icsea != null);
+  if (valid.length === 0) return null;
+  return Math.round(valid.reduce((s, r) => s + r.icsea!, 0) / valid.length);
+}
+
 export function icseaContext(avg_icsea: number | null): {
   vsNational: number | null;
   color: string;
@@ -76,9 +82,9 @@ export function icseaContext(avg_icsea: number | null): {
 } {
   const vsNational = avg_icsea != null ? avg_icsea - 1000 : null;
   const color =
-    avg_icsea == null       ? "#6b7280"
-    : vsNational! > 20      ? "#16a34a"
-    : vsNational! < -20     ? "#dc2626"
+    vsNational == null  ? "#6b7280"
+    : vsNational > 20   ? "#16a34a"
+    : vsNational < -20  ? "#dc2626"
     : "#d97706";
   const label =
     vsNational == null       ? "Socio-educational advantage index"
