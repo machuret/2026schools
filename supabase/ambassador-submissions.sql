@@ -116,13 +116,17 @@ create index if not exists ambassador_nominations_created_idx on ambassador_nomi
 -- ── 3. Add Apply + Nominate to front-end menu ───────────────────
 -- Only inserts if the href doesn't already exist in menu_items
 insert into menu_items (label, href, target, position, is_active)
-select 'Apply', '/apply', '_self',
+select 'Apply', '/ambassadors/apply', '_self',
   coalesce((select max(position) from menu_items), 0) + 1,
   true
-where not exists (select 1 from menu_items where href = '/apply');
+where not exists (select 1 from menu_items where href = '/ambassadors/apply');
 
 insert into menu_items (label, href, target, position, is_active)
-select 'Nominate', '/nominate', '_self',
+select 'Nominate', '/ambassadors/nominate', '_self',
   coalesce((select max(position) from menu_items), 0) + 1,
   true
-where not exists (select 1 from menu_items where href = '/nominate');
+where not exists (select 1 from menu_items where href = '/ambassadors/nominate');
+
+-- Fix any existing stale /apply and /nominate menu items
+update menu_items set href = '/ambassadors/apply'   where href = '/apply';
+update menu_items set href = '/ambassadors/nominate' where href = '/nominate';
