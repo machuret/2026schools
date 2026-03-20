@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
+import { submitAmbassadorNomination } from '@/lib/hubspot';
 
 function anonClient() {
   return createClient(
@@ -36,5 +37,22 @@ export async function POST(req: NextRequest) {
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  submitAmbassadorNomination({
+    nominee_first_name:   nominee_first_name.trim(),
+    nominee_last_name:    nominee_last_name.trim(),
+    nominee_email:        body.nominee_email?.trim().toLowerCase() || null,
+    nominee_phone:        body.nominee_phone?.trim()        || null,
+    nominee_organisation: body.nominee_organisation?.trim() || null,
+    nominee_role_title:   body.nominee_role_title?.trim()   || null,
+    nominee_state:        body.nominee_state                || null,
+    reason:               reason.trim(),
+    nominee_linkedin:     body.nominee_linkedin?.trim()     || null,
+    nominator_name:       nominator_name.trim(),
+    nominator_email:      nominator_email.trim().toLowerCase(),
+    nominator_phone:      body.nominator_phone?.trim()      || null,
+    nominator_relation:   body.nominator_relation?.trim()   || null,
+  }).catch((e) => console.error("[HubSpot] nominate error:", e));
+
   return NextResponse.json({ ok: true });
 }

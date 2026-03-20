@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
+import { submitAmbassadorApplication } from '@/lib/hubspot';
 
 function anonClient() {
   return createClient(
@@ -34,5 +35,20 @@ export async function POST(req: NextRequest) {
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  submitAmbassadorApplication({
+    first_name:     first_name.trim(),
+    last_name:      last_name.trim(),
+    email:          email.trim().toLowerCase(),
+    phone:          body.phone?.trim()         || null,
+    organisation:   body.organisation?.trim()  || null,
+    role_title:     body.role_title?.trim()    || null,
+    state:          body.state                 || null,
+    why_ambassador: why_ambassador.trim(),
+    experience:     body.experience?.trim()    || null,
+    linkedin_url:   body.linkedin_url?.trim()  || null,
+    website_url:    body.website_url?.trim()   || null,
+  }).catch((e) => console.error("[HubSpot] apply error:", e));
+
   return NextResponse.json({ ok: true });
 }
