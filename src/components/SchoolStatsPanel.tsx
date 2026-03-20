@@ -244,7 +244,7 @@ export default async function SchoolStatsPanel({ slug, stateName }: { slug: stri
 
         <div className="card" style={{ padding: "20px 22px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 18 }}>
-            <span className="material-symbols-outlined" style={{ fontSize: 17, color: "#2563eb" }}>corporate_fare</span>
+            <span className="material-symbols-outlined" style={{ fontSize: 17, color: "#2563eb" }}>domain</span>
             <span style={{ fontSize: 13, fontWeight: 700, color: "var(--dark)" }}>School Sector</span>
           </div>
           <BreakdownList counts={sectors} total={total_schools} colorMap={SECTOR_COLORS} />
@@ -283,7 +283,7 @@ export default async function SchoolStatsPanel({ slug, stateName }: { slug: stri
             borderLeft: "4px solid #dc2626",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-              <span className="material-symbols-outlined" style={{ fontSize: 15, color: "#dc2626" }}>social_leaderboard</span>
+              <span className="material-symbols-outlined" style={{ fontSize: 15, color: "#dc2626" }}>bar_chart</span>
               <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#dc2626" }}>Socioeconomic Disadvantage</span>
             </div>
             <div style={{ fontSize: 32, fontWeight: 900, color: "#dc2626", lineHeight: 1, marginBottom: 6 }}>
