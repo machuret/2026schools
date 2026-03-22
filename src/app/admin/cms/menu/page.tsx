@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import MenuManager from "@/components/admin/MenuManager";
 
+export const dynamic = 'force-dynamic';
+
 export default async function CmsMenuPage() {
   const sb = await createClient();
 

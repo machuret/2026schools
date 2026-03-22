@@ -2,6 +2,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import IssuesBulkRewrite from "@/components/admin/IssuesBulkRewrite";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminIssuesPage() {
   let issues: { id: string; rank: number; slug: string; icon: string; title: string; severity: string; anchor_stat: string }[] = [];
   let fetchError = "";

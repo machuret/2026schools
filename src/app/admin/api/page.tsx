@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import ApiKeysClient from "@/components/admin/ApiKeysClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminApiPage() {
   const sb = await createClient();
   const { data: keys, error } = await sb

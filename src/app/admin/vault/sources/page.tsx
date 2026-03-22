@@ -3,6 +3,8 @@ import VaultSourcesClient from "@/components/admin/VaultSourcesClient";
 import VaultContentClient from "@/components/admin/VaultContentClient";
 import VaultTabs from "@/components/admin/VaultTabs";
 
+export const dynamic = 'force-dynamic';
+
 export default async function VaultSourcesPage() {
   const sb = await createClient();
 

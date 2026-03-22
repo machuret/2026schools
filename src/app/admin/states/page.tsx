@@ -2,6 +2,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import StatesClient from "@/components/admin/StatesClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminStatesPage() {
   let states: { id: string; slug: string; name: string; icon: string; subtitle: string; issues: string[] | null; updated_at: string }[] | null = null;
   let fetchError = "";

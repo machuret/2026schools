@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import SchoolsClient from '@/components/admin/SchoolsClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminSchoolsPage() {
   let schools: unknown[] = [];
   let totalCount = 0;

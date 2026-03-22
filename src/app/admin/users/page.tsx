@@ -1,6 +1,8 @@
 import { createClient as adminClient } from "@supabase/supabase-js";
 import UsersClient from "@/components/admin/UsersClient";
 
+export const dynamic = 'force-dynamic';
+
 async function getUsers() {
   const url  = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key  = process.env.SUPABASE_SERVICE_ROLE_KEY;

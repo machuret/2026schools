@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import PromptsClient, { type PromptTemplate } from "@/components/admin/PromptsClient";
 
+export const dynamic = 'force-dynamic';
+
 export default async function PromptsPage() {
   const sb = await createClient();
   const { data, error } = await sb
