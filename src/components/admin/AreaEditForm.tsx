@@ -7,9 +7,10 @@ import SeoPanel from "@/components/admin/SeoPanel";
 import ConfirmModal from "@/components/admin/ConfirmModal";
 import { useRegenerate } from "@/components/admin/useRegenerate";
 import RichTextEditor from "@/components/admin/RichTextEditor";
-
-interface KeyStat { num: string; label: string; }
-interface Issue { title: string; severity: string; stat: string; desc: string; }
+import RegenBtn from "@/components/admin/areas/RegenBtn";
+import KeyStatCard from "@/components/admin/areas/KeyStatCard";
+import AreaIssueCard from "@/components/admin/areas/AreaIssueCard";
+import { type KeyStat, type AreaIssue, INPUT_CLS, INPUT_STYLE, LABEL_CLS, LABEL_STYLE } from "@/components/admin/areas/AreaTypes";
 
 interface Area {
   id: string; slug: string; name: string; state: string; state_slug: string;
@@ -18,107 +19,19 @@ interface Area {
   seo_title?: string; seo_desc?: string; og_image?: string;
 }
 
-const I = "w-full rounded-xl px-4 py-2.5 text-[15px] outline-none transition-all";
-const IS: React.CSSProperties = { background: "#fff", border: "1px solid var(--admin-border-strong)", color: "var(--admin-text-primary)", boxShadow: "0 1px 2px rgba(0,0,0,0.04)" };
-const L = "block text-xs font-semibold mb-2 uppercase tracking-wider";
-const LS: React.CSSProperties = { color: "var(--admin-text-subtle)" };
+const I = INPUT_CLS;
+const IS = INPUT_STYLE;
+const L = LABEL_CLS;
+const LS = LABEL_STYLE;
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="mb-4"><label className={L} style={LS}>{label}</label>{children}</div>;
-}
-
-const SEVERITY_LEFT: Record<string, string> = {
-  critical: "var(--admin-danger)",
-  high:     "var(--admin-warning-light)",
-  notable:  "var(--admin-success)",
-};
-
-function KeyStatCard({ stat, idx, onChange, onRemove }: {
-  stat: KeyStat; idx: number;
-  onChange: (idx: number, field: keyof KeyStat, val: string) => void;
-  onRemove: (idx: number) => void;
-}) {
-  return (
-    <div className="rounded-xl p-4" style={{ background: "var(--admin-bg-elevated)", border: "1px solid var(--admin-border)" }}>
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--admin-text-faint)" }}>Stat #{idx + 1}</span>
-        <button onClick={() => onRemove(idx)} className="admin-btn admin-btn-danger text-xs px-2.5 py-1">Remove</button>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Number / Value">
-          <input className={I} style={IS} value={stat.num} onChange={e => onChange(idx, "num", e.target.value)} placeholder="e.g. 12,000" />
-        </Field>
-        <Field label="Label">
-          <input className={I} style={IS} value={stat.label} onChange={e => onChange(idx, "label", e.target.value)} placeholder="e.g. Students enrolled" />
-        </Field>
-      </div>
-    </div>
-  );
-}
-
-function IssueCard({ issue, idx, onChange, onRemove }: {
-  issue: Issue; idx: number;
-  onChange: (idx: number, field: keyof Issue, val: string) => void;
-  onRemove: (idx: number) => void;
-}) {
-  const leftColor = SEVERITY_LEFT[issue.severity] ?? SEVERITY_LEFT.notable;
-  return (
-    <div className="rounded-xl p-5" style={{ background: "var(--admin-bg-deep)", border: "1px solid var(--admin-border-strong)", borderLeft: `3px solid ${leftColor}` }}>
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--admin-text-faint)" }}>Issue #{idx + 1}</span>
-        <button onClick={() => onRemove(idx)} className="admin-btn admin-btn-danger text-xs px-2.5 py-1">Remove</button>
-      </div>
-      <div className="grid grid-cols-2 gap-3 mb-3">
-        <Field label="Title">
-          <input className={I} style={IS} value={issue.title} onChange={e => onChange(idx, "title", e.target.value)} placeholder="e.g. Anxiety" />
-        </Field>
-        <Field label="Severity">
-          <select className={I} style={IS} value={issue.severity} onChange={e => onChange(idx, "severity", e.target.value)}>
-            <option value="critical">Critical</option>
-            <option value="high">High</option>
-            <option value="notable">Notable</option>
-          </select>
-        </Field>
-      </div>
-      <Field label="Key Stat">
-        <input className={I} style={IS} value={issue.stat} onChange={e => onChange(idx, "stat", e.target.value)} placeholder="e.g. 1 in 5 students" />
-      </Field>
-      <Field label="Description">
-        <textarea rows={2} className={I} style={{ ...IS, resize: "vertical" }} value={issue.desc} onChange={e => onChange(idx, "desc", e.target.value)} placeholder="Brief description of this issue locally…" />
-      </Field>
-      <div className="mt-2">
-        <span className={`admin-badge ${issue.severity === "critical" ? "admin-badge-red" : issue.severity === "high" ? "admin-badge-yellow" : "admin-badge-green"}`}>
-          {issue.severity || "notable"}
-        </span>
-      </div>
-    </div>
-  );
 }
 
 function parseJsonArray<T>(raw: unknown, fallback: T[]): T[] {
   if (Array.isArray(raw)) return raw as T[];
   if (typeof raw === "string") { try { return JSON.parse(raw) as T[]; } catch { return fallback; } }
   return fallback;
-}
-
-/** Small re-generate button shown inline next to section labels. */
-function RegenBtn({ label, onClick, busy }: { label: string; onClick: () => void; busy: boolean }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={busy}
-      className="admin-btn admin-btn-secondary text-xs flex items-center gap-1.5"
-      style={{ opacity: busy ? 0.6 : 1 }}
-      title={`Re-generate ${label} with AI`}
-    >
-      {busy
-        ? <svg className="animate-spin" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true"><circle cx="12" cy="12" r="10" strokeOpacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
-        : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.01"/></svg>
-      }
-      {busy ? "Generating…" : `↺ ${label}`}
-    </button>
-  );
 }
 
 export default function AreaEditForm({ area }: { area: Area | null }) {
@@ -137,7 +50,7 @@ export default function AreaEditForm({ area }: { area: Area | null }) {
     seo_title: area?.seo_title ?? "", seo_desc: area?.seo_desc ?? "", og_image: area?.og_image ?? "",
   });
   const [keyStats, setKeyStats] = useState<KeyStat[]>(parseJsonArray<KeyStat>(area?.key_stats, []));
-  const [issues, setIssues] = useState<Issue[]>(parseJsonArray<Issue>(area?.issues, []));
+  const [issues, setIssues] = useState<AreaIssue[]>(parseJsonArray<AreaIssue>(area?.issues, []));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -154,7 +67,7 @@ export default function AreaEditForm({ area }: { area: Area | null }) {
   function removeStat(idx: number) { setKeyStats(s => s.filter((_, i) => i !== idx)); setDirty(true); }
   function addStat() { setKeyStats(s => [...s, { num: "", label: "" }]); setDirty(true); }
 
-  function updateIssue(idx: number, field: keyof Issue, val: string) {
+  function updateIssue(idx: number, field: keyof AreaIssue, val: string) {
     setIssues(s => s.map((item, i) => i === idx ? { ...item, [field]: val } : item));
     setDirty(true);
   }
@@ -210,7 +123,7 @@ export default function AreaEditForm({ area }: { area: Area | null }) {
     if (u.prevention  && typeof u.prevention === "string")  { setForm(f => ({ ...f, prevention: u.prevention as string })); setDirty(true); }
     if (u.seo_title   && typeof u.seo_title === "string")   { setForm(f => ({ ...f, seo_title: u.seo_title as string })); setDirty(true); }
     if (u.seo_desc    && typeof u.seo_desc === "string")    { setForm(f => ({ ...f, seo_desc: u.seo_desc as string })); setDirty(true); }
-    if (Array.isArray(u.issues))    { setIssues(u.issues as Issue[]); setDirty(true); }
+    if (Array.isArray(u.issues))    { setIssues(u.issues as AreaIssue[]); setDirty(true); }
     if (Array.isArray(u.key_stats)) { setKeyStats(u.key_stats as KeyStat[]); setDirty(true); }
   }
 
@@ -352,7 +265,7 @@ export default function AreaEditForm({ area }: { area: Area | null }) {
               <button onClick={addIssue} className="admin-btn admin-btn-secondary mt-3">Add first issue</button>
             </div>
           )}
-          {issues.map((issue, idx) => <IssueCard key={idx} issue={issue} idx={idx} onChange={updateIssue} onRemove={removeIssue} />)}
+          {issues.map((issue, idx) => <AreaIssueCard key={idx} issue={issue} idx={idx} onChange={updateIssue} onRemove={removeIssue} />)}
         </div>
       )}
 
