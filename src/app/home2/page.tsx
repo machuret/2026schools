@@ -1,10 +1,21 @@
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
+import {
+  Eyebrow,
+  CtaButton,
+  GhostButton,
+  ArrowIcon,
+} from "@/components/home-variants/Primitives";
 
 export const metadata = {
   title: "National Check-in Week 2026 — Bold",
   description:
     "National Check-In Week is a FREE initiative giving Australian school leaders the tools, data, and professional learning they need to support every student.",
+  openGraph: {
+    title: "National Check-in Week 2026 — Bold",
+    description: "A free initiative giving Australian school leaders the tools, data, and professional learning they need to support every student.",
+    url: "https://2026schools.vercel.app/home2",
+  },
 };
 
 const HERO_STATS = [
@@ -12,21 +23,33 @@ const HERO_STATS = [
   { num: "72%",     label: "of lifetime mental health conditions begin before age 25" },
   { num: "8×",      label: "more cost-effective to intervene early than treat a crisis" },
   { num: "Suicide", label: "is the leading cause of death for Australians aged 15–24" },
-];
+] as const;
+
+const TICKER_STATS = [
+  { num: "~580K", desc: "children with a diagnosable mental disorder" },
+  { num: "38%",   desc: "experienced cyberbullying in the past 12 months" },
+  { num: "1 in 5",desc: "young Australians felt lonely most of the time" },
+  { num: "57%",   desc: "avg attendance in remote vs 93% city schools" },
+] as const;
 
 const ISSUES_PREVIEW = [
-  { icon: "😰", title: "Anxiety & Depression", stat: "13.9% of children aged 4–17 have a mental disorder" },
+  { icon: "😰", title: "Anxiety & Depression",    stat: "13.9% of children aged 4–17 have a mental disorder" },
   { icon: "🆘", title: "Self-Harm & Suicidality", stat: "AIHW maps regional estimates at PHN and SA3 level nationally" },
-  { icon: "👊", title: "Bullying at School", stat: "46,000+ bullying incidents in Queensland schools in 2023 alone" },
-];
+  { icon: "👊", title: "Bullying at School",       stat: "46,000+ bullying incidents in Queensland schools in 2023 alone" },
+] as const;
+
+/** Dark-mode background for home2 — intentionally off-token (showcase variant) */
+const DARK_BG  = "#0d0d0d";
+const DARK_CARD = "#111";
+const DARK_CARD2 = "#141414";
 
 export default function Home2() {
   return (
-    <div style={{ background: "#0d0d0d", color: "#f0f0f0", fontFamily: "var(--font-body)", minHeight: "100vh" }}>
+    <div style={{ background: DARK_BG, color: "#f0f0f0", fontFamily: "var(--font-body)", minHeight: "100vh" }}>
       <a href="#main-content" className="skip-link">Skip to main content</a>
 
-      {/* Nav wrapper with dark override */}
-      <div style={{ background: "#111" }}>
+      {/* Nav sits on the dark surface */}
+      <div style={{ background: DARK_CARD }}>
         <Nav />
       </div>
 
@@ -37,12 +60,15 @@ export default function Home2() {
         margin: "0 auto",
         position: "relative",
       }}>
-        {/* Background glow */}
-        <div style={{
-          position: "absolute", top: 0, left: "10%", width: 600, height: 500,
-          background: "radial-gradient(ellipse at center, rgba(41,184,232,0.12) 0%, transparent 70%)",
-          pointerEvents: "none",
-        }} />
+        {/* Decorative background glow — presentational only */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute", top: 0, left: "10%", width: 600, height: 500,
+            background: "radial-gradient(ellipse at center, rgba(41,184,232,0.12) 0%, transparent 70%)",
+            pointerEvents: "none",
+          }}
+        />
 
         <div style={{
           display: "inline-flex", alignItems: "center", gap: 8,
@@ -52,7 +78,7 @@ export default function Home2() {
           textTransform: "uppercase", color: "var(--primary)",
           marginBottom: 36,
         }}>
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--primary)", display: "inline-block" }} />
+          <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--primary)", display: "inline-block" }} />
           National Check-in Week · Australia 2026
         </div>
 
@@ -84,25 +110,17 @@ export default function Home2() {
         </p>
 
         <div style={{ display: "flex", gap: 16, flexWrap: "wrap", marginBottom: 80 }}>
-          <a href="/events" style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            background: "var(--primary)", color: "#fff",
-            padding: "16px 32px", borderRadius: 8,
-            fontWeight: 700, fontSize: "0.95rem",
-            textDecoration: "none",
-          }}>
-            Register for Free Webinars
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </a>
-          <a href="/issues" style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            background: "rgba(255,255,255,0.06)", color: "#fff",
-            padding: "16px 32px", borderRadius: 8,
-            fontWeight: 600, fontSize: "0.95rem",
-            textDecoration: "none", border: "1px solid rgba(255,255,255,0.12)",
-          }}>
+          <CtaButton href="/events">
+            Register for Free Webinars <ArrowIcon />
+          </CtaButton>
+          <GhostButton
+            href="/issues"
+            color="#fff"
+            borderColor="rgba(255,255,255,0.2)"
+            style={{ background: "rgba(255,255,255,0.06)" }}
+          >
             Explore the Issues →
-          </a>
+          </GhostButton>
         </div>
 
         {/* Stats strip */}
@@ -116,10 +134,7 @@ export default function Home2() {
           border: "1px solid rgba(255,255,255,0.08)",
         }}>
           {HERO_STATS.map((s) => (
-            <div key={s.label} style={{
-              padding: "28px 24px",
-              background: "#111",
-            }}>
+            <div key={s.label} style={{ padding: "28px 24px", background: DARK_CARD }}>
               <div style={{
                 fontSize: "clamp(1.6rem, 3vw, 2.2rem)",
                 fontWeight: 900, color: "var(--primary)",
@@ -128,7 +143,7 @@ export default function Home2() {
               }}>
                 {s.num}
               </div>
-              <p style={{ fontSize: "0.82rem", color: "#888", lineHeight: 1.6, margin: 0 }}>
+              <p style={{ fontSize: "0.82rem", color: "var(--text-light)", lineHeight: 1.6, margin: 0 }}>
                 {s.label}
               </p>
             </div>
@@ -139,25 +154,24 @@ export default function Home2() {
       <main id="main-content">
 
         {/* ── Stat ticker strip ── */}
-        <div style={{
-          borderTop: "1px solid rgba(255,255,255,0.06)",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
-          background: "rgba(255,255,255,0.02)",
-          padding: "20px 40px",
-          display: "flex", gap: 48, overflowX: "auto",
-        }}>
-          {[
-            { num: "~580K", desc: "children with a diagnosable mental disorder" },
-            { num: "38%", desc: "experienced cyberbullying in the past 12 months" },
-            { num: "1 in 5", desc: "young Australians felt lonely most of the time" },
-            { num: "57%", desc: "avg attendance in remote vs 93% city schools" },
-          ].map((t) => (
+        <div
+          role="region"
+          aria-label="Key wellbeing statistics"
+          style={{
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            background: "rgba(255,255,255,0.02)",
+            padding: "20px 40px",
+            display: "flex", gap: 48, overflowX: "auto",
+          }}
+        >
+          {TICKER_STATS.map((t) => (
             <div key={t.desc} style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
               <span style={{
                 fontSize: "1.3rem", fontWeight: 900, color: "var(--accent)",
                 fontFamily: "var(--font-display)", whiteSpace: "nowrap",
               }}>{t.num}</span>
-              <span style={{ fontSize: "0.8rem", color: "#666", maxWidth: 160, lineHeight: 1.4 }}>{t.desc}</span>
+              <span style={{ fontSize: "0.8rem", color: "var(--text-light)", maxWidth: 160, lineHeight: 1.4 }}>{t.desc}</span>
             </div>
           ))}
         </div>
@@ -169,12 +183,7 @@ export default function Home2() {
             marginBottom: 40, flexWrap: "wrap", gap: 16,
           }}>
             <div>
-              <div style={{
-                fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.14em",
-                textTransform: "uppercase", color: "var(--primary)", marginBottom: 12,
-              }}>
-                The Crisis Is Real
-              </div>
+              <Eyebrow style={{ marginBottom: 12 }}>The Crisis Is Real</Eyebrow>
               <h2 style={{
                 fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)",
                 fontWeight: 900, color: "#fff",
@@ -194,7 +203,7 @@ export default function Home2() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 2 }}>
             {ISSUES_PREVIEW.map((issue) => (
               <div key={issue.title} style={{
-                background: "#141414",
+                background: DARK_CARD2,
                 border: "1px solid rgba(255,255,255,0.08)",
                 borderRadius: 12, padding: "32px 28px",
                 transition: "border-color 0.2s",
@@ -215,18 +224,12 @@ export default function Home2() {
 
         {/* ── Movement block ── */}
         <section style={{
-          margin: "0 40px 80px",
-          maxWidth: 1020, marginLeft: "auto", marginRight: "auto",
+          maxWidth: 1020, margin: "0 auto 80px", padding: "56px 52px",
           background: "linear-gradient(135deg, rgba(41,184,232,0.08) 0%, rgba(229,0,126,0.06) 100%)",
           border: "1px solid rgba(41,184,232,0.2)",
-          borderRadius: 20, padding: "56px 52px",
+          borderRadius: 20,
         }}>
-          <div style={{
-            fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.14em",
-            textTransform: "uppercase", color: "var(--primary)", marginBottom: 16,
-          }}>
-            If Not Now, When?
-          </div>
+          <Eyebrow style={{ marginBottom: 16 }}>If Not Now, When?</Eyebrow>
           <h2 style={{
             fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)",
             fontWeight: 900, color: "#fff", marginBottom: 20,
@@ -239,19 +242,14 @@ export default function Home2() {
             still lack the tools needed to act early. All events, tools and resources are{" "}
             <strong style={{ color: "#fff" }}>free</strong> for every school and family.
           </p>
-          <a href="/events" style={{
-            display: "inline-flex", alignItems: "center", gap: 8,
-            background: "var(--primary)", color: "#fff",
-            padding: "16px 36px", borderRadius: 8,
-            fontWeight: 700, fontSize: "1rem", textDecoration: "none",
-          }}>
-            Register for Free →
-          </a>
+          <CtaButton href="/events" style={{ fontSize: "1rem" }}>
+            Register for Free <ArrowIcon />
+          </CtaButton>
         </section>
 
       </main>
 
-      <div style={{ background: "#0d0d0d" }}>
+      <div style={{ background: DARK_BG }}>
         <Footer />
       </div>
     </div>
