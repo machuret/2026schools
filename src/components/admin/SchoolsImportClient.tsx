@@ -183,7 +183,7 @@ export default function SchoolsImportClient() {
         >
           {uploading ? (
             <>
-              <span className="material-symbols-outlined" style={{ fontSize: 16, animation: 'spin 1s linear infinite' }}>refresh</span>
+              <span className="material-symbols-outlined swa-spin" style={{ fontSize: 16 }}>refresh</span>
               Importing…
             </>
           ) : (
@@ -213,7 +213,7 @@ export default function SchoolsImportClient() {
         )}
       </div>
 
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      <style>{`.swa-spin { animation: swa-spin 1s linear infinite; } @keyframes swa-spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

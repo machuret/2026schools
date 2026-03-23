@@ -1,13 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
-
-function adminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { adminClient } from '@/lib/adminClient';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -21,7 +13,11 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
     .select('*')
     .eq('id', id)
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 404 });
+  if (error) {
+    // PGRST116 = "no rows returned" — genuine 404
+    const status = error.code === 'PGRST116' ? 404 : 500;
+    return NextResponse.json({ error: error.message }, { status });
+  }
   return NextResponse.json(data);
 }
 

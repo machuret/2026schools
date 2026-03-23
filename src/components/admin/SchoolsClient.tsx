@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -32,8 +32,8 @@ function sectorBadge(sector: string | null) {
 }
 
 export default function SchoolsClient({
-  schools,
-  totalCount,
+  schools: initialSchools,
+  totalCount: initialCount,
 }: {
   schools: SchoolRow[];
   totalCount: number;
@@ -46,23 +46,40 @@ export default function SchoolsClient({
   const [deleting, setDeleting] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState('');
 
-  const filtered = schools.filter((s) => {
-    const q = search.toLowerCase();
-    const matchSearch =
-      !q ||
-      s.school_name.toLowerCase().includes(q) ||
-      (s.suburb ?? '').toLowerCase().includes(q) ||
-      (s.postcode ?? '').includes(q) ||
-      String(s.acara_sml_id ?? '').includes(q);
-    const matchState = !stateFilter || s.state === stateFilter;
-    const matchSector = !sectorFilter || s.school_sector === sectorFilter;
-    const matchType = !typeFilter || s.school_type === typeFilter;
-    return matchSearch && matchState && matchSector && matchType;
-  });
+  // API-driven results — start with SSR data, update when filters change
+  const [filtered, setFiltered] = useState<SchoolRow[]>(initialSchools);
+  const [totalCount, setTotalCount] = useState(initialCount);
+  const [searching, setSearching] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Re-query the API whenever search text or dropdowns change.
+  // Type filter is client-only (not in API) so applied after fetch.
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const params = new URLSearchParams({ limit: '200' });
+        if (search.trim()) params.set('q', search.trim());
+        if (stateFilter)  params.set('state', stateFilter);
+        if (sectorFilter) params.set('sector', sectorFilter);
+        const res = await fetch(`/api/admin/schools?${params}`);
+        if (!res.ok) return;
+        const json = await res.json();
+        const rows: SchoolRow[] = json.data ?? [];
+        // Apply type filter client-side (not supported by API)
+        setFiltered(typeFilter ? rows.filter((s) => s.school_type === typeFilter) : rows);
+        setTotalCount(json.count ?? rows.length);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [search, stateFilter, sectorFilter, typeFilter]);
 
   const stateCounts = STATES.map((st) => ({
     state: st,
-    count: schools.filter((s) => s.state === st).length,
+    count: initialSchools.filter((s) => s.state === st).length,
   }));
 
   const handleDelete = useCallback(
@@ -97,7 +114,7 @@ export default function SchoolsClient({
           </div>
           <div className="swa-stat-card__value">{totalCount.toLocaleString()}</div>
           <div className="swa-stat-card__bottom">
-            <span className="swa-stat-card__delta">Showing first {schools.length}</span>
+            <span className="swa-stat-card__delta">Showing first {initialSchools.length}</span>
           </div>
         </div>
 
@@ -125,9 +142,9 @@ export default function SchoolsClient({
             <span className="swa-badge swa-badge--warning">Sectors</span>
           </div>
           <div className="swa-stat-card__value" style={{ fontSize: 20 }}>
-            {schools.filter((s) => s.school_sector === 'Government').length} /{' '}
-            {schools.filter((s) => s.school_sector === 'Catholic').length} /{' '}
-            {schools.filter((s) => s.school_sector === 'Independent').length}
+            {initialSchools.filter((s) => s.school_sector === 'Government').length} /{' '}
+            {initialSchools.filter((s) => s.school_sector === 'Catholic').length} /{' '}
+            {initialSchools.filter((s) => s.school_sector === 'Independent').length}
           </div>
           <div className="swa-stat-card__bottom">
             <span className="swa-stat-card__delta">From loaded records</span>
@@ -197,9 +214,9 @@ export default function SchoolsClient({
         </select>
 
         <span style={{ fontSize: 13, color: 'var(--color-text-faint)', marginLeft: 4 }}>
-          {filtered.length.toLocaleString()} shown
-          {totalCount > schools.length && (
-            <> · <span style={{ color: 'var(--color-warning)' }}>use search to find more ({totalCount.toLocaleString()} total)</span></>
+          {searching ? 'Searching…' : `${filtered.length.toLocaleString()} shown`}
+          {!searching && totalCount > filtered.length && (
+            <> · <span style={{ color: 'var(--color-warning)' }}>{totalCount.toLocaleString()} total</span></>
           )}
         </span>
       </div>
@@ -375,9 +392,9 @@ export default function SchoolsClient({
         </div>
       )}
 
-      {totalCount > schools.length && (
+      {!searching && totalCount > filtered.length && (
         <p style={{ fontSize: 12, color: 'var(--color-text-faint)', marginTop: 12, textAlign: 'center' }}>
-          Showing first {schools.length} of {totalCount.toLocaleString()} schools. Use the search box to find specific schools.
+          Showing {filtered.length} of {totalCount.toLocaleString()} schools. Refine the search or filters to narrow results.
         </p>
       )}
     </div>

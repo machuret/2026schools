@@ -1,13 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
-
-function adminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { adminClient } from '@/lib/adminClient';
 
 function toNum(val: string | undefined): number | null {
   if (!val || val.trim() === '') return null;
@@ -21,12 +13,43 @@ function toInt(val: string | undefined): number | null {
   return isNaN(n) ? null : n;
 }
 
+/** RFC 4180-compliant CSV field splitter — handles quoted fields with embedded commas/newlines */
+function splitCSVLine(line: string): string[] {
+  const fields: string[] = [];
+  let i = 0;
+  while (i <= line.length) {
+    if (line[i] === '"') {
+      // Quoted field
+      let val = '';
+      i++; // skip opening quote
+      while (i < line.length) {
+        if (line[i] === '"' && line[i + 1] === '"') {
+          val += '"'; i += 2; // escaped quote
+        } else if (line[i] === '"') {
+          i++; break; // closing quote
+        } else {
+          val += line[i++];
+        }
+      }
+      fields.push(val);
+      if (line[i] === ',') i++; // skip comma after closing quote
+    } else {
+      // Unquoted field — read until next comma
+      const start = i;
+      while (i < line.length && line[i] !== ',') i++;
+      fields.push(line.slice(start, i).trim());
+      if (line[i] === ',') i++;
+    }
+  }
+  return fields;
+}
+
 function parseCSV(text: string): Record<string, string>[] {
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
   if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map((h) => h.trim());
+  const headers = splitCSVLine(lines[0]).map((h) => h.trim());
   return lines.slice(1).map((line) => {
-    const vals = line.split(',');
+    const vals = splitCSVLine(line);
     const row: Record<string, string> = {};
     headers.forEach((h, i) => { row[h] = (vals[i] ?? '').trim(); });
     return row;
@@ -41,6 +64,12 @@ export async function POST(req: NextRequest) {
 
   const file = formData.get('file') as File | null;
   if (!file) return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+
+  // S6: reject files over 50 MB server-side
+  const MAX_BYTES = 50 * 1024 * 1024;
+  if (file.size > MAX_BYTES) {
+    return NextResponse.json({ error: 'File exceeds 50 MB limit' }, { status: 413 });
+  }
 
   const text = await file.text();
   const records = parseCSV(text);
