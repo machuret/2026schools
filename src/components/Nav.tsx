@@ -27,6 +27,9 @@ export default async function Nav() {
         seen.add(l.href);
         return true;
       });
+      if (!links.find((l) => l.href === "/resources")) {
+        links = [...links, { id: "resources", href: "/resources", label: "Resources", target: "_self" }];
+      }
     }
   } catch {
     // silently fall back to static links

@@ -120,7 +120,8 @@
 
 /* ── Stats section (separate block below hero) ── */
 .hero-stats-section {
-  background: linear-gradient(135deg, #fce8f3 0%, #f0e8fc 40%, #e8f0fc 80%, #e8f8fc 100%);
+  background: #ffffff;
+  border-top: 1px solid #f0f0f0;
   padding: 72px 40px;
 }
 .hero-stats-grid {

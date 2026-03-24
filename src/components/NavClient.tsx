@@ -46,11 +46,13 @@ export default function NavClient({ links }: { links: NavLink[] }) {
     <>
       <nav className="nav">
         <Link href="/" className="nav-logo" onClick={close}>
-          <img src="/nciw-logo.svg" alt="" width="33" height="40" aria-hidden="true" />
-          <div className="nav-logo-text">
-            <span>National</span>
-            <span>Check-in Week</span>
-          </div>
+          <img
+            src="/logo/nciw_no_background-1024x577.png"
+            alt="National Check-in Week"
+            height="44"
+            width="78"
+            style={{ objectFit: "contain" }}
+          />
         </Link>
 
         {/* Desktop links */}
