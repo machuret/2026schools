@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminClient } from '@/lib/adminClient';
 
+export const runtime = 'edge';
+
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
