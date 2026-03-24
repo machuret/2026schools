@@ -7,6 +7,7 @@ const FALLBACK_LINKS = [
   { id: "3", href: "/#prevention", label: "Prevention", target: "_self" },
   { id: "4", href: "/#research",   label: "Research",   target: "_self" },
   { id: "5", href: "/#data",       label: "Data",       target: "_self" },
+  { id: "6", href: "/resources",   label: "Resources",  target: "_self" },
 ];
 
 export default async function Nav() {

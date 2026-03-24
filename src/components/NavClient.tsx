@@ -46,12 +46,7 @@ export default function NavClient({ links }: { links: NavLink[] }) {
     <>
       <nav className="nav">
         <Link href="/" className="nav-logo" onClick={close}>
-          <svg className="logo-icon" width="36" height="44" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <ellipse cx="20" cy="20" rx="20" ry="20" fill="#29B8E8"/>
-            <circle cx="20" cy="17" r="7" fill="#fff"/>
-            <path d="M4 30 Q20 48 36 30" fill="#E5007E"/>
-            <path d="M13 20 L18 25 L28 13" stroke="#29B8E8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
+          <img src="/nciw-logo.svg" alt="" width="33" height="40" aria-hidden="true" />
           <div className="nav-logo-text">
             <span>National</span>
             <span>Check-in Week</span>
