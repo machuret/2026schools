@@ -1,6 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
-import { createHash } from "crypto";
+
+export const runtime = "edge";
+
+async function hashIp(ip: string, slug: string): Promise<string> {
+  const buf = new TextEncoder().encode(ip + slug);
+  const digest = await crypto.subtle.digest("SHA-256", buf);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, 16);
+}
 
 function anonClient() {
   return createClient(
@@ -26,7 +36,7 @@ export async function POST(req: NextRequest) {
   // Hash IP for privacy — we store it only to detect obvious spam
   const forwarded = req.headers.get("x-forwarded-for") ?? "";
   const ip = forwarded.split(",")[0].trim() || "unknown";
-  const ip_hash = createHash("sha256").update(ip + entity_slug).digest("hex").slice(0, 16);
+  const ip_hash = await hashIp(ip, entity_slug);
 
   const sb = anonClient();
 

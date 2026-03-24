@@ -2,6 +2,8 @@ import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { submitAmbassadorApplication } from '@/lib/hubspot';
 
+export const runtime = 'edge';
+
 function anonClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
