@@ -37,81 +37,63 @@ export default function Home1() {
       <Nav />
       <NewsTicker />
 
-      {/* ── Hero: Minimal / Editorial ── */}
-      <section style={{
-        borderBottom: "1px solid #e8e8e8",
-        background: "#fff",
-      }}>
-        <div style={{ maxWidth: 900, margin: "0 auto", padding: "96px 40px 80px" }}>
+      {/* ── Hero: Clean / Light ── */}
+      <section style={{ background: "#fff", borderBottom: "1px solid var(--border)" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 48px 72px" }}>
 
+          {/* Badge */}
           <div style={{
-            display: "inline-block",
-            fontSize: "0.65rem",
-            fontWeight: 800,
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            color: "var(--primary)",
-            borderBottom: "2px solid var(--primary)",
-            paddingBottom: 4,
-            marginBottom: 40,
+            display: "inline-flex", alignItems: "center", gap: 8,
+            marginBottom: 32,
           }}>
-            National Check-in Week · Australia 2026
+            <span style={{ display: "inline-block", width: 24, height: 2, background: "var(--primary)" }} />
+            <span style={{
+              fontFamily: "var(--font-body)",
+              fontSize: "0.65rem", fontWeight: 800,
+              letterSpacing: "0.18em", textTransform: "uppercase",
+              color: "var(--primary)",
+            }}>
+              National Check-in Week · Australia 2026
+            </span>
           </div>
 
           <h1 style={{
-            fontSize: "clamp(3rem, 7vw, 5.5rem)",
-            fontWeight: 900,
-            lineHeight: 1.05,
-            letterSpacing: "-0.03em",
-            color: "#0a0a0a",
-            marginBottom: 32,
             fontFamily: "var(--font-display)",
-            maxWidth: 820,
+            fontSize: "clamp(2.8rem, 5.5vw, 4.2rem)",
+            fontWeight: 900, lineHeight: 1.1,
+            letterSpacing: "-0.025em",
+            color: "var(--dark)", marginBottom: 28, maxWidth: 780,
           }}>
-            Every student deserves<br />
-            to be{" "}
-            <span style={{
-              position: "relative",
-              display: "inline-block",
-              color: "var(--primary)",
-            }}>
-              checked in on.
-            </span>
+            Every student deserves<br />to be{" "}
+            <span style={{ color: "var(--primary)" }}>checked in on.</span>
           </h1>
 
           <p style={{
-            fontSize: "1.15rem",
-            color: "#555",
-            lineHeight: 1.85,
-            maxWidth: 600,
-            marginBottom: 48,
+            fontFamily: "var(--font-body)",
+            fontSize: "1.05rem", lineHeight: 1.85,
+            color: "var(--text-mid)", maxWidth: 580, marginBottom: 40,
           }}>
-            National Check-in Week is a <strong style={{ color: "#0a0a0a" }}>FREE</strong> initiative
-            giving Australian school leaders the tools, data, and professional learning they need to
-            support every student — before challenges become crises.
+            National Check-in Week is a <strong style={{ color: "var(--dark)", fontWeight: 700 }}>FREE</strong> initiative
+            giving Australian school leaders the tools, data, and professional learning they need
+            to support every student — before challenges become crises.
           </p>
 
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
             <a href="/events" style={{
-              display: "inline-block",
-              background: "#0a0a0a",
-              color: "#fff",
-              fontWeight: 800,
-              fontSize: "0.9rem",
-              letterSpacing: "0.04em",
-              padding: "16px 36px",
-              textDecoration: "none",
+              fontFamily: "var(--font-body)",
+              display: "inline-flex", alignItems: "center", gap: 8,
+              background: "var(--dark)", color: "#fff",
+              fontWeight: 700, fontSize: "0.88rem",
+              padding: "14px 32px", textDecoration: "none",
+              letterSpacing: "0.02em",
             }}>
               Register for Free Webinars →
             </a>
             <a href="/issues" style={{
-              display: "inline-block",
-              color: "#0a0a0a",
-              fontWeight: 600,
-              fontSize: "0.9rem",
-              textDecoration: "none",
-              borderBottom: "2px solid var(--primary)",
-              paddingBottom: 2,
+              fontFamily: "var(--font-body)",
+              display: "inline-flex", alignItems: "center",
+              color: "var(--dark)", fontWeight: 600, fontSize: "0.88rem",
+              textDecoration: "none", borderBottom: "2px solid var(--primary)", paddingBottom: 2,
             }}>
               Explore the Issues
             </a>
@@ -119,27 +101,20 @@ export default function Home1() {
         </div>
 
         {/* Stats strip */}
-        <div style={{
-          borderTop: "1px solid #e8e8e8",
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-        }}>
+        <div style={{ borderTop: "1px solid var(--border)", display: "grid", gridTemplateColumns: "repeat(4, 1fr)" }}>
           {STATS.map((s, i) => (
             <div key={s.label} style={{
-              padding: "32px 36px",
-              borderRight: i < 3 ? "1px solid #e8e8e8" : "none",
+              padding: "28px 36px",
+              borderRight: i < 3 ? "1px solid var(--border)" : "none",
             }}>
               <div style={{
-                fontSize: "clamp(1.4rem, 3vw, 2rem)",
-                fontWeight: 900,
-                color: "#0a0a0a",
                 fontFamily: "var(--font-display)",
-                lineHeight: 1,
-                marginBottom: 10,
+                fontSize: "clamp(1.5rem, 3vw, 2.2rem)",
+                fontWeight: 900, color: "var(--dark)", lineHeight: 1, marginBottom: 8,
               }}>
                 {s.num}
               </div>
-              <p style={{ fontSize: "0.8rem", color: "#777", lineHeight: 1.6, margin: 0 }}>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: "0.78rem", color: "var(--text-mid)", lineHeight: 1.55, margin: 0 }}>
                 {s.label}
               </p>
             </div>
