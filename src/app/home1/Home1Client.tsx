@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, BarChart3, Lightbulb, ClipboardCheck, Users, Calendar, MessageSquare, Database, Menu, X } from "lucide-react";
+import Image from "next/image";
+import { BarChart3, Lightbulb, ClipboardCheck, Users, Calendar, MessageSquare, Database, Menu, X } from "lucide-react";
 
 /* ── Design tokens ─────────────────────────────────────────── */
-const B6 = "#2563EB", B7 = "#1D4ED8", B9 = "#1E3A8A", B8 = "#1E40AF";
-const B50 = "#EFF6FF", B100 = "#DBEAFE", B200 = "#BFDBFE";
-const S9 = "#0F172A", S6 = "#475569", S5 = "#64748B", S4 = "#94A3B8";
-const S3 = "#CBD5E1", S2 = "#E2E8F0", S1 = "#F1F5F9", S0 = "#F8FAFC";
-const ff = "var(--font-inter), Inter, system-ui, sans-serif";
+const B6 = "#29B8E8", B7 = "#1A9DCA", B9 = "#3D3D3D", B8 = "#1A9DCA";
+const B50 = "#E6F7FD", B100 = "#E6F7FD", B200 = "#C7EEFB";
+const S9 = "#3D3D3D", S6 = "#475569", S5 = "#64748B", S4 = "#94A3B8";
+const S3 = "#CBD5E1", S2 = "#E2E8F0", S1 = "#F1F5F9", S0 = "#F8F4F7";
+const ff = "var(--font-montserrat), Montserrat, sans-serif";
+const fb = "var(--font-poppins), Poppins, sans-serif";
 
 /* ── Inline Countdown ───────────────────────────────────────── */
 const TARGET = new Date("2026-05-25T00:00:00+10:00");
@@ -43,7 +45,7 @@ function Countdown() {
 }
 
 /* ── Shared input style ──────────────────────────────────────── */
-const inp: React.CSSProperties = { fontFamily: ff, fontSize: "0.875rem", color: S9, background: S0, border: `1px solid ${S2}`, borderRadius: 12, padding: "12px 16px", width: "100%", boxSizing: "border-box", outline: "none" };
+const inp: React.CSSProperties = { fontFamily: fb, fontSize: "0.875rem", color: S9, background: S0, border: `1px solid ${S2}`, borderRadius: 12, padding: "12px 16px", width: "100%", boxSizing: "border-box", outline: "none" };
 
 /* ── Header ─────────────────────────────────────────────────── */
 function Header() {
@@ -51,21 +53,22 @@ function Header() {
   return (
     <header style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(255,255,255,0.9)", backdropFilter: "blur(12px)", borderBottom: `1px solid ${S1}` }}>
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 2rem", display: "flex", justifyContent: "space-between", alignItems: "center", height: 80 }}>
-        <a href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-          <div style={{ background: B6, padding: 6, borderRadius: 8, display: "flex" }}>
-            <CheckCircle size={24} color="#fff" />
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
-            <span style={{ fontFamily: ff, fontWeight: 800, color: B9, fontSize: "1.125rem", letterSpacing: "-0.025em" }}>National</span>
-            <span style={{ fontFamily: ff, fontWeight: 700, color: B6, fontSize: "0.875rem" }}>Check-In Week</span>
-          </div>
+        <a href="/" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
+          <Image
+            src="/logo/nciw_no_background-1024x577.png"
+            alt="National Check-in Week"
+            height={52}
+            width={92}
+            style={{ objectFit: "contain" }}
+            priority
+          />
         </a>
         <nav style={{ display: "flex", alignItems: "center", gap: 32 }}>
           {["Home","Products","Resources","Blog"].map(l => (
             <a key={l} href="#" style={{ fontFamily: ff, fontSize: "0.875rem", fontWeight: 500, color: S6, textDecoration: "none" }}>{l}</a>
           ))}
           <a href="/login" style={{ fontFamily: ff, fontSize: "0.875rem", fontWeight: 500, color: S6, textDecoration: "none" }}>Log In</a>
-          <a href="/events" style={{ fontFamily: ff, fontSize: "0.875rem", fontWeight: 600, color: "#fff", background: B6, padding: "10px 24px", borderRadius: 9999, textDecoration: "none", boxShadow: "0 4px 14px rgba(37,99,235,0.35)" }}>Register Now</a>
+          <a href="/events" style={{ fontFamily: ff, fontSize: "0.875rem", fontWeight: 600, color: "#fff", background: B6, padding: "10px 24px", borderRadius: 9999, textDecoration: "none", boxShadow: "0 4px 14px rgba(41,184,232,0.35)" }}>Register Now</a>
         </nav>
         <button onClick={() => setOpen(!open)} style={{ display: "none", background: "none", border: "none", cursor: "pointer", padding: 8 }} aria-label="menu">
           {open ? <X size={24} /> : <Menu size={24} />}
@@ -102,7 +105,7 @@ function Hero() {
             Join Australia&rsquo;s leading student wellbeing event, National Check-In Week,
             bridging data, experts, and schools.
           </p>
-          <a href="/events" style={{ display: "inline-block", fontFamily: ff, fontWeight: 700, fontSize: "1.125rem", color: "#fff", background: B6, padding: "16px 32px", borderRadius: 9999, textDecoration: "none", marginBottom: 48, boxShadow: "0 20px 40px rgba(37,99,235,0.3)" }}>
+          <a href="/events" style={{ display: "inline-block", fontFamily: ff, fontWeight: 700, fontSize: "1.125rem", color: "#fff", background: B6, padding: "16px 32px", borderRadius: 9999, textDecoration: "none", marginBottom: 48, boxShadow: "0 20px 40px rgba(41,184,232,0.3)" }}>
             Register Now
           </a>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -117,7 +120,7 @@ function Hero() {
             <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=1000" alt="Students collaborating" style={{ width: "100%", height: 480, objectFit: "cover", display: "block" }} referrerPolicy="no-referrer" />
           </div>
           <div aria-hidden="true" style={{ position: "absolute", top: -40, right: -40, width: 160, height: 160, background: B100, borderRadius: "50%", filter: "blur(40px)", opacity: 0.7 }} />
-          <div aria-hidden="true" style={{ position: "absolute", bottom: -40, left: -40, width: 160, height: 160, background: "#FCE7F3", borderRadius: "50%", filter: "blur(40px)", opacity: 0.7 }} />
+          <div aria-hidden="true" style={{ position: "absolute", bottom: -40, left: -40, width: 160, height: 160, background: "#FCEEF6", borderRadius: "50%", filter: "blur(40px)", opacity: 0.7 }} />
         </motion.div>
       </div>
     </section>
@@ -189,7 +192,7 @@ function HowToParticipate() {
     { Icon: Database,      title: "Step 4. Enter Data",       desc: "Registration to the data and insights derived from the national measurement." },
   ];
   return (
-    <section style={{ background: "rgba(239,246,255,0.5)", padding: "96px 0" }}>
+    <section style={{ background: B50, padding: "96px 0" }}>
       <div style={{ maxWidth: 1280, margin: "0 auto", padding: "0 2rem" }}>
         <p style={{ fontFamily: ff, textAlign: "center", fontSize: "0.75rem", fontWeight: 900, letterSpacing: "0.2em", textTransform: "uppercase", color: S4, marginBottom: 64 }}>How to Participate</p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 64, alignItems: "start" }}>
@@ -226,7 +229,7 @@ function HowToParticipate() {
                   </label>
                 ))}
               </div>
-              <button type="submit" style={{ fontFamily: ff, fontWeight: 700, fontSize: "1rem", color: "#fff", background: B6, padding: "16px", borderRadius: 12, border: "none", cursor: "pointer", boxShadow: "0 8px 20px rgba(37,99,235,0.3)" }}>
+              <button type="submit" style={{ fontFamily: ff, fontWeight: 700, fontSize: "1rem", color: "#fff", background: B6, padding: "16px", borderRadius: 12, border: "none", cursor: "pointer", boxShadow: "0 8px 20px rgba(41,184,232,0.3)" }}>
                 Register
               </button>
             </form>
@@ -308,13 +311,13 @@ function Home1Footer() {
             </div>
           </div>
           <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "flex-start" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <CheckCircle size={32} color="#fff" />
-              <div style={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
-                <span style={{ fontFamily: ff, fontWeight: 800, fontSize: "1.25rem", color: "#fff" }}>National</span>
-                <span style={{ fontFamily: ff, fontWeight: 700, fontSize: "0.875rem", color: B200 }}>Check-In Week</span>
-              </div>
-            </div>
+            <Image
+              src="/nciw-logo.svg"
+              alt="National Check-in Week"
+              width={80}
+              height={96}
+              style={{ objectFit: "contain" }}
+            />
           </div>
         </div>
         <div style={{ borderTop: `1px solid ${B8}`, paddingTop: 40, textAlign: "center" }}>

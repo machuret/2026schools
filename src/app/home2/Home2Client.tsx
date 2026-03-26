@@ -2,20 +2,21 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import {
   Heart, Users, BarChart3, Smile, TrendingUp, ShieldCheck, Database,
-  MessageSquare, CheckCircle2, UserCircle,
+  MessageSquare, UserCircle,
 } from "lucide-react";
 
 /* ── Tokens ──────────────────────────────────────────────────── */
-const fi = "var(--font-inter), Inter, system-ui, sans-serif";
-const fs = "var(--font-cormorant), 'Cormorant Garamond', Georgia, serif";
-const WARM   = "#fdfbf7";
-const SAGE   = "#d1e2d3";
-const BLUE   = "#3b82f6";
-const BLUE_D = "#2563eb";
-const NAVY   = "#1e3a8a";
-const DARK   = "#1f2937";
+const fi = "var(--font-poppins), Poppins, sans-serif";
+const fs = "var(--font-montserrat), Montserrat, sans-serif";
+const WARM   = "#FFFFFF";
+const SAGE   = "#F8F4F7";
+const BLUE   = "#29B8E8";
+const BLUE_D = "#1A9DCA";
+const NAVY   = "#3D3D3D";
+const DARK   = "#3D3D3D";
 const G6     = "#4b5563";
 const G5     = "#6b7280";
 const G4     = "#9ca3af";
@@ -64,14 +65,16 @@ const inp: React.CSSProperties = {
 function Navbar() {
   return (
     <nav style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px", maxWidth: 1280, margin: "0 auto", width: "100%" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <div style={{ width: 32, height: 32, background: BLUE, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <CheckCircle2 size={20} color="#fff" />
-        </div>
-        <span style={{ fontFamily: fi, fontWeight: 700, fontSize: "1.125rem", lineHeight: 1.25, color: DARK }}>
-          National<br />Check-In<br />Week
-        </span>
-      </div>
+      <a href="/" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
+        <Image
+          src="/logo/nciw_no_background-1024x577.png"
+          alt="National Check-in Week"
+          height={52}
+          width={92}
+          style={{ objectFit: "contain" }}
+          priority
+        />
+      </a>
       <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
         {["Home", "Products", "Resources", "Blog", "Log In"].map(l => (
           <a key={l} href="#" style={{ fontFamily: fi, fontSize: "0.875rem", fontWeight: 500, color: G6, textDecoration: "none" }}>{l}</a>
@@ -100,7 +103,7 @@ function Hero() {
             Together, we can make a difference in mental health awareness.
           </p>
           <div style={{ marginBottom: 40 }}>
-            <a href="/events" style={{ fontFamily: fi, fontWeight: 600, fontSize: "1rem", color: "#fff", background: BLUE, padding: "16px 32px", borderRadius: 9999, textDecoration: "none", boxShadow: "0 10px 25px rgba(59,130,246,0.3)", display: "inline-block" }}>
+            <a href="/events" style={{ fontFamily: fi, fontWeight: 600, fontSize: "1rem", color: "#fff", background: BLUE, padding: "16px 32px", borderRadius: 9999, textDecoration: "none", boxShadow: "0 10px 25px rgba(41,184,232,0.3)", display: "inline-block" }}>
               Join the Movement
             </a>
           </div>
@@ -188,7 +191,7 @@ function HowToParticipate() {
   const steps = [
     { step: "1", title: "Connect",          desc: "Join our leading student wellbeing event, National Check-In Week.",               Icon: Users },
     { step: "2", title: "Check Routines",   desc: "Create space for students on the regular items and routines at school.",           Icon: UserCircle },
-    { step: "3", title: "Registration",     desc: "Register your school and role to be part of the movement.",                       Icon: CheckCircle2 },
+    { step: "3", title: "Registration",     desc: "Register your school and role to be part of the movement.",                       Icon: ShieldCheck },
     { step: "4", title: "Enter Data",       desc: "Register to the online platform for data collection and insights.",               Icon: Database },
   ];
   return (
@@ -230,7 +233,7 @@ function HowToParticipate() {
                   </label>
                 ))}
               </div>
-              <button type="submit" style={{ fontFamily: fi, fontWeight: 700, fontSize: "1rem", color: "#fff", background: BLUE, padding: "16px", borderRadius: 12, border: "none", cursor: "pointer", boxShadow: "0 8px 20px rgba(59,130,246,0.25)", marginTop: 8 }}>
+              <button type="submit" style={{ fontFamily: fi, fontWeight: 700, fontSize: "1rem", color: "#fff", background: BLUE, padding: "16px", borderRadius: 12, border: "none", cursor: "pointer", boxShadow: "0 8px 20px rgba(41,184,232,0.25)", marginTop: 8 }}>
                 Register
               </button>
             </form>
@@ -314,14 +317,13 @@ function Footer() {
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-            <div style={{ width: 32, height: 32, background: "#fff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <CheckCircle2 size={20} color={NAVY} />
-            </div>
-            <span style={{ fontFamily: fi, fontWeight: 700, fontSize: "1.125rem", lineHeight: 1.25, color: "#fff" }}>
-              National<br />Check-In<br />Week
-            </span>
-          </div>
+          <Image
+            src="/nciw-logo.svg"
+            alt="National Check-in Week"
+            width={80}
+            height={96}
+            style={{ objectFit: "contain", marginBottom: 16 }}
+          />
           <p style={{ fontFamily: fi, fontSize: "0.75rem", opacity: 0.4, textAlign: "right", margin: 0 }}>
             © 2026 National Check-In Week.<br />All rights reserved.
           </p>
