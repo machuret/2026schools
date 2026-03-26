@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import {
   Heart, Users, BarChart3, Smile, TrendingUp, ShieldCheck, Database,
-  MessageSquare, UserCircle, Menu, X, CheckCircle,
+  MessageSquare, UserCircle, Menu, X, CheckCircle, ArrowRight,
 } from "lucide-react";
 
 /* ── Tokens ──────────────────────────────────────────────────── */
@@ -25,30 +25,25 @@ const G3     = "#d1d5db";
 /* ── Countdown ───────────────────────────────────────────────── */
 const TARGET = new Date("2026-05-25T00:00:00+10:00");
 function Countdown() {
-  const [t, setT] = useState({ d: 0, h: 0, m: 0 });
+  const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0 });
   const [ok, setOk] = useState(false);
   useEffect(() => {
     setOk(true);
     const tick = () => {
-      const diff = Math.max(0, TARGET.getTime() - Date.now());
-      setT({ d: Math.floor(diff / 86400000), h: Math.floor((diff % 86400000) / 3600000), m: Math.floor((diff % 3600000) / 60000) });
+      const ms = Math.max(0, TARGET.getTime() - Date.now());
+      setT({ d: Math.floor(ms / 86400000), h: Math.floor((ms % 86400000) / 3600000), m: Math.floor((ms % 3600000) / 60000), s: Math.floor((ms % 60000) / 1000) });
     };
     tick(); const id = setInterval(tick, 1000); return () => clearInterval(id);
   }, []);
-  if (!ok) return <div style={{ height: 60 }} />;
-  const box = (val: number, lbl: string) => (
-    <div key={lbl} style={{ textAlign: "center" }}>
-      <div style={{ fontFamily: fi, fontSize: "1.875rem", fontWeight: 700, color: DARK, lineHeight: 1 }}>{String(val).padStart(2, "0")}</div>
-      <div style={{ fontFamily: fi, fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: G5, marginTop: 4 }}>{lbl}</div>
-    </div>
-  );
+  if (!ok) return <div style={{ height: 88 }} />;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-      {box(t.d, "Days")}
-      <span style={{ fontFamily: fi, fontSize: "1.5rem", fontWeight: 700, color: G3 }}>:</span>
-      {box(t.h, "Hours")}
-      <span style={{ fontFamily: fi, fontSize: "1.5rem", fontWeight: 700, color: G3 }}>:</span>
-      {box(t.m, "Minutes")}
+    <div className="flex gap-3">
+      {([[t.d, "Days"], [t.h, "Hrs"], [t.m, "Min"], [t.s, "Sec"]] as [number, string][]).map(([v, l]) => (
+        <div key={l as string} className="flex flex-col items-center bg-white rounded-2xl px-4 py-3 shadow-sm border border-slate-100 min-w-[62px]">
+          <span className="text-3xl font-black tabular-nums leading-none" style={{ color: DARK, fontFamily: fs }}>{String(v as number).padStart(2, "0")}</span>
+          <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-400 mt-1.5">{l}</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -73,7 +68,7 @@ function Navbar() {
             <a key={l} href="#" className="text-sm font-medium text-slate-500 hover:text-[#29B8E8] transition-colors" style={{ textDecoration: "none" }}>{l}</a>
           ))}
           <a href="/login" className="text-sm font-medium text-slate-500 hover:text-[#29B8E8] transition-colors" style={{ textDecoration: "none" }}>Log In</a>
-          <a href="/events" className="text-sm font-semibold text-white px-6 py-2.5 rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200" style={{ background: BLUE, textDecoration: "none" }}>Register Now</a>
+          <a href="/events" className="text-base font-bold text-white px-8 py-3.5 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200" style={{ background: BLUE, textDecoration: "none" }}>Register Now</a>
         </nav>
         <button onClick={() => setOpen(!open)} className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors" style={{ background: "none", border: "none", cursor: "pointer", color: DARK }} aria-label={open ? "Close menu" : "Open menu"}>
           {open ? <X size={22} /> : <Menu size={22} />}
@@ -98,10 +93,15 @@ function Navbar() {
 /* ── Hero ────────────────────────────────────────────────────── */
 function Hero() {
   return (
-    <section style={{ position: "relative", overflow: "hidden", padding: "48px 24px 80px" }}>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center" style={{ maxWidth: 1280, margin: "0 auto", padding: "0 1.5rem" }}>
+    <section className="relative overflow-hidden bg-white py-20 lg:py-28">
+      <div aria-hidden="true" className="pointer-events-none absolute -top-48 -right-48 w-[700px] h-[700px] rounded-full" style={{ background: "radial-gradient(circle, #E6F7FD 0%, transparent 65%)" }} />
+      <div aria-hidden="true" className="pointer-events-none absolute -bottom-48 -left-48 w-[600px] h-[600px] rounded-full" style={{ background: "radial-gradient(circle, #FCEEF6 0%, transparent 65%)" }} />
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
-          <h1 style={{ fontFamily: fs, fontSize: "3.75rem", fontWeight: 700, lineHeight: 1.2, color: DARK, marginBottom: 24 }}>
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }} className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6" style={{ color: BLUE, background: "#E6F7FD" }}>
+            <span aria-hidden>💙</span> 25 May 2026 &middot; Australia
+          </motion.div>
+          <h1 className="font-black leading-[1.07] tracking-tight mb-5" style={{ fontFamily: fs, fontSize: "clamp(2.5rem, 5vw, 3.75rem)", color: DARK }}>
             Empathy &amp; Connection:<br />
             <span style={{ color: BLUE }}>A National Check-In Week</span><br />
             for Student Wellbeing.
@@ -110,10 +110,13 @@ function Hero() {
             Join us in creating safe spaces and fostering community for all students.
             Together, we can make a difference in mental health awareness.
           </p>
-          <div style={{ marginBottom: 40 }}>
-            <a href="/events" style={{ fontFamily: fi, fontWeight: 600, fontSize: "1rem", color: "#fff", background: BLUE, padding: "16px 32px", borderRadius: 9999, textDecoration: "none", boxShadow: "0 10px 25px rgba(41,184,232,0.3)", display: "inline-block" }}>
-              Join the Movement
-            </a>
+          <div className="flex flex-wrap gap-3 mb-10">
+            <motion.a href="/events" whileHover={{ scale: 1.04, y: -3 }} whileTap={{ scale: 0.97 }} className="inline-flex items-center gap-2.5 text-base font-bold text-white px-9 py-4 rounded-2xl shadow-2xl" style={{ background: BLUE, textDecoration: "none" }}>
+              Join the Movement <ArrowRight size={18} />
+            </motion.a>
+            <motion.a href="/about" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="inline-flex items-center text-base font-bold text-slate-700 bg-white border-2 border-slate-200 hover:border-[#29B8E8] hover:text-[#29B8E8] px-9 py-4 rounded-2xl transition-colors duration-200" style={{ textDecoration: "none" }}>
+              Learn More
+            </motion.a>
           </div>
           <Countdown />
           <p style={{ fontFamily: fi, fontSize: "0.875rem", color: G6, fontStyle: "italic", marginTop: 16 }}>
@@ -178,15 +181,16 @@ function WhyMatters() {
         <p style={{ fontFamily: fi, textAlign: "center", fontSize: "0.85rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.3em", color: G6, marginBottom: 64 }}>Why This Matters</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 lg:gap-x-16 lg:gap-y-10">
           {items.map((item, i) => (
-            <div key={i} style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
-              <div style={{ background: "#fff", padding: 16, borderRadius: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.06)", flexShrink: 0 }}>
+            <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
+              className="flex gap-5 p-6 rounded-3xl border border-slate-100 hover:border-[#29B8E8]/30 hover:shadow-lg transition-all duration-300 group">
+              <div className="flex-shrink-0 p-3 rounded-2xl group-hover:scale-110 transition-transform duration-200" style={{ background: "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
                 <item.Icon size={24} color={item.iconColor} />
               </div>
               <div>
-                <h3 style={{ fontFamily: fi, fontSize: "1.25rem", fontWeight: 700, color: DARK, marginBottom: 8 }}>{item.title}</h3>
-                <p style={{ fontFamily: fi, fontSize: "1rem", color: DARK, lineHeight: 1.6, margin: 0 }}>{item.desc}</p>
+                <h3 className="text-base font-bold mb-2" style={{ fontFamily: fi, color: DARK }}>{item.title}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed">{item.desc}</p>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
@@ -210,15 +214,15 @@ function HowToParticipate() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
           <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
             {steps.map((s, i) => (
-              <div key={i} style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
-                <div style={{ width: 48, height: 48, background: "#fff", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", color: G6 }}>
-                  <s.Icon size={20} color={G6} />
+              <motion.div key={i} initial={{ opacity: 0, x: -24 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="flex gap-5 group">
+                <div className="flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black text-white shadow-lg group-hover:scale-110 transition-transform duration-200" style={{ background: BLUE }}>
+                  {i + 1}
                 </div>
-                <div>
-                  <h3 style={{ fontFamily: fi, fontWeight: 700, fontSize: "1.125rem", color: DARK, marginBottom: 4 }}>Step {s.step}: {s.title}</h3>
-                  <p style={{ fontFamily: fi, fontSize: "1rem", color: DARK, lineHeight: 1.6, margin: 0 }}>{s.desc}</p>
+                <div className="pt-1">
+                  <h3 className="text-base font-bold mb-1" style={{ fontFamily: fi, color: DARK }}>{s.title}</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">{s.desc}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
 
@@ -249,9 +253,9 @@ function HowToParticipate() {
                   </label>
                 ))}
               </div>
-              <button type="submit" className="hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200" style={{ fontFamily: fi, fontWeight: 700, fontSize: "1rem", color: "#fff", background: BLUE, padding: "16px", borderRadius: 12, border: "none", cursor: "pointer", boxShadow: "0 8px 20px rgba(41,184,232,0.25)", marginTop: 8 }}>
-                Register
-              </button>
+              <motion.button type="submit" whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.97 }} className="mt-1 w-full inline-flex items-center justify-center gap-2.5 text-base font-bold text-white py-4 rounded-2xl shadow-xl border-0 cursor-pointer" style={{ background: BLUE }}>
+                Register Now <ArrowRight size={18} />
+              </motion.button>
             </form>
             )}
           </div>
@@ -264,14 +268,14 @@ function HowToParticipate() {
 /* ── Featured Speakers ───────────────────────────────────────── */
 function FeaturedSpeakers() {
   const speakers = [
-    { name: "Andrew Smith",    role: "Professor",       desc: "Leading expert in student wellbeing and mental health education.",           img: "https://picsum.photos/seed/speaker1/200/200" },
-    { name: "Sally Webster",   role: "Professor",       desc: "Specialist in educational psychology and student connection.",              img: "https://picsum.photos/seed/speaker2/200/200" },
-    { name: "Dianne Giblin",   role: "Professor",       desc: "Advocate for parent and community engagement in schools.",                 img: "https://picsum.photos/seed/speaker3/200/200" },
-    { name: "Dr Mark Williams",role: "Senior Lecturer", desc: "Researcher focusing on data-driven wellbeing interventions.",              img: "https://picsum.photos/seed/speaker4/200/200" },
-    { name: "Gemma McLean",    role: "Professor",       desc: "Expert in school leadership and wellbeing culture.",                       img: "https://picsum.photos/seed/speaker5/200/200" },
-    { name: "Kate Xavier",     role: "Professor",       desc: "Clinical psychologist specialising in adolescent mental health.",          img: "https://picsum.photos/seed/speaker6/200/200" },
-    { name: "Niski Bonus",     role: "Professor",       desc: "Researcher in social-emotional learning and student voice.",               img: "https://picsum.photos/seed/speaker7/200/200" },
-    { name: "Corrie Auckland", role: "Professor",       desc: "Advocate for inclusive education and student support systems.",            img: "https://picsum.photos/seed/speaker8/200/200" },
+    { name: "Andrew Smith",    role: "Wellbeing Researcher",    desc: "Leading expert in student wellbeing and educational data analysis.",          img: "https://i.pravatar.cc/150?u=andrew1" },
+    { name: "Sally Webster",   role: "Educational Psychologist",desc: "Specialises in psychological safety and resilience programs for youth.",      img: "https://i.pravatar.cc/150?u=sally2"  },
+    { name: "Dianne Giblin",   role: "Community Advocate",      desc: "Advocate for parent engagement and community-driven wellbeing initiatives.",  img: "https://i.pravatar.cc/150?u=dianne3" },
+    { name: "Dr Mark Williams",role: "Cognitive Researcher",    desc: "Researches digital environments and their impact on cognitive development.",  img: "https://i.pravatar.cc/150?u=mark4"   },
+    { name: "Gemma McLean",    role: "Early Childhood Lead",    desc: "Expert in early childhood development and transition to primary school.",     img: "https://i.pravatar.cc/150?u=gemma5"  },
+    { name: "Kate Xavier",     role: "Trauma Specialist",       desc: "Expert in trauma-informed practice for vulnerable student populations.",      img: "https://i.pravatar.cc/150?u=kate6"   },
+    { name: "Nikki Bonus",     role: "Platform Founder",        desc: "Founded wellbeing platforms used by thousands of schools across Australia.",  img: "https://i.pravatar.cc/150?u=nikki7"  },
+    { name: "Corrie Ackland",  role: "Mental Health Lead",      desc: "Dedicated to improving peer-to-peer mental health support in schools.",      img: "https://i.pravatar.cc/150?u=corrie8" },
   ];
   return (
     <section style={{ padding: "80px 24px", background: "#fff" }}>
@@ -279,15 +283,15 @@ function FeaturedSpeakers() {
         <p style={{ fontFamily: fi, textAlign: "center", fontSize: "0.85rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.3em", color: G6, marginBottom: 64 }}>Featured Speakers</p>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 lg:gap-6">
           {speakers.map((s, i) => (
-            <motion.div key={i} whileHover={{ y: -5 }}
-              style={{ background: WARM, padding: 24, borderRadius: 24, textAlign: "center" }}>
-              <div style={{ width: 96, height: 96, borderRadius: "50%", overflow: "hidden", margin: "0 auto 16px", border: "4px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+            <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.05 }}
+              className="group bg-white rounded-3xl p-5 text-center border border-slate-100 hover:border-[#29B8E8]/40 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
+              <div className="w-20 h-20 rounded-full overflow-hidden mx-auto mb-4 ring-4 ring-slate-100 group-hover:ring-[#29B8E8]/40 transition-all duration-300">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={s.img} alt={s.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} referrerPolicy="no-referrer" />
+                <img src={s.img} alt={s.name} className="w-full h-full object-cover block" referrerPolicy="no-referrer" />
               </div>
-              <h3 style={{ fontFamily: fi, fontWeight: 700, fontSize: "1.125rem", color: DARK, marginBottom: 4 }}>{s.name}</h3>
-              <p style={{ fontFamily: fi, fontSize: "0.875rem", fontWeight: 700, color: BLUE, marginBottom: 12 }}>{s.role}</p>
-              <p style={{ fontFamily: fi, fontSize: "0.875rem", color: DARK, lineHeight: 1.6, margin: 0 }}>{s.desc}</p>
+              <h3 className="text-sm font-bold mb-1.5" style={{ color: DARK, fontFamily: fi }}>{s.name}</h3>
+              <span className="inline-block text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full mb-3" style={{ color: BLUE, background: "#E6F7FD" }}>{s.role}</span>
+              <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">{s.desc}</p>
             </motion.div>
           ))}
         </div>
@@ -339,7 +343,7 @@ function Footer() {
             alt="National Check-in Week"
             width={160}
             height={90}
-            style={{ objectFit: "contain", marginBottom: 16 }}
+            style={{ objectFit: "contain", marginBottom: 16, filter: "brightness(0) invert(1)", opacity: 0.8 }}
           />
           <p style={{ fontFamily: fi, fontSize: "0.875rem", opacity: 0.75, textAlign: "right", margin: 0 }}>
             © 2026 National Check-In Week.<br />All rights reserved.
