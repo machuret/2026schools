@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { BarChart3, Lightbulb, ClipboardCheck, Users, Calendar, MessageSquare, Database, Menu, X, CheckCircle } from "lucide-react";
+import { BarChart3, Lightbulb, ClipboardCheck, Users, Calendar, MessageSquare, Database, Menu, X, CheckCircle, ArrowRight } from "lucide-react";
 
 /* ── Design tokens ─────────────────────────────────────────── */
 const B6 = "#29B8E8", B7 = "#1A9DCA", B9 = "#3D3D3D", B8 = "#1A9DCA";
@@ -16,30 +16,25 @@ const fb = "var(--font-poppins), Poppins, sans-serif";
 /* ── Inline Countdown ───────────────────────────────────────── */
 const TARGET = new Date("2026-05-25T00:00:00+10:00");
 function Countdown() {
-  const [t, setT] = useState({ d: 0, h: 0, m: 0 });
+  const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0 });
   const [ok, setOk] = useState(false);
   useEffect(() => {
     setOk(true);
     const tick = () => {
-      const diff = Math.max(0, TARGET.getTime() - Date.now());
-      setT({ d: Math.floor(diff / 86400000), h: Math.floor((diff % 86400000) / 3600000), m: Math.floor((diff % 3600000) / 60000) });
+      const ms = Math.max(0, TARGET.getTime() - Date.now());
+      setT({ d: Math.floor(ms / 86400000), h: Math.floor((ms % 86400000) / 3600000), m: Math.floor((ms % 3600000) / 60000), s: Math.floor((ms % 60000) / 1000) });
     };
     tick(); const id = setInterval(tick, 1000); return () => clearInterval(id);
   }, []);
-  if (!ok) return <div style={{ height: 68 }} />;
-  const box = (val: number, lbl: string) => (
-    <div key={lbl} style={{ textAlign: "center" }}>
-      <div style={{ fontSize: "2.25rem", fontWeight: 900, color: B9, fontFamily: ff, lineHeight: 1 }}>{String(val).padStart(2,"0")}</div>
-      <div style={{ fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: S5, fontFamily: fb, marginTop: 4 }}>{lbl}</div>
-    </div>
-  );
+  if (!ok) return <div style={{ height: 88 }} />;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-      {box(t.d, "Days")}
-      <span style={{ fontSize: "1.875rem", fontWeight: 300, color: S3, fontFamily: ff }}>:</span>
-      {box(t.h, "Hours")}
-      <span style={{ fontSize: "1.875rem", fontWeight: 300, color: S3, fontFamily: ff }}>:</span>
-      {box(t.m, "Minutes")}
+    <div className="flex gap-3">
+      {([[t.d, "Days"], [t.h, "Hrs"], [t.m, "Min"], [t.s, "Sec"]] as [number, string][]).map(([v, l]) => (
+        <div key={l as string} className="flex flex-col items-center bg-white rounded-2xl px-4 py-3 shadow-sm border border-slate-100 min-w-[62px]">
+          <span className="text-3xl font-black tabular-nums leading-none" style={{ color: B9, fontFamily: ff }}>{String(v as number).padStart(2, "0")}</span>
+          <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-400 mt-1.5">{l}</span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -68,7 +63,7 @@ function Header() {
             <a key={l} href="#" className="text-sm font-medium text-slate-500 hover:text-[#29B8E8] transition-colors" style={{ textDecoration: "none" }}>{l}</a>
           ))}
           <a href="/login" style={{ fontFamily: ff, fontSize: "0.875rem", fontWeight: 500, color: S6, textDecoration: "none" }}>Log In</a>
-          <a href="/events" className="text-sm font-semibold text-white px-6 py-2.5 rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200" style={{ background: B6, textDecoration: "none" }}>Register Now</a>
+          <a href="/events" className="text-base font-bold text-white px-8 py-3.5 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200" style={{ background: B6, textDecoration: "none" }}>Register Now</a>
         </nav>
         <button onClick={() => setOpen(!open)} className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors" style={{ background: "none", border: "none", cursor: "pointer" }} aria-label={open ? "Close menu" : "Open menu"}>
           {open ? <X size={24} /> : <Menu size={24} />}
@@ -94,8 +89,10 @@ function Header() {
 /* ── Hero ────────────────────────────────────────────────────── */
 function Hero() {
   return (
-    <section style={{ background: "#fff", padding: "64px 0 96px", overflow: "hidden" }}>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center" style={{ maxWidth: 1280, margin: "0 auto", padding: "0 2rem" }}>
+    <section className="relative overflow-hidden bg-white py-20 lg:py-28">
+      <div aria-hidden="true" className="pointer-events-none absolute -top-48 -right-48 w-[700px] h-[700px] rounded-full" style={{ background: `radial-gradient(circle, ${B50} 0%, transparent 65%)` }} />
+      <div aria-hidden="true" className="pointer-events-none absolute -bottom-48 -left-48 w-[600px] h-[600px] rounded-full" style={{ background: "radial-gradient(circle, #FCEEF6 0%, transparent 65%)" }} />
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }}>
           <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6" style={{ color: B6, background: B50 }}>
             <span aria-hidden>📅</span> 25 May 2026 &middot; Australia
@@ -108,8 +105,12 @@ function Hero() {
             Join Australia&rsquo;s leading student wellbeing event — bridging data, experts and schools to create lasting change.
           </p>
           <div className="flex flex-wrap gap-3 mb-10">
-            <a href="/events" className="inline-flex items-center gap-2 text-base font-bold text-white px-8 py-4 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200" style={{ background: B6, textDecoration: "none" }}>Register Now</a>
-            <a href="/about" className="inline-flex items-center text-base font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 px-8 py-4 rounded-full transition-all duration-200" style={{ textDecoration: "none" }}>Learn More</a>
+            <motion.a href="/events" whileHover={{ scale: 1.04, y: -3 }} whileTap={{ scale: 0.97 }} className="inline-flex items-center gap-2.5 text-base font-bold text-white px-9 py-4 rounded-2xl shadow-2xl" style={{ background: B6, textDecoration: "none" }}>
+              Register Now <ArrowRight size={18} />
+            </motion.a>
+            <motion.a href="/about" whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} className="inline-flex items-center text-base font-bold text-slate-700 bg-white border-2 border-slate-200 hover:border-[#29B8E8] hover:text-[#29B8E8] px-9 py-4 rounded-2xl transition-colors duration-200" style={{ textDecoration: "none" }}>
+              Learn More
+            </motion.a>
           </div>
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-3">Countdown to the event</p>
           <Countdown />
@@ -211,15 +212,15 @@ function HowToParticipate() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
           <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
             {steps.map((s, i) => (
-              <div key={i} style={{ display: "flex", gap: 24 }}>
-                <div style={{ flexShrink: 0, width: 48, height: 48, background: "#fff", borderRadius: 12, border: `1px solid ${S1}`, boxShadow: "0 1px 3px rgba(0,0,0,0.06)", display: "flex", alignItems: "center", justifyContent: "center", color: B6 }}>
-                  <s.Icon size={20} color={B6} />
+              <motion.div key={i} initial={{ opacity: 0, x: -24 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }} className="flex gap-5 group">
+                <div className="flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black text-white shadow-lg group-hover:scale-110 transition-transform duration-200" style={{ background: B6 }}>
+                  {i + 1}
                 </div>
-                <div>
-                  <h3 style={{ fontFamily: ff, fontSize: "1.125rem", fontWeight: 700, color: S9, marginBottom: 4 }}>{s.title}</h3>
-                  <p style={{ fontFamily: fb, fontSize: "1rem", color: S9, lineHeight: 1.6, margin: 0 }}>{s.desc}</p>
+                <div className="pt-1">
+                  <h3 className="text-base font-bold mb-1" style={{ fontFamily: ff, color: S9 }}>{s.title}</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">{s.desc}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
           <div style={{ background: "#fff", padding: 40, borderRadius: 24, boxShadow: "0 20px 40px rgba(0,0,0,0.08)", border: `1px solid ${S1}` }}>
@@ -249,9 +250,9 @@ function HowToParticipate() {
                   </label>
                 ))}
               </div>
-              <button type="submit" className="hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200" style={{ fontFamily: ff, fontWeight: 700, fontSize: "1rem", color: "#fff", background: B6, padding: "16px", borderRadius: 12, border: "none", cursor: "pointer", boxShadow: "0 8px 20px rgba(41,184,232,0.3)" }}>
-                Register
-              </button>
+              <motion.button type="submit" whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.97 }} className="mt-1 w-full inline-flex items-center justify-center gap-2.5 text-base font-bold text-white py-4 rounded-2xl shadow-xl border-0 cursor-pointer" style={{ background: B6 }}>
+                Register Now <ArrowRight size={18} />
+              </motion.button>
             </form>
             )}
           </div>
