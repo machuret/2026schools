@@ -4,11 +4,12 @@ import { useEffect } from 'react';
 
 export default function ContactFormClient() {
   useEffect(() => {
-    // Load HubSpot form script
+    // Load HubSpot v2 embed script
     const script = document.createElement('script');
-    script.src = 'https://js-ap1.hsforms.net/forms/embed/4596264.js';
+    script.src = '//js-ap1.hsforms.net/forms/embed/v2.js';
+    script.charset = 'utf-8';
+    script.type = 'text/javascript';
     script.async = true;
-    script.defer = true;
     
     script.onload = () => {
       if (window.hbspt) {

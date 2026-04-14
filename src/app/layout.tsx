@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Montserrat, Poppins } from "next/font/google";
+import Script from "next/script";
 import { getTypographyCssInline } from "@/lib/typography-css";
 import "./globals.css";
 
@@ -79,10 +80,14 @@ export default async function RootLayout({
         {typographyCss && (
           <style dangerouslySetInnerHTML={{ __html: typographyCss }} />
         )}
-        {/* LSGO Analytics */}
-        <script async defer src="https://lsgo-resources.s3.ap-southeast-2.amazonaws.com/utilities/lsgo_ac/lsgo_ac_global_v3.min.js"></script>
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Script
+          src="https://lsgo-resources.s3.ap-southeast-2.amazonaws.com/utilities/lsgo_ac/lsgo_ac_global_v3.min.js"
+          strategy="afterInteractive"
+        />
+      </body>
     </html>
   );
 }

@@ -30,7 +30,7 @@ export default function LogosTab({ logos, onAdd, onUpdate, onDelete }: LogosTabP
   return (
     <div className="swa-card">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700 }}>Trusted Organizations</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 700 }}>Trusted Organisations</h2>
         <button onClick={onAdd} className="swa-btn swa-btn--primary">
           <span className="material-symbols-outlined" style={{ fontSize: 16 }}>add</span>
           Add Logo

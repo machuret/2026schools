@@ -11,7 +11,7 @@ export function LogosSection({ logos }: LogosSectionProps) {
   
   return (
     <section className="home1-logos fade-up">
-      <div className="home1-logos-label">Trusted by leading organizations</div>
+      <div className="home1-logos-label">Trusted by leading organisations</div>
       <div className="home1-logos-row">
         {logos.map(logo => (
           <div key={logo.id} className="home1-logo-badge">

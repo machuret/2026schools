@@ -164,7 +164,7 @@ export default async function StatePage({ params }: Props) {
         <section className="inner-section">
           <h2 className="section-heading section-heading--sm">Sources & References</h2>
           <p className="inner-lead inner-lead--tight" style={{ marginBottom: "24px" }}>
-            The data presented on this page is sourced from reputable Australian government and research organizations.
+            The data presented on this page is sourced from reputable Australian government and research organisations.
           </p>
           <div style={{
             background: "#f8fafc",

@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export const metadata = {
   title: "Partners — National Check-in Week",
-  description: "Organizations and companies we proudly work with to improve student wellbeing.",
+  description: "Organisations and companies we proudly work with to improve student wellbeing.",
 };
 
 export default async function PartnersPage() {
@@ -28,7 +28,7 @@ export default async function PartnersPage() {
             Partners
           </h1>
           <p className="page-hero__subtitle">
-            Organizations and companies we proudly work with to improve student wellbeing
+            Organisations and companies we proudly work with to improve student wellbeing
           </p>
         </div>
       </div>
