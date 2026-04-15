@@ -19,6 +19,6 @@ interface Window {
   hbspt?: {
     forms: HubSpotForms;
   };
-  /** lsgo_ac_global_v3 school-autocomplete initialiser */
+  /** lsgo_ac school-autocomplete initialiser (lsgo_ac_global_v4) */
   lsgoACinit?: () => void;
 }

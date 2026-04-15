@@ -41,6 +41,20 @@ export default function HubSpotForm({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const initialised = useRef(false);
+  const readyFired = useRef(false);
+
+  // Single source of truth: mark the form as loaded and trigger lsgo_ac.
+  // Uses a ref guard so it only fires once even if both the HubSpot
+  // onFormReady callback AND the MutationObserver detect the form.
+  const markReady = useCallback(($form?: HTMLFormElement | null) => {
+    if (readyFired.current) return;
+    readyFired.current = true;
+    setLoading(false);
+    onFormReady?.($form as HTMLFormElement);
+    if (window.lsgoACinit) {
+      setTimeout(window.lsgoACinit, 300);
+    }
+  }, [onFormReady]);
 
   const createForm = useCallback(() => {
     if (initialised.current) return;
@@ -52,28 +66,13 @@ export default function HubSpotForm({
       formId,
       region,
       target: `#${targetId}`,
-      onFormReady: ($form: HTMLFormElement) => {
-        setLoading(false);
-        onFormReady?.($form);
-        // Re-trigger lsgo_ac school autocomplete now that the HubSpot
-        // form DOM exists (the script's own init fires too early).
-        if (window.lsgoACinit) {
-          setTimeout(window.lsgoACinit, 300);
-        }
-      },
+      onFormReady: ($form: HTMLFormElement) => markReady($form),
       onFormSubmit: onFormSubmit as HubSpotFormConfig['onFormSubmit'],
     });
-  }, [portalId, formId, region, targetId, onFormReady, onFormSubmit]);
+  }, [portalId, formId, region, targetId, markReady, onFormSubmit]);
 
   // Fallback: watch for HubSpot injecting content into the target div
   // in case onFormReady doesn't fire (observed in production).
-  const markReady = useCallback(() => {
-    setLoading(false);
-    if (window.lsgoACinit) {
-      setTimeout(window.lsgoACinit, 300);
-    }
-  }, []);
-
   useEffect(() => {
     const target = document.getElementById(targetId);
     if (!target) return;
@@ -81,17 +80,19 @@ export default function HubSpotForm({
     const mo = new MutationObserver(() => {
       if (target.querySelector('iframe, form, .hs-form')) {
         mo.disconnect();
-        markReady();
-        onFormReady?.(target.querySelector('form') as HTMLFormElement);
+        markReady(target.querySelector('form'));
       }
     });
     mo.observe(target, { childList: true, subtree: true });
 
     return () => mo.disconnect();
-  }, [targetId, markReady, onFormReady]);
+  }, [targetId, markReady]);
 
   useEffect(() => {
     initialised.current = false;
+    readyFired.current = false;
+    // Intentional reset when form props change — not a cascading render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError('');
 
