@@ -55,6 +55,11 @@ export default function HubSpotForm({
       onFormReady: ($form: HTMLFormElement) => {
         setLoading(false);
         onFormReady?.($form);
+        // Re-trigger lsgo_ac school autocomplete now that the HubSpot
+        // form DOM exists (the script's own init fires too early).
+        if (window.lsgoACinit) {
+          setTimeout(window.lsgoACinit, 300);
+        }
       },
       onFormSubmit: onFormSubmit as HubSpotFormConfig['onFormSubmit'],
     });

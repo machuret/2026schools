@@ -7,7 +7,6 @@ const optStr = z.string().optional();
 const optNullStr = z.string().nullable().optional();
 const optBool = z.boolean().optional();
 const optNum = z.number().optional();
-const optNullNum = z.number().nullable().optional();
 
 // ─── Blog ─────────────────────────────────────────────────────────────────────
 
@@ -28,26 +27,36 @@ export const BlogPatchSchema = z.object({
 // ─── Events ───────────────────────────────────────────────────────────────────
 
 const SpeakerSchema = z.object({
-  name:     z.string(),
-  title:    z.string().optional(),
-  bio:      z.string().optional(),
-  imageUrl: z.string().optional(),
+  name:       z.string(),
+  title:      z.string().optional(),
+  bio:        z.string().optional(),
+  photo:      z.string().optional(),
+  sort_order: z.number().optional(),
 }).passthrough();
 
 export const EventPutSchema = z.object({
-  title:            z.string().min(1),
-  date:             optNullStr,
-  end_date:         optNullStr,
-  location:         optNullStr,
-  description:      optNullStr,
-  tagline:          optNullStr,
-  max_attendees:    optNullNum,
-  registration_url: optNullStr,
-  published:        optBool,
-  image_url:        optNullStr,
-  seo_title:        optNullStr,
-  seo_desc:         optNullStr,
-  speakers:         z.array(SpeakerSchema).optional(),
+  slug:              z.string().min(1),
+  title:             z.string().min(1),
+  tagline:           optStr,
+  description:       optStr,
+  body:              optStr,
+  event_date:        optNullStr,
+  event_time:        optStr,
+  event_end:         optStr,
+  format:            z.enum(['webinar','in-person','hybrid','workshop','conference']).optional(),
+  location:          optStr,
+  feature_image:     optStr,
+  is_free:           optBool,
+  price:             optStr,
+  register_url:      optStr,
+  recording_url:     optStr,
+  hubspot_form_id:   optStr,
+  hubspot_portal_id: optStr,
+  status:            z.enum(['draft','upcoming','live','past','cancelled']).optional(),
+  published:         optBool,
+  seo_title:         optStr,
+  seo_desc:          optStr,
+  speakers:          z.array(SpeakerSchema).optional(),
 });
 
 // ─── Ambassadors ──────────────────────────────────────────────────────────────

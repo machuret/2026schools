@@ -19,4 +19,6 @@ interface Window {
   hbspt?: {
     forms: HubSpotForms;
   };
+  /** lsgo_ac_global_v3 school-autocomplete initialiser */
+  lsgoACinit?: () => void;
 }
