@@ -8,6 +8,9 @@ const optNullStr = z.string().nullable().optional();
 const optBool = z.boolean().optional();
 const optNum = z.number().optional();
 
+// Transform empty strings to null — prevents PostgreSQL date/timestamp parse failures
+const emptyToNull = z.string().transform((v) => v.trim() === '' ? null : v).nullable().optional();
+
 // ─── Blog ─────────────────────────────────────────────────────────────────────
 
 export const BlogPatchSchema = z.object({
@@ -18,7 +21,7 @@ export const BlogPatchSchema = z.object({
   feature_image: optNullStr,
   author:        optNullStr,
   published:     optBool,
-  published_at:  optNullStr,
+  published_at:  emptyToNull,
   meta_title:    optNullStr,
   meta_desc:     optNullStr,
   og_image:      optNullStr,
@@ -33,8 +36,6 @@ const SpeakerSchema = z.object({
   photo:      z.string().optional(),
   sort_order: z.number().optional(),
 }).passthrough();
-
-const emptyToNull = z.string().transform((v) => v.trim() === '' ? null : v).nullable().optional();
 
 export const EventPutSchema = z.object({
   slug:              z.string().min(1),
@@ -170,7 +171,7 @@ export const ResourcePostSchema = z.object({
 export const SubmissionPatchSchema = z.object({
   status:      z.enum(['pending', 'approved', 'rejected', 'reviewed']).optional(),
   notes:       optNullStr,
-  reviewed_at: optNullStr,
+  reviewed_at: emptyToNull,
   reviewed_by: optNullStr,
 });
 
