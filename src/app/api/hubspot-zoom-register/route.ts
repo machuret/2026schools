@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hubspotZoomSchema, safeValidate } from '@/lib/adminSchemas';
+import * as rateLimit from '@/lib/rateLimit';
+
+const limiter = rateLimit.create('hubspot-zoom', { limit: 5, windowSeconds: 300 });
 
 // Zoom API credentials — must be set as environment variables
 const ZOOM_ACCOUNT_ID    = process.env.ZOOM_ACCOUNT_ID!;
@@ -141,6 +144,9 @@ async function submitToHubSpot(formId: string, fields: Record<string, any>, cont
  * }
  */
 export async function POST(request: NextRequest) {
+  const blocked = limiter.check(request);
+  if (blocked) return blocked;
+
   try {
     const body = await request.json();
 

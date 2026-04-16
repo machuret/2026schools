@@ -1,8 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { voteSchema, safeValidate } from "@/lib/adminSchemas";
+import * as rateLimit from "@/lib/rateLimit";
 
 export const runtime = "edge";
+
+const limiter = rateLimit.create('vote', { limit: 20, windowSeconds: 60 });
 
 async function hashIp(ip: string, slug: string): Promise<string> {
   const buf = new TextEncoder().encode(ip + slug);
@@ -22,6 +25,9 @@ function anonClient() {
 
 // POST /api/votes
 export async function POST(req: NextRequest) {
+  const blocked = limiter.check(req);
+  if (blocked) return blocked;
+
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
 

@@ -2,8 +2,11 @@ import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
 import { submitAmbassadorApplication } from '@/lib/hubspot';
 import { ambassadorApplySchema, safeValidate } from '@/lib/adminSchemas';
+import * as rateLimit from '@/lib/rateLimit';
 
 export const runtime = 'edge';
+
+const limiter = rateLimit.create('ambassador-apply', { limit: 5, windowSeconds: 300 });
 
 function anonClient() {
   return createClient(
@@ -13,6 +16,9 @@ function anonClient() {
 }
 
 export async function POST(req: NextRequest) {
+  const blocked = limiter.check(req);
+  if (blocked) return blocked;
+
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
 
