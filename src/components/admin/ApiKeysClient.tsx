@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { FormField, TextInput, Select, Button, Alert } from "@/components/shared/forms";
 import { useFormState, useAutoDismiss } from "@/hooks/shared";
 import { useValidation } from "@/hooks/shared/useValidation";
-import { apiKeyCreateSchema } from "@/lib/validation/schemas";
+import { apiKeyCreateSchema } from "@/lib/adminSchemas";
 import {
   DangerConfirm,
   FormPanelHeader,

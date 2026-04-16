@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminClient } from '@/lib/adminClient';
 import { requireAdmin } from '@/lib/adminAuth';
-import { blogPostCreateSchema, safeValidate } from '@/lib/validation/schemas';
+import { blogPostCreateSchema, safeValidate } from '@/lib/adminSchemas';
 
 /**
  * GET /api/admin/blog

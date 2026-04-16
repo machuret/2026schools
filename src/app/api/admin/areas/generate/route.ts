@@ -3,7 +3,7 @@ import { requireAdmin } from '@/lib/auth';
 import { openaiService } from '@/lib/ai/openai-service';
 import { OpenAIError } from '@/lib/ai/errors';
 import { AREA_SYSTEM_PROMPT, getAreaPrompt } from '@/lib/ai/prompts';
-import { areaGenerateSchema, safeValidate } from '@/lib/validation/schemas';
+import { areaGenerateSchema, safeValidate } from '@/lib/adminSchemas';
 
 export const runtime = 'edge';
 

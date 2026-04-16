@@ -4,7 +4,7 @@ import type { VaultSource, SourceCategory, SourceLink } from "@/lib/sources/type
 import { checkUrlSpecificity } from "@/lib/sources/validation";
 import { FormField, TextInput, TextArea, Select, Button, Alert } from "@/components/shared/forms";
 import { useFormState, useValidation } from "@/hooks/shared";
-import { sourceCreateSchema } from "@/lib/validation/schemas";
+import { sourceCreateSchema } from "@/lib/adminSchemas";
 
 interface SourcesTabProps {
   /** Array of sources to display */

@@ -3,7 +3,7 @@ import { requireAdmin } from '@/lib/auth';
 import { openaiService } from '@/lib/ai/openai-service';
 import { OpenAIError } from '@/lib/ai/errors';
 import { BLOG_SYSTEM_PROMPT, getBlogPrompt } from '@/lib/ai/prompts';
-import { blogGenerateSchema, safeValidate } from '@/lib/validation/schemas';
+import { blogGenerateSchema, safeValidate } from '@/lib/adminSchemas';
 
 export const runtime = 'edge';
 
