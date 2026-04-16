@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { hubspotZoomSchema, safeValidate } from '@/lib/adminSchemas';
 
 // Zoom API credentials — must be set as environment variables
 const ZOOM_ACCOUNT_ID    = process.env.ZOOM_ACCOUNT_ID!;
@@ -142,27 +143,18 @@ async function submitToHubSpot(formId: string, fields: Record<string, any>, cont
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { hubspot_form_id, zoom_webinar_ids, fields, context } = body;
+
+    const parsed = safeValidate(hubspotZoomSchema, body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+    const { hubspot_form_id, zoom_webinar_ids, fields, context } = parsed.data;
 
     console.log('[HubSpot-Zoom] Received request:', {
       hubspot_form_id,
       zoom_webinar_ids,
-      fields: { ...fields, email: fields?.email ? '***' : undefined },
+      fields: { ...fields, email: '***' },
     });
-
-    if (!hubspot_form_id) {
-      return NextResponse.json(
-        { error: 'hubspot_form_id is required' },
-        { status: 400 }
-      );
-    }
-
-    if (!fields?.email || !fields?.firstname || !fields?.lastname) {
-      return NextResponse.json(
-        { error: 'email, firstname, and lastname are required fields' },
-        { status: 400 }
-      );
-    }
 
     const results: any = {
       hubspot: null,

@@ -384,6 +384,89 @@ export const registrationSchema = z.object({
 
 export type Registration = z.infer<typeof registrationSchema>;
 
+// ─── Public Endpoint Schemas ─────────────────────────────────────────────────
+
+const looseTrimmedString = (max: number) =>
+  z.string().max(max).transform((s) => s.trim());
+
+const looseEmail = z
+  .string()
+  .min(1, 'Email is required')
+  .max(254, 'Email too long')
+  .email('Invalid email address')
+  .transform((s) => s.trim().toLowerCase());
+
+const looseUrl = z
+  .string()
+  .url('Invalid URL')
+  .max(2000, 'URL too long')
+  .optional()
+  .or(z.literal(''))
+  .transform((v) => v?.trim() || null);
+
+export const voteSchema = z.object({
+  entity_type: z.enum(['issue', 'area', 'event']).default('issue'),
+  entity_slug: z.string().min(1).max(200, 'Slug too long'),
+  vote: z.enum(['up', 'down']),
+  feedback: looseTrimmedString(2000).optional().transform((v) => v || null),
+  contact: looseTrimmedString(254).optional().transform((v) => v || null),
+});
+
+export type Vote = z.infer<typeof voteSchema>;
+
+export const ambassadorApplySchema = z.object({
+  first_name: looseTrimmedString(100).pipe(z.string().min(1, 'First name is required')),
+  last_name: looseTrimmedString(100).pipe(z.string().min(1, 'Last name is required')),
+  email: looseEmail,
+  phone: looseTrimmedString(30).optional().transform((v) => v || null),
+  organisation: looseTrimmedString(200).optional().transform((v) => v || null),
+  role_title: looseTrimmedString(100).optional().transform((v) => v || null),
+  state: z.string().max(50).optional().transform((v) => v || null),
+  category_id: z.string().uuid().optional().transform((v) => v || null),
+  why_ambassador: looseTrimmedString(5000).pipe(z.string().min(1, 'Motivation is required')),
+  experience: looseTrimmedString(5000).optional().transform((v) => v || null),
+  linkedin_url: looseUrl,
+  website_url: looseUrl,
+});
+
+export type AmbassadorApply = z.infer<typeof ambassadorApplySchema>;
+
+export const ambassadorNominateSchema = z.object({
+  nominee_first_name: looseTrimmedString(100).pipe(z.string().min(1, 'Nominee first name is required')),
+  nominee_last_name: looseTrimmedString(100).pipe(z.string().min(1, 'Nominee last name is required')),
+  nominee_email: looseEmail.optional().transform((v) => v || null),
+  nominee_phone: looseTrimmedString(30).optional().transform((v) => v || null),
+  nominee_organisation: looseTrimmedString(200).optional().transform((v) => v || null),
+  nominee_role_title: looseTrimmedString(100).optional().transform((v) => v || null),
+  nominee_state: z.string().max(50).optional().transform((v) => v || null),
+  category_id: z.string().uuid().optional().transform((v) => v || null),
+  reason: looseTrimmedString(5000).pipe(z.string().min(1, 'Reason is required')),
+  nominee_linkedin: looseUrl,
+  nominator_name: looseTrimmedString(100).pipe(z.string().min(1, 'Your name is required')),
+  nominator_email: looseEmail,
+  nominator_phone: looseTrimmedString(30).optional().transform((v) => v || null),
+  nominator_relation: looseTrimmedString(200).optional().transform((v) => v || null),
+});
+
+export type AmbassadorNominate = z.infer<typeof ambassadorNominateSchema>;
+
+export const hubspotZoomSchema = z.object({
+  hubspot_form_id: z.string().min(1, 'Form ID is required').max(100, 'Form ID too long'),
+  zoom_webinar_ids: z.array(z.string().max(50)).max(10).optional(),
+  fields: z.object({
+    email: looseEmail,
+    firstname: looseTrimmedString(100).pipe(z.string().min(1, 'First name is required')),
+    lastname: looseTrimmedString(100).pipe(z.string().min(1, 'Last name is required')),
+  }).passthrough(),
+  context: z.object({
+    pageUri: z.string().max(2000).optional(),
+    pageName: z.string().max(200).optional(),
+    hutk: z.string().max(200).optional(),
+  }).optional(),
+});
+
+export type HubspotZoom = z.infer<typeof hubspotZoomSchema>;
+
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 /** Server-side helper: parse body or return a 400 NextResponse */

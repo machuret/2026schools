@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { voteSchema, safeValidate } from "@/lib/adminSchemas";
 
 export const runtime = "edge";
 
@@ -24,14 +25,9 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
 
-  const { entity_type, entity_slug, vote, feedback, contact } = body;
-
-  if (!entity_slug || !vote) {
-    return NextResponse.json({ error: "entity_slug and vote are required" }, { status: 400 });
-  }
-  if (!["up", "down"].includes(vote)) {
-    return NextResponse.json({ error: "vote must be 'up' or 'down'" }, { status: 400 });
-  }
+  const parsed = safeValidate(voteSchema, body);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
+  const { entity_type, entity_slug, vote, feedback, contact } = parsed.data;
 
   // Hash IP for privacy — we store it only to detect obvious spam
   const forwarded = req.headers.get("x-forwarded-for") ?? "";
@@ -41,11 +37,11 @@ export async function POST(req: NextRequest) {
   const sb = anonClient();
 
   const { error } = await sb.from("data_votes").insert({
-    entity_type: entity_type ?? "issue",
+    entity_type,
     entity_slug,
     vote,
-    feedback: feedback?.trim() || null,
-    contact: contact?.trim() || null,
+    feedback,
+    contact,
     ip_hash,
   });
 
