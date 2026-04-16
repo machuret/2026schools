@@ -34,18 +34,20 @@ const SpeakerSchema = z.object({
   sort_order: z.number().optional(),
 }).passthrough();
 
+const emptyToNull = z.string().transform((v) => v.trim() === '' ? null : v).nullable().optional();
+
 export const EventPutSchema = z.object({
   slug:              z.string().min(1),
   title:             z.string().min(1),
   tagline:           optStr,
   description:       optStr,
   body:              optStr,
-  event_date:        optNullStr,
+  event_date:        emptyToNull,
   event_time:        optStr,
   event_end:         optStr,
   format:            z.enum(['webinar','in-person','hybrid','workshop','conference']).optional(),
   location:          optStr,
-  feature_image:     optStr,
+  feature_image:     optNullStr,
   is_free:           optBool,
   price:             optStr,
   register_url:      optStr,
