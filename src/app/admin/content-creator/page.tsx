@@ -7,7 +7,7 @@
  * active tab changes; nothing fancier needed at the current volume.
  * ═══════════════════════════════════════════════════════════════════════════ */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { listDrafts, approveIdea, archiveDraft } from "@/lib/content-creator/client";
 import type { ContentDraft, ContentStatus, ContentType } from "@/lib/content-creator/types";
@@ -28,9 +28,8 @@ export default function ContentCreatorDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const activeStatuses = TABS.find((t) => t.key === tab)!.statuses;
-
-  async function refresh() {
+  const refresh = useCallback(async () => {
+    const activeStatuses = TABS.find((t) => t.key === tab)!.statuses;
     try {
       setLoading(true);
       // Fetch everything for this tab; a single query hits the indexed
@@ -47,9 +46,9 @@ export default function ContentCreatorDashboard() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [tab, typeFilter]);
 
-  useEffect(() => { refresh(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [tab, typeFilter]);
+  useEffect(() => { refresh(); }, [refresh]);
 
   async function onApprove(id: string) {
     try {

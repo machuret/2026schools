@@ -17,6 +17,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { fetchVaultContext, formatVaultContext, type VaultEntry } from "./vault.ts";
+// (VaultEntry is re-exported so the generate try/catch can hoist its declared type.)
 import {
   buildIdeaPrompt,
   buildGeneratePrompt,
@@ -112,9 +113,12 @@ async function handleGenerateIdeas(body: Record<string, unknown>, ctx: Ctx) {
     temperature: 0.8,  // ideas should be diverse
   });
 
-  const parsed = JSON.parse(ai.content) as {
+  const parsed = safeParseJson<{
     ideas: { title: string; summary: string; vault_ids?: string[] }[];
-  };
+  }>(ai.content, "openai ideas");
+  if (!Array.isArray(parsed.ideas) || parsed.ideas.length === 0) {
+    throw new Error("openai ideas returned empty array");
+  }
 
   // 3. Insert each idea as a draft row with status='idea'.
   const sb = createClient(ctx.sbUrl, ctx.sbKey, {
@@ -168,56 +172,75 @@ async function handleGenerate(body: Record<string, unknown>, ctx: Ctx) {
   // 2. Flip to 'generating' so the UI can show a spinner.
   await sb.from("content_drafts").update({ status: "generating" }).eq("id", draft_id);
 
-  // 3. Re-pull vault context (brief may reference different keywords than the idea).
-  const vault = await fetchVaultContext(ctx.sbUrl, ctx.sbKey, {
-    keywords:       draft.brief.keywords,
-    vault_category: draft.brief.vault_category,
-    topic:          draft.brief.topic,
-  });
-  const vaultBlock = formatVaultContext(vault);
+  // 3-5. Run the AI chain inside a try/catch so a crash anywhere resets the
+  //      draft back to 'approved_idea' rather than leaving it stuck in
+  //      'generating' forever.
+  let openaiRes: Awaited<ReturnType<typeof callOpenAI>>;
+  let anthroRes: Awaited<ReturnType<typeof callAnthropic>>;
+  let openaiDraft: { title: string | null; body: string; vault_ids_used?: string[] };
+  let improved:    { title: string | null; body: string; drift_warnings?: string[] };
+  let vault: VaultEntry[];
+  let vaultBlock: string;
 
-  // 4. OpenAI draft.
-  const gen = buildGeneratePrompt({
-    content_type: draft.content_type,
-    platform:     draft.platform ?? undefined,
-    idea:         { title: draft.title ?? "(untitled idea)", summary: draft.body },
-    brief:        draft.brief,
-    vault_block:  vaultBlock,
-  });
+  try {
+    // Re-pull vault context (brief may reference different keywords than the idea).
+    vault = await fetchVaultContext(ctx.sbUrl, ctx.sbKey, {
+      keywords:       draft.brief.keywords,
+      vault_category: draft.brief.vault_category,
+      topic:          draft.brief.topic,
+    });
+    vaultBlock = formatVaultContext(vault);
 
-  const openaiRes = await callOpenAI({
-    apiKey: ctx.openaiKey!,
-    system: gen.system,
-    user:   gen.user,
-    temperature: 0.5,
-    maxTokens:   3500,
-  });
-  const openaiDraft = JSON.parse(openaiRes.content) as {
-    title: string | null;
-    body: string;
-    vault_ids_used?: string[];
-  };
+    // OpenAI draft.
+    const gen = buildGeneratePrompt({
+      content_type: draft.content_type,
+      platform:     draft.platform ?? undefined,
+      idea:         { title: draft.title ?? "(untitled idea)", summary: draft.body },
+      brief:        draft.brief,
+      vault_block:  vaultBlock,
+    });
 
-  // 5. Anthropic improvement pass.
-  const imp = buildImprovePrompt({
-    content_type: draft.content_type,
-    platform:     draft.platform ?? undefined,
-    draft:        { title: openaiDraft.title, body: openaiDraft.body },
-    vault_block:  vaultBlock,
-  });
+    openaiRes = await callOpenAI({
+      apiKey: ctx.openaiKey!,
+      system: gen.system,
+      user:   gen.user,
+      temperature: 0.5,
+      maxTokens:   3500,
+    });
+    openaiDraft = safeParseJson(openaiRes.content, "openai draft");
 
-  const anthroRes = await callAnthropic({
-    apiKey: ctx.anthropicKey!,
-    system: imp.system,
-    user:   imp.user,
-    temperature: 0.3,
-    maxTokens:   3500,
-  });
-  const improved = JSON.parse(anthroRes.content) as {
-    title: string | null;
-    body: string;
-    drift_warnings?: string[];
-  };
+    // Anthropic improvement pass.
+    const imp = buildImprovePrompt({
+      content_type: draft.content_type,
+      platform:     draft.platform ?? undefined,
+      draft:        { title: openaiDraft.title, body: openaiDraft.body },
+      vault_block:  vaultBlock,
+    });
+
+    anthroRes = await callAnthropic({
+      apiKey: ctx.anthropicKey!,
+      system: imp.system,
+      user:   imp.user,
+      temperature: 0.3,
+      maxTokens:   3500,
+    });
+    improved = safeParseJson(anthroRes.content, "anthropic improve");
+  } catch (err) {
+    // Reset the row so the admin can retry.
+    await sb
+      .from("content_drafts")
+      .update({
+        status: "approved_idea",
+        ai_metadata: {
+          ...(draft.ai_metadata ?? {}),
+          last_error: err instanceof Error ? err.message : String(err),
+          last_error_at: new Date().toISOString(),
+          last_error_stage: "generate",
+        },
+      })
+      .eq("id", draft_id);
+    throw err;
+  }
 
   // 6. Persist.
   const newTitle = draft.content_type === "social" ? null : (improved.title ?? openaiDraft.title);
@@ -279,29 +302,12 @@ async function handleVerify(body: Record<string, unknown>, ctx: Ctx) {
 
   await sb.from("content_drafts").update({ status: "verifying" }).eq("id", draft_id);
 
-  // Pull vault context using the draft's brief — same corpus the writer saw.
-  const vault = await fetchVaultContext(ctx.sbUrl, ctx.sbKey, {
-    keywords:       draft.brief.keywords,
-    vault_category: draft.brief.vault_category,
-    topic:          draft.brief.topic,
-    limit:          40,  // bigger window for verification — every claim counts
-  });
-
-  const { system, user } = buildVerifyPrompt({
-    content_type: draft.content_type,
-    draft:        { title: draft.title, body: draft.body },
-    vault_block:  formatVaultContext(vault),
-  });
-
-  const anthroRes = await callAnthropic({
-    apiKey: ctx.anthropicKey!,
-    system,
-    user,
-    temperature: 0.1,   // verification should be boring and consistent
-    maxTokens:   3000,
-  });
-
-  const verdict = JSON.parse(anthroRes.content) as {
+  // Run the AI chain inside a try/catch — on any failure we demote the row
+  // back to the prior editable state so the admin can retry without SQL.
+  const priorStatus = draft.status;  // 'draft' or 'rejected'
+  let vault: VaultEntry[];
+  let anthroRes: Awaited<ReturnType<typeof callAnthropic>>;
+  let verdict: {
     status: "verified" | "partially_verified" | "unverified";
     confidence: "high" | "medium" | "low";
     notes?: string;
@@ -309,10 +315,59 @@ async function handleVerify(body: Record<string, unknown>, ctx: Ctx) {
     flagged_claims?:   { claim: string; reason: string; suggested_fix?: string }[];
   };
 
+  try {
+    // Pull vault context using the draft's brief — same corpus the writer saw.
+    vault = await fetchVaultContext(ctx.sbUrl, ctx.sbKey, {
+      keywords:       draft.brief.keywords,
+      vault_category: draft.brief.vault_category,
+      topic:          draft.brief.topic,
+      limit:          40,  // bigger window for verification — every claim counts
+    });
+
+    const { system, user } = buildVerifyPrompt({
+      content_type: draft.content_type,
+      draft:        { title: draft.title, body: draft.body },
+      vault_block:  formatVaultContext(vault),
+    });
+
+    anthroRes = await callAnthropic({
+      apiKey: ctx.anthropicKey!,
+      system,
+      user,
+      temperature: 0.1,   // verification should be boring and consistent
+      maxTokens:   3000,
+    });
+
+    verdict = safeParseJson(anthroRes.content, "anthropic verify");
+  } catch (err) {
+    await sb
+      .from("content_drafts")
+      .update({
+        status: priorStatus,
+        ai_metadata: {
+          ...(draft.ai_metadata ?? {}),
+          last_error: err instanceof Error ? err.message : String(err),
+          last_error_at: new Date().toISOString(),
+          last_error_stage: "verify",
+        },
+      })
+      .eq("id", draft_id);
+    throw err;
+  }
+
+  // Only keep vault_ids that were actually sent — prevents Claude from
+  // hallucinating uuids that aren't in the vault.
+  const validVaultIds = new Set(vault.map((v) => v.id));
+  const filteredSupported = (verdict.supported_claims ?? []).filter(
+    (c) => validVaultIds.has(c.vault_id),
+  );
+  const hallucinated = (verdict.supported_claims ?? []).length - filteredSupported.length;
+
   const verification = {
     ...verdict,
-    supported_claims: verdict.supported_claims ?? [],
-    flagged_claims:   verdict.flagged_claims   ?? [],
+    supported_claims: filteredSupported,
+    flagged_claims:   verdict.flagged_claims ?? [],
+    hallucinated_vault_ids: hallucinated,
     checked_at:       new Date().toISOString(),
   };
 
@@ -353,4 +408,18 @@ function json(body: unknown, status = 200) {
 
 function dedupUuids(arr: string[]): string[] {
   return Array.from(new Set(arr.filter((v) => typeof v === "string" && v.length > 0)));
+}
+
+/**
+ * Parse a JSON string but wrap errors with a label so the admin can see
+ * which stage failed (OpenAI draft vs Anthropic improve vs verify).
+ */
+function safeParseJson<T>(raw: string, label: string): T {
+  try {
+    return JSON.parse(raw) as T;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const preview = raw.slice(0, 200).replace(/\s+/g, " ");
+    throw new Error(`${label} returned invalid JSON: ${msg}. Preview: ${preview}`);
+  }
 }

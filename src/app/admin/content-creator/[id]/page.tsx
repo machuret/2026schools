@@ -25,6 +25,7 @@ import {
   generateDraft,
   verifyDraft,
   archiveDraft,
+  approveIdea,
 } from "@/lib/content-creator/client";
 import { PLATFORM_CONFIG } from "@/lib/content-creator/platforms";
 import type { ContentDraft, FlaggedClaim, SupportedClaim } from "@/lib/content-creator/types";
@@ -41,7 +42,12 @@ export default function DraftDetailPage() {
   // Local editable copies so the textarea doesn't jank on every poll.
   const [title, setTitle] = useState<string>("");
   const [body,  setBody]  = useState<string>("");
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Cap the polling loop. Edge fn max runtime is ~60s; we allow 3×30s headroom
+  // before declaring the row stuck and showing a recovery CTA.
+  const pollCountRef = useRef(0);
+  const MAX_POLLS = 30;  // 30 × 3s = 90s
+  const [stuck, setStuck] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -59,17 +65,38 @@ export default function DraftDetailPage() {
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  // Auto-poll while a stage is in flight.
+  // Auto-poll while a stage is in flight — bounded by MAX_POLLS so a stuck
+  // edge function can't trap the UI in an infinite refresh loop.
   useEffect(() => {
     if (!draft) return;
     const inFlight = draft.status === 'generating' || draft.status === 'verifying';
+
     if (inFlight && !pollRef.current) {
-      pollRef.current = setInterval(refresh, 3000);
+      pollCountRef.current = 0;
+      setStuck(false);
+      pollRef.current = setInterval(() => {
+        pollCountRef.current += 1;
+        if (pollCountRef.current > MAX_POLLS) {
+          // Stop polling and surface a recovery CTA. The edge fn already
+          // resets status on thrown errors, but network blackouts can still
+          // leave the row pending.
+          if (pollRef.current) {
+            clearInterval(pollRef.current);
+            pollRef.current = null;
+          }
+          setStuck(true);
+          return;
+        }
+        refresh();
+      }, 3000);
     }
+
     if (!inFlight && pollRef.current) {
       clearInterval(pollRef.current);
       pollRef.current = null;
+      pollCountRef.current = 0;
     }
+
     return () => {
       if (pollRef.current && !inFlight) {
         clearInterval(pollRef.current);
@@ -87,7 +114,6 @@ export default function DraftDetailPage() {
       // Also covers the "idea → approved_idea → generating" jump — the API
       // layer returns 409 if you skip steps, so we approve first if needed.
       if (draft.status === 'idea') {
-        const { approveIdea } = await import('@/lib/content-creator/client');
         await approveIdea(draft.id);
       }
       await generateDraft(draft.id);
@@ -150,7 +176,7 @@ export default function DraftDetailPage() {
       : `# ${draft.title ?? ''}\n\n${draft.body}`;
     await navigator.clipboard.writeText(text);
     // minimal feedback — no toast library yet
-    setError("✓ Copied to clipboard");
+    setError("Copied to clipboard");
     setTimeout(() => setError(""), 1500);
   }
 
@@ -210,7 +236,7 @@ export default function DraftDetailPage() {
 
       {error && (
         <div
-          className={`swa-alert ${error.startsWith('✓') ? 'swa-alert--success' : 'swa-alert--error'}`}
+          className={`swa-alert ${error === 'Copied to clipboard' ? 'swa-alert--success' : 'swa-alert--error'}`}
           style={{ marginBottom: 20 }}
         >
           {error}
@@ -280,7 +306,8 @@ export default function DraftDetailPage() {
           <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
             {(draft.status === 'idea' || draft.status === 'approved_idea') && (
               <button onClick={doGenerate} disabled={inFlight} className="swa-btn swa-btn--primary">
-                {busy === 'generate' ? 'Generating…' : '✨ Generate content'}
+                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>auto_awesome</span>
+                {busy === 'generate' ? 'Generating…' : 'Generate content'}
               </button>
             )}
 
@@ -290,7 +317,8 @@ export default function DraftDetailPage() {
                   {busy === 'save' ? 'Saving…' : 'Save'}
                 </button>
                 <button onClick={doVerify} disabled={inFlight} className="swa-btn swa-btn--primary">
-                  {busy === 'verify' ? 'Verifying…' : '🔍 Verify against Vault'}
+                  <span className="material-symbols-outlined" style={{ fontSize: 16 }}>fact_check</span>
+                  {busy === 'verify' ? 'Verifying…' : 'Verify against Vault'}
                 </button>
               </>
             )}
@@ -311,8 +339,21 @@ export default function DraftDetailPage() {
               </>
             )}
 
-            {draft.status === 'generating' && <Spinner label="Writing draft…" />}
-            {draft.status === 'verifying' && <Spinner label="Checking claims against Vault…" />}
+            {draft.status === 'generating' && !stuck && <Spinner label="Writing draft…" />}
+            {draft.status === 'verifying'  && !stuck && <Spinner label="Checking claims against Vault…" />}
+
+            {stuck && (
+              <div style={{ width: '100%', padding: 12, background: '#FEF2F2', borderRadius: 8, color: '#991B1B', fontSize: 13 }}>
+                <strong>Still processing after {MAX_POLLS * 3}s.</strong> The AI call may have stalled.
+                <button
+                  onClick={() => { setStuck(false); refresh(); }}
+                  className="swa-btn"
+                  style={{ marginLeft: 8 }}
+                >
+                  Check again
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -433,6 +474,19 @@ function ClaimRow({ claim, sub, tone }: { claim: string; sub: string; tone: 'goo
 
 function MetaPanel({ draft }: { draft: ContentDraft }) {
   const m = draft.ai_metadata ?? {};
+  // drift_warnings, last_error are stored as extras on ai_metadata by the edge
+  // fn — surface them here so admins can see why a run failed or drifted.
+  const metaUnknown = m as unknown as Record<string, unknown>;
+  const driftWarnings = Array.isArray(metaUnknown.drift_warnings)
+    ? (metaUnknown.drift_warnings as string[])
+    : [];
+  const lastError = typeof metaUnknown.last_error === 'string'
+    ? (metaUnknown.last_error as string)
+    : null;
+  const lastErrorStage = typeof metaUnknown.last_error_stage === 'string'
+    ? (metaUnknown.last_error_stage as string)
+    : null;
+
   return (
     <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: 16, fontSize: 12, color: '#6B7280' }}>
       <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1E1040', marginBottom: 10 }}>Provenance</h3>
@@ -444,6 +498,26 @@ function MetaPanel({ draft }: { draft: ContentDraft }) {
         <dt>Created</dt>    <dd>{new Date(draft.created_at).toLocaleString()}</dd>
         <dt>Updated</dt>    <dd>{new Date(draft.updated_at).toLocaleString()}</dd>
       </dl>
+
+      {driftWarnings.length > 0 && (
+        <div style={{ marginTop: 12, padding: 8, background: '#FFFBEB', borderLeft: '3px solid #F59E0B', borderRadius: 4 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#B45309', marginBottom: 4, textTransform: 'uppercase' }}>
+            Drift warnings ({driftWarnings.length})
+          </div>
+          {driftWarnings.map((w, i) => (
+            <div key={i} style={{ fontSize: 12, color: '#78350F', marginTop: 2 }}>• {w}</div>
+          ))}
+        </div>
+      )}
+
+      {lastError && (
+        <div style={{ marginTop: 12, padding: 8, background: '#FEF2F2', borderLeft: '3px solid #EF4444', borderRadius: 4 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#B91C1C', marginBottom: 4, textTransform: 'uppercase' }}>
+            Last error{lastErrorStage ? ` (${lastErrorStage})` : ''}
+          </div>
+          <div style={{ fontSize: 12, color: '#991B1B' }}>{lastError}</div>
+        </div>
+      )}
     </div>
   );
 }

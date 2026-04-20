@@ -86,8 +86,11 @@ export const PATCH = requireAdmin(async (req: NextRequest, ctx?: Ctx) => {
   if ('body' in parsed.data) patch.body = parsed.data.body;
 
   // Editing a verified draft demotes it back to 'draft' so it must be re-verified.
+  // Clear the stale verification verdict at the same time — otherwise the UI
+  // would still show green "Verified" badges for content that has drifted.
   if (current.status === 'verified' && (patch.body !== undefined || patch.title !== undefined)) {
     patch.status = 'draft';
+    patch.verification = {};
   }
 
   const { data, error } = await sb

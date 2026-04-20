@@ -10,14 +10,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminClient } from '@/lib/adminClient';
 import { requireAdmin } from '@/lib/auth';
 import { canTransition } from '@/lib/content-creator/schemas';
-import { callEdge } from '../../route';
+import { callEdge, contentCreatorAILimiter } from '../../route';
 
 export const runtime = 'nodejs';
 export const maxDuration = 90;
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export const POST = requireAdmin(async (_req: NextRequest, ctx?: Ctx) => {
+export const POST = requireAdmin(async (req: NextRequest, ctx?: Ctx) => {
+  const limited = contentCreatorAILimiter.check(req);
+  if (limited) return limited;
+
   const { id } = await ctx!.params;
   const sb = adminClient();
 
