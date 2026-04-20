@@ -35,6 +35,12 @@ interface FetchOpts {
   vault_category?: string;
   topic?:          string;
   limit?:          number;
+  /**
+   * When true AND no topic/keywords are supplied, pulls a diverse sample
+   * of chunks from the category instead of failing. Used by the Topic
+   * Generator in "surprise me" mode where the admin hasn't given a seed.
+   */
+  allow_broad_sample?: boolean;
 }
 
 const DEFAULT_LIMIT = 12;
@@ -80,8 +86,59 @@ export async function fetchVaultContext(
     }
   }
 
+  // ─── Broad sample (topic-generator fallback) ──────────────────────────
+  // When the caller opted in AND there's no seed, sample chunks from the
+  // requested category so the Topic Generator has something to work with
+  // even without an embedding query.
+  if (opts.allow_broad_sample && buildQueryString(opts).length === 0) {
+    const broad = await broadSample(sb, opts.vault_category, limit);
+    if (broad.length > 0) return broad;
+  }
+
   // ─── Fallback: keyword scoring over vault_content ─────────────────────
   return await keywordFallback(sb, opts, limit);
+}
+
+/** Pull a diverse sample from the new vault_chunks table for no-seed runs. */
+async function broadSample(
+  sb: ReturnType<typeof createClient>,
+  vault_category: string | undefined,
+  limit: number,
+): Promise<VaultEntry[]> {
+  // Strategy: pull most recent chunks from the category (up to 4x limit)
+  // and then shuffle client-side so each generation run gets a different
+  // slice without a full random-on-DB table scan.
+  let q = sb
+    .from("vault_chunks")
+    .select("id, content, vault_documents!inner(id, title, source, kind, category, status)")
+    .eq("vault_documents.status", "ready")
+    .order("created_at", { ascending: false })
+    .limit(limit * 4);
+
+  if (vault_category && vault_category !== "all") {
+    q = q.eq("vault_documents.category", vault_category);
+  }
+
+  const { data, error } = await q;
+  if (error) {
+    console.error("[vault] broadSample failed:", error.message);
+    return [];
+  }
+  if (!data || data.length === 0) return [];
+
+  // Fisher-Yates-ish shuffle and take `limit`. Cheap and deterministic-enough.
+  const shuffled = [...data].sort(() => Math.random() - 0.5).slice(0, limit);
+
+  return shuffled.map((row) => {
+    const doc = Array.isArray(row.vault_documents) ? row.vault_documents[0] : row.vault_documents;
+    return {
+      id:       row.id as string,
+      title:    doc?.title ?? "Untitled",
+      content:  row.content as string,
+      source:   doc?.source ?? doc?.kind ?? "",
+      category: doc?.category ?? "general",
+    };
+  });
 }
 
 /* ─── Embedding helper ───────────────────────────────────────────────────── */

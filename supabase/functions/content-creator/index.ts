@@ -19,6 +19,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { fetchVaultContext, formatVaultContext, type VaultEntry } from "./vault.ts";
 // (VaultEntry is re-exported so the generate try/catch can hoist its declared type.)
 import {
+  buildTopicPrompt,
   buildIdeaPrompt,
   buildGeneratePrompt,
   buildImprovePrompt,
@@ -55,6 +56,8 @@ Deno.serve(async (req: Request) => {
     }
 
     switch (stage) {
+      case "generate_topics":
+        return json(await handleGenerateTopics(body, { sbUrl, sbKey, openaiKey, anthropicKey }));
       case "generate_ideas":
         return json(await handleGenerateIdeas(body, { sbUrl, sbKey, openaiKey, anthropicKey }));
       case "generate":
@@ -70,6 +73,136 @@ Deno.serve(async (req: Request) => {
     return json({ error: msg }, 500);
   }
 });
+
+/* ─── Stage 0: topic generation ──────────────────────────────────────────── */
+
+/**
+ * Generate N content topics from the Vault.
+ *
+ * Input shape (from the API route):
+ *   { stage: 'generate_topics', vault_category: string, count?: number, seed?: string }
+ *
+ * Contract:
+ *   • Topics land in content_topics with status='draft' (review-before-approve).
+ *   • source_document_ids are filtered against the actual retrieved chunks so
+ *     Claude/GPT hallucinated IDs don't get persisted.
+ *   • Returns the inserted rows so the UI can render immediately.
+ */
+async function handleGenerateTopics(body: Record<string, unknown>, ctx: Ctx) {
+  const vault_category = (body.vault_category as string | undefined)?.trim();
+  const count          = Math.min(Math.max((body.count as number | undefined) ?? 5, 1), 10);
+  const seed           = (body.seed as string | undefined)?.trim() || undefined;
+
+  if (!vault_category) throw new Error("vault_category is required (use 'all' for cross-category).");
+
+  // 1. Pull vault context. If no seed, use the broad-sample path so we still
+  //    have material to feed into the prompt.
+  const vault = await fetchVaultContext(ctx.sbUrl, ctx.sbKey, {
+    vault_category: vault_category === "all" ? undefined : vault_category,
+    topic:          seed,
+    limit:          25,          // generous window — more context = better angles
+    allow_broad_sample: !seed,   // only sample broadly when the admin gave nothing
+  });
+
+  if (vault.length === 0) {
+    throw new Error(
+      `Vault is empty for category '${vault_category}' — upload some documents first.`,
+    );
+  }
+
+  // 2. Build the set of document IDs that the retrieved chunks actually came
+  //    from. The prompt asks the model to cite these; we'll use this set to
+  //    filter hallucinated IDs out of the response.
+  const sb = createClient(ctx.sbUrl, ctx.sbKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  // Map chunk_id → document_id via vault_chunks so we don't trust the model
+  // to invent the relationship. We need this because vault returns chunk IDs
+  // in `.id`, not document IDs.
+  const chunkIds = vault.map((v) => v.id).filter((id) => /^[0-9a-f-]{36}$/i.test(id));
+  const { data: chunkRows } = await sb
+    .from("vault_chunks")
+    .select("id, document_id")
+    .in("id", chunkIds);
+
+  const validDocIds = new Set<string>(
+    (chunkRows ?? []).map((r: { document_id: string }) => r.document_id),
+  );
+
+  // 3. Call OpenAI for N topics.
+  const { system, user } = buildTopicPrompt({
+    vault_block:    formatVaultContext(vault),
+    vault_category,
+    seed,
+    count,
+  });
+
+  const ai = await callOpenAI({
+    apiKey: ctx.openaiKey!,
+    system,
+    user,
+    temperature: 0.75,  // topics should be varied but not wild
+  });
+
+  const parsed = safeParseJson<{
+    topics: Array<{
+      title:               string;
+      angle:               string;
+      rationale?:          string;
+      suggested_keywords?: string[];
+      suggested_audience?: string;
+      suggested_tone?:     string;
+      source_document_ids?: string[];
+    }>;
+  }>(ai.content, "openai topics");
+
+  if (!Array.isArray(parsed.topics) || parsed.topics.length === 0) {
+    throw new Error("openai topics returned empty array");
+  }
+
+  // 4. Insert each topic as a draft row. Trim lengths defensively so a
+  //    misbehaving model can't bust the DB CHECK constraints.
+  const now = new Date().toISOString();
+  const rows = parsed.topics.slice(0, count).map((t) => ({
+    title:               trim(t.title, 300) || "Untitled topic",
+    angle:               trim(t.angle, 2000) || "(no angle)",
+    rationale:           t.rationale ? trim(t.rationale, 2000) : null,
+    suggested_keywords:  dedupStrings(t.suggested_keywords ?? []).slice(0, 20),
+    suggested_audience:  t.suggested_audience ? trim(t.suggested_audience, 200) : null,
+    suggested_tone:      t.suggested_tone     ? trim(t.suggested_tone,     200) : null,
+    // Filter to only documents we actually retrieved chunks from.
+    source_document_ids: dedupUuids(t.source_document_ids ?? []).filter((id) => validDocIds.has(id)),
+    vault_category:      vault_category === "all" ? null : vault_category,
+    status:              "draft" as const,
+    ai_metadata: {
+      openai_model: ai.model,
+      tokens:       ai.tokens,
+      provider:     "openai" as const,
+      generated_at: now,
+      seed:         seed ?? null,
+    },
+  }));
+
+  const { data, error } = await sb.from("content_topics").insert(rows).select();
+  if (error) throw new Error(`insert topics failed: ${error.message}`);
+
+  return { topics: data };
+}
+
+function trim(s: string, max: number): string {
+  return (s ?? "").toString().trim().slice(0, max);
+}
+
+function dedupStrings(arr: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const v of arr) {
+    const t = (v ?? "").toString().trim();
+    if (t.length > 0 && t.length <= 80 && !seen.has(t)) { seen.add(t); out.push(t); }
+  }
+  return out;
+}
 
 /* ─── Stage 1: idea generation ───────────────────────────────────────────── */
 

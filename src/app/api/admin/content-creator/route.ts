@@ -70,6 +70,32 @@ export const POST = requireAdmin(async (req: NextRequest) => {
   }
 
   const edgeRes = await callEdge({ stage: 'generate_ideas', ...parsed.data });
+
+  // One-shot topic lifecycle: if this brief was spawned from a topic, flip
+  // that topic to 'used' as soon as ideas are successfully generated. The
+  // first idea's id is stored as used_in_draft_id for provenance. Only do
+  // this when the edge fn returned 200 — we don't want to retire a topic
+  // because of a network hiccup.
+  const topicId = parsed.data.brief.source_topic_id;
+  if (topicId && edgeRes.status === 200) {
+    const firstIdeaId =
+      (edgeRes.body as { ideas?: Array<{ id?: string }> } | undefined)
+        ?.ideas?.[0]?.id ?? null;
+
+    const sb = adminClient();
+    // Only flip if still a 'draft' or 'approved' topic — don't clobber a
+    // topic that the admin manually archived during generation.
+    await sb
+      .from('content_topics')
+      .update({
+        status: 'used',
+        used_in_draft_id: firstIdeaId,
+        used_at: new Date().toISOString(),
+      })
+      .eq('id', topicId)
+      .in('status', ['draft', 'approved']);
+  }
+
   return NextResponse.json(edgeRes.body, { status: edgeRes.status });
 });
 

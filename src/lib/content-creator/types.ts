@@ -35,6 +35,8 @@ export interface ContentBrief {
   keywords?: string[];
   /** Filters vault_content.category during RAG. Optional — if absent, all categories are fair game. */
   vault_category?: string;
+  /** When the brief was spawned from a content_topics row, track it here. */
+  source_topic_id?: string;
 }
 
 /**

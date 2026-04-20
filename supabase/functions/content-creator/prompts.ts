@@ -33,6 +33,67 @@ to action and opinion statements that do not contain statistics or factual
 assertions.
 `.trim();
 
+/* ─── STAGE 0: TOPIC GENERATION ─────────────────────────────────────────── */
+
+export interface TopicPromptInput {
+  vault_block:    string;
+  vault_category: string;       // 'all' or a real category name
+  seed?:          string;       // optional admin-supplied focus
+  count:          number;
+}
+
+/**
+ * Topic generation happens BEFORE ideas / content. Given a slice of the vault,
+ * the model proposes reusable content topics — broad angles that can later
+ * spawn multiple ideas. Output constrained to strict JSON so the admin UI can
+ * render cards without markdown parsing.
+ *
+ * Why we ask for source_document_ids:
+ *   - Provenance for the admin to trust the angle
+ *   - Lets the UI show chips linking back to the original documents
+ *   - The edge function filters out hallucinated IDs before persisting
+ */
+export function buildTopicPrompt(input: TopicPromptInput): { system: string; user: string } {
+  const system = `${MISSION}
+
+Task: propose ${input.count} distinct CONTENT TOPICS for future posts. Each
+topic should be a broad angle that could spawn multiple blog / social /
+newsletter pieces, not a single tweet.
+
+Ground every topic in ONE or more vault documents. If the vault is thin,
+return fewer topics rather than inventing material.
+
+Return STRICT JSON only:
+{
+  "topics": [
+    {
+      "title":              "short catchy title (<= 120 chars)",
+      "angle":              "2-3 sentence hook / POV",
+      "rationale":          "why this angle emerges from the vault",
+      "suggested_keywords": ["3-6 keywords"],
+      "suggested_audience": "who this is for (short phrase)",
+      "suggested_tone":     "tone hint (short phrase)",
+      "source_document_ids": ["uuid", ...]
+    }
+  ]
+}`.trim();
+
+  const seedLine = input.seed
+    ? `Admin seed (focus these topics around this angle): ${input.seed}`
+    : `(no admin seed — pick the strongest distinct angles from the vault)`;
+
+  const user = `SCOPE
+category: ${input.vault_category}
+${seedLine}
+
+VAULT (authoritative facts — do NOT invent beyond this)
+${input.vault_block}
+
+Produce ${input.count} distinct topics now. Return JSON only.`.trim();
+
+  return { system, user };
+}
+
 /* ─── STAGE 1: IDEA GENERATION ──────────────────────────────────────────── */
 
 export interface IdeaPromptInput {

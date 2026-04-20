@@ -38,6 +38,8 @@ export const ContentBriefSchema = z.object({
   audience:        z.string().max(120).optional(),
   keywords:        z.array(z.string().max(40)).max(20).optional(),
   vault_category:  z.string().max(60).optional(),
+  /** When the brief was spawned from a content_topics row, track it here. */
+  source_topic_id: z.string().uuid().optional(),
 });
 
 /* ─── Stage 1: generate ideas (POST /api/admin/content-creator) ──────────── */
