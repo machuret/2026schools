@@ -25,7 +25,9 @@ import {
   generateDraft,
   verifyDraft,
   archiveDraft,
+  deleteDraft,
   approveIdea,
+  unapproveIdea,
 } from "@/lib/content-creator/client";
 import { PLATFORM_CONFIG } from "@/lib/content-creator/platforms";
 import type { ContentDraft, FlaggedClaim, SupportedClaim } from "@/lib/content-creator/types";
@@ -163,10 +165,34 @@ export default function DraftDetailPage() {
 
   async function doArchive() {
     if (!draft) return;
-    if (!confirm("Archive this draft?")) return;
+    if (!confirm("Archive this draft? You can find it later under Archived.")) return;
     try {
       await archiveDraft(draft.id);
       router.push('/admin/content-creator');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function doDelete() {
+    if (!draft) return;
+    if (!confirm(
+      "Delete this draft permanently?\n\n" +
+      "This cannot be undone. If you just want to hide it, use Archive instead.",
+    )) return;
+    try {
+      await deleteDraft(draft.id);
+      router.push('/admin/content-creator');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  async function doUnapprove() {
+    if (!draft) return;
+    try {
+      const updated = await unapproveIdea(draft.id);
+      setDraft(updated);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -236,9 +262,34 @@ export default function DraftDetailPage() {
             {draft.brief?.topic ? <> · Topic: {draft.brief.topic}</> : null}
           </p>
         </div>
-        <button onClick={doArchive} className="swa-btn" style={{ color: '#EF4444' }}>
-          Archive
-        </button>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          {draft.status === 'approved_idea' && (
+            <button
+              onClick={doUnapprove}
+              className="swa-btn"
+              title="Send back to idea for more edits"
+            >
+              Unapprove
+            </button>
+          )}
+          <button
+            onClick={doArchive}
+            className="swa-btn"
+            title="Soft-delete — reversible"
+            style={{ color: '#6B7280' }}
+          >
+            Archive
+          </button>
+          <button
+            onClick={doDelete}
+            className="swa-btn"
+            title="Delete permanently — cannot be undone"
+            style={{ color: '#EF4444', borderColor: '#FECACA' }}
+            disabled={draft.status === 'generating' || draft.status === 'verifying'}
+          >
+            Delete
+          </button>
+        </div>
       </div>
 
       {error && (

@@ -83,18 +83,36 @@ export async function approveIdea(id: string): Promise<ContentDraft> {
   return draft;
 }
 
-/** Stage 2: idea → draft. May take 30-60s. */
-export async function generateDraft(id: string): Promise<ContentDraft> {
-  const res = await adminFetch(`${BASE}/${id}/generate`, { method: 'POST' });
+/** Send an `approved_idea` row back to `idea` for more editing. */
+export async function unapproveIdea(id: string): Promise<ContentDraft> {
+  const res = await adminFetch(`${BASE}/${id}/unapprove`, { method: 'POST' });
   const { draft } = await asJson<{ draft: ContentDraft }>(res);
   return draft;
 }
 
-/** Stage 3: draft → verified | rejected. May take 20-40s. */
+/**
+ * Stage 2: idea → draft. May take 30-60s on OpenAI + Anthropic round-trip.
+ * The Next.js route uses `maxDuration=90` and the edge fn proxy caps at 85s,
+ * so we give the browser 100s before giving up. Otherwise the default
+ * 30s adminFetch timeout aborts a request that's actually still working.
+ */
+export async function generateDraft(id: string): Promise<ContentDraft> {
+  const res = await adminFetch(`${BASE}/${id}/generate`, {
+    method:  'POST',
+    timeout: 100_000,
+  });
+  const { draft } = await asJson<{ draft: ContentDraft }>(res);
+  return draft;
+}
+
+/** Stage 3: draft → verified | rejected. Similar timeout profile to generate. */
 export async function verifyDraft(
   id: string,
 ): Promise<{ draft: ContentDraft; verification: VerificationResult }> {
-  const res = await adminFetch(`${BASE}/${id}/verify`, { method: 'POST' });
+  const res = await adminFetch(`${BASE}/${id}/verify`, {
+    method:  'POST',
+    timeout: 100_000,
+  });
   return asJson<{ draft: ContentDraft; verification: VerificationResult }>(res);
 }
 
@@ -111,7 +129,17 @@ export async function patchDraft(
   return draft;
 }
 
+/** Soft-delete — flips status to 'archived'. Reversible. */
 export async function archiveDraft(id: string): Promise<void> {
   const res = await adminFetch(`${BASE}/${id}`, { method: 'DELETE' });
+  await asJson<{ ok: boolean }>(res);
+}
+
+/**
+ * Permanent row removal. Refused by the server if status is `generating`
+ * or `verifying`. Use `archiveDraft` unless you really want the row gone.
+ */
+export async function deleteDraft(id: string): Promise<void> {
+  const res = await adminFetch(`${BASE}/${id}?hard=true`, { method: 'DELETE' });
   await asJson<{ ok: boolean }>(res);
 }

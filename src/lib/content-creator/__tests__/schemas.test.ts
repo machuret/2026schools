@@ -92,4 +92,12 @@ describe('status transition graph', () => {
     expect(ALLOWED_TRANSITIONS.archived).toEqual([]);
     expect(canTransition('archived', 'draft')).toBe(false);
   });
+
+  it('allows unapprove (approved_idea → idea)', () => {
+    expect(canTransition('approved_idea', 'idea')).toBe(true);
+  });
+
+  it('blocks unapprove once content is generated (draft → idea)', () => {
+    expect(canTransition('draft', 'idea')).toBe(false);
+  });
 });

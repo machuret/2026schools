@@ -143,8 +143,10 @@ export async function adminFetch(
         throw error;
       }
 
-      // If this was the last attempt, throw the error
-      if (attempt === retries) {
+      // If this was the last effective attempt, throw the error. We use
+      // `effectiveRetries` (not `retries`) so the message honours the fact
+      // that non-idempotent methods are never retried.
+      if (attempt === effectiveRetries) {
         break;
       }
 
@@ -155,7 +157,7 @@ export async function adminFetch(
 
   // All retries failed
   throw new AdminFetchError(
-    `Request to ${url} failed after ${retries + 1} attempts: ${lastError?.message}`,
+    `Request to ${url} failed after ${effectiveRetries + 1} attempt${effectiveRetries === 0 ? '' : 's'}: ${lastError?.message}`,
     500,
     url,
     lastError

@@ -103,13 +103,57 @@ export const PATCH = requireAdmin(async (req: NextRequest, ctx?: Ctx) => {
   return NextResponse.json({ draft: data });
 });
 
-export const DELETE = requireAdmin(async (_req: NextRequest, ctx?: Ctx) => {
-  const { id } = await ctx!.params;
-  const sb = adminClient();
+/**
+ * DELETE /api/admin/content-creator/[id]?hard=true
+ *
+ * Two modes:
+ *   - default  → soft archive (status = 'archived'). Reversible.
+ *   - ?hard=true → permanent row removal. Refused while the edge fn is in
+ *     flight (`generating` / `verifying`) so we don't orphan a running
+ *     AI chain that then tries to update a ghost row.
+ *
+ * Both modes also null out the `used_in_draft_id` reference on the source
+ * topic (if any) so a topic that had this as its only draft can be reused.
+ */
+export const DELETE = requireAdmin(async (req: NextRequest, ctx?: Ctx) => {
+  const { id }       = await ctx!.params;
+  const { searchParams } = new URL(req.url);
+  const hard         = searchParams.get('hard') === 'true';
+  const sb           = adminClient();
+
+  if (hard) {
+    // Guard: refuse hard-delete while AI is mid-flight — we can't undo
+    // a Supabase function call once it's billing.
+    const { data: current, error: loadErr } = await sb
+      .from('content_drafts')
+      .select('id, status')
+      .eq('id', id)
+      .single();
+    if (loadErr) return NextResponse.json({ error: loadErr.message }, { status: 404 });
+    if (current.status === 'generating' || current.status === 'verifying') {
+      return NextResponse.json(
+        { error: `Cannot delete while status = ${current.status}. Wait for the current stage to finish, then try again.` },
+        { status: 409 },
+      );
+    }
+
+    // Clear any source-topic pointer before removing the row, so the
+    // topic can be reused for another brief.
+    await sb
+      .from('content_topics')
+      .update({ used_in_draft_id: null, status: 'approved' })
+      .eq('used_in_draft_id', id);
+
+    const { error } = await sb.from('content_drafts').delete().eq('id', id);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true, hard: true });
+  }
+
+  // Soft delete = archive. Reversible via a manual status flip in SQL.
   const { error } = await sb
     .from('content_drafts')
     .update({ status: 'archived' })
     .eq('id', id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, hard: false });
 });

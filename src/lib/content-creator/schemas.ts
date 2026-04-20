@@ -84,7 +84,7 @@ export const ContentDraftPatchSchema = z.object({
  */
 export const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   idea:          ['approved_idea', 'archived'],
-  approved_idea: ['generating', 'archived'],
+  approved_idea: ['generating', 'idea', 'archived'],  // 'idea' = unapprove
   generating:    ['draft', 'rejected'],
   draft:         ['verifying', 'archived'],
   verifying:     ['verified', 'rejected'],

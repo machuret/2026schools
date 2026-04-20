@@ -19,7 +19,11 @@ function safeText(v: unknown, fallback = ''): string {
 export interface DraftRowProps {
   draft:          ContentDraft;
   onApprove:      (id: string) => void;
+  /** Send an approved_idea back to idea state. Only visible on that status. */
+  onUnapprove:    (id: string) => void;
   onArchive:      (id: string) => void;
+  /** Permanent removal. Only visible on terminal / early states. */
+  onDelete:       (id: string) => void;
   selectable:     boolean;
   selected:       boolean;
   onToggleSelect: () => void;
@@ -28,7 +32,7 @@ export interface DraftRowProps {
 }
 
 export function DraftRow({
-  draft, onApprove, onArchive,
+  draft, onApprove, onUnapprove, onArchive, onDelete,
   selectable, selected, onToggleSelect, disabled,
 }: DraftRowProps) {
   const body  = safeText(draft.body);
@@ -73,7 +77,8 @@ export function DraftRow({
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+      <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
+        {/* Stage-specific primary action ─────────────────────────────── */}
         {draft.status === 'idea' && (
           <button
             onClick={() => onApprove(draft.id)}
@@ -83,22 +88,50 @@ export function DraftRow({
             Approve
           </button>
         )}
+        {draft.status === 'approved_idea' && (
+          <button
+            onClick={() => onUnapprove(draft.id)}
+            className="swa-btn"
+            title="Send back to idea for more edits"
+            style={{ fontSize: 13, padding: '6px 12px' }}
+          >
+            Unapprove
+          </button>
+        )}
+
+        {/* Edit = the detail page. Disabled while AI is mid-flight. */}
         <Link
           href={`/admin/content-creator/${draft.id}`}
           className="swa-icon-btn"
-          title={isGenerating ? 'In progress…' : 'Open'}
-          style={isGenerating ? { opacity: 0.5 } : undefined}
+          title={isGenerating ? 'In progress…' : 'Edit'}
+          style={isGenerating ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
+          aria-disabled={isGenerating}
         >
-          <span className="material-symbols-outlined" style={{ fontSize: 18 }}>open_in_new</span>
+          <span className="material-symbols-outlined" style={{ fontSize: 18 }}>edit</span>
         </Link>
+
+        {/* Archive (soft) — hidden on already-archived rows. */}
         {draft.status !== 'archived' && (
           <button
             onClick={() => onArchive(draft.id)}
             className="swa-icon-btn"
-            title="Archive"
-            style={{ color: '#EF4444' }}
+            title="Archive (reversible)"
+            style={{ color: '#9CA3AF' }}
           >
             <span className="material-symbols-outlined" style={{ fontSize: 18 }}>archive</span>
+          </button>
+        )}
+
+        {/* Hard delete — offered on non-running rows. Confirmation is in
+            the parent onDelete handler so we don't double-prompt. */}
+        {!isGenerating && (
+          <button
+            onClick={() => onDelete(draft.id)}
+            className="swa-icon-btn"
+            title="Delete permanently"
+            style={{ color: '#EF4444' }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>delete</span>
           </button>
         )}
       </div>

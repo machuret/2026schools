@@ -30,7 +30,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   listDrafts,
   approveIdea,
+  unapproveIdea,
   archiveDraft,
+  deleteDraft,
   generateDraft,
 } from "@/lib/content-creator/client";
 import type { ContentDraft, ContentType } from "@/lib/content-creator/types";
@@ -165,9 +167,18 @@ export function StageList({ stageKey }: { stageKey: StageKey }) {
     try { await approveIdea(id); await refresh(); }
     catch (e) { setError(e instanceof Error ? e.message : String(e)); }
   }
+  async function onUnapprove(id: string) {
+    try { await unapproveIdea(id); await refresh(); }
+    catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+  }
   async function onArchive(id: string) {
     if (!confirm("Archive this draft? You can find it in the Archived stage.")) return;
     try { await archiveDraft(id); await refresh(); }
+    catch (e) { setError(e instanceof Error ? e.message : String(e)); }
+  }
+  async function onDelete(id: string) {
+    if (!confirm("Delete this draft permanently? This cannot be undone.")) return;
+    try { await deleteDraft(id); await refresh(); }
     catch (e) { setError(e instanceof Error ? e.message : String(e)); }
   }
 
@@ -221,7 +232,9 @@ export function StageList({ stageKey }: { stageKey: StageKey }) {
                 key={d.id}
                 draft={d}
                 onApprove={onApprove}
+                onUnapprove={onUnapprove}
                 onArchive={onArchive}
+                onDelete={onDelete}
                 selectable={selectableStatuses.includes(d.status)}
                 selected={selected.has(d.id)}
                 onToggleSelect={() => toggleSelect(d.id)}
