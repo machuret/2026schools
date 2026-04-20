@@ -44,7 +44,8 @@ const SECTIONS = [
   {
     label: 'AI',
     items: [
-      { label: 'The Vault',     href: '/admin/vault/sources',   ms: 'lock' },
+      { label: 'Vault library',  href: '/admin/vault/sources',   ms: 'lock' },
+      { label: 'Vault upload',   href: '/admin/vault/upload',    ms: 'upload' },
       { label: 'Content Creator', href: '/admin/content-creator', ms: 'edit_note' },
       { label: 'Prompts',       href: '/admin/prompts',         ms: 'smart_toy' },
       { label: 'SEO',           href: '/admin/seo',             ms: 'travel_explore' },

@@ -1,75 +1,166 @@
 /* ═══════════════════════════════════════════════════════════════════════════
  * Vault retrieval helpers for the Content Creator edge function.
  *
- * VAULT is the source of truth. Every AI call (ideas / generation / verify)
- * receives a bundle of vault_content rows pulled by this module. We use
- * keyword + category matching today; swap to pgvector embeddings later by
- * replacing the body of `fetchVaultContext` — the contract stays the same.
+ * Strategy — two-tier retrieval:
+ *
+ *   1. PRIMARY  — semantic search via pgvector:
+ *      build a query embedding from topic + keywords → match_vault_chunks()
+ *      RPC returns top-k most similar chunks by cosine similarity.
+ *
+ *   2. FALLBACK — keyword scoring over vault_content (the legacy paste-only
+ *      table). Triggered when:
+ *        • OpenAI embedding call fails, OR
+ *        • match_vault_chunks returns 0 results (empty new vault), OR
+ *        • OPENAI_API_KEY is missing.
+ *
+ *      Keeps the pipeline alive during the rollout window when vault_content
+ *      has data but vault_documents is still empty / mid-backfill.
+ *
+ * Return shape is stable (`VaultEntry[]`) — prompt builders don't care which
+ * path produced the data.
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Surface type — the subset of vault_content fields the AI prompts consume.
 export interface VaultEntry {
-  id: string;
-  title: string;
-  content: string;
-  source: string;       // denormalised URL or citation (vault_content.source)
-  category: string;
+  id:       string;      // chunk id (new path) or vault_content id (fallback)
+  title:    string;      // document title
+  content:  string;      // the actual text the prompt will read
+  source:   string;      // URL, filename, or citation
+  category: string;      // kept for compatibility; ignored in the new path
 }
 
-/**
- * Fetch vault entries relevant to a brief.
- *
- * Strategy (v1, keyword-based):
- *   1. If `vault_category` is provided, narrow by category.
- *   2. Score each row by keyword hits in title + content (case-insensitive).
- *   3. Return top N rows, sorted by score then recency.
- *
- * Hard cap `limit` so we never blow past the model's context window.
- */
+interface FetchOpts {
+  keywords?:       string[];
+  vault_category?: string;
+  topic?:          string;
+  limit?:          number;
+}
+
+const DEFAULT_LIMIT = 12;
+const EMBED_MODEL   = "text-embedding-3-small";
+// Minimum cosine similarity to keep a chunk — tuned empirically. Below 0.2
+// the matches tend to be garbage; 0.3–0.5 is the sweet spot for focused
+// topics. 0.22 is permissive enough for short briefs while still filtering
+// obvious noise.
+const MIN_SIMILARITY = 0.22;
+
 export async function fetchVaultContext(
   sbUrl: string,
   sbKey: string,
-  opts: {
-    keywords?: string[];
-    vault_category?: string;
-    topic?: string;
-    limit?: number;
-  },
+  opts: FetchOpts,
 ): Promise<VaultEntry[]> {
-  const limit = opts.limit ?? 25;
+  const limit = opts.limit ?? DEFAULT_LIMIT;
   const sb = createClient(sbUrl, sbKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
+  // ─── Primary: embedding-based similarity search ──────────────────────
+  const openaiKey = Deno.env.get("OPENAI_API_KEY");
+  if (openaiKey) {
+    try {
+      const query = buildQueryString(opts);
+      if (query.length > 0) {
+        const embedding = await embed(openaiKey, query);
+        const { data, error } = await sb.rpc("match_vault_chunks", {
+          query_embedding: embedding,
+          match_k:         limit,
+          min_similarity:  MIN_SIMILARITY,
+          category_filter: opts.vault_category ?? null,
+        });
+
+        if (!error && Array.isArray(data) && data.length > 0) {
+          return data.map(rowToEntry);
+        }
+        // error OR 0 rows → fall through to keyword fallback.
+      }
+    } catch (err) {
+      // Swallow and fall back. Log for observability; don't blow up generation.
+      console.error("[vault] semantic search failed, falling back:", err instanceof Error ? err.message : err);
+    }
+  }
+
+  // ─── Fallback: keyword scoring over vault_content ─────────────────────
+  return await keywordFallback(sb, opts, limit);
+}
+
+/* ─── Embedding helper ───────────────────────────────────────────────────── */
+
+async function embed(apiKey: string, text: string): Promise<number[]> {
+  const res = await fetch("https://api.openai.com/v1/embeddings", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type":  "application/json",
+    },
+    body: JSON.stringify({ model: EMBED_MODEL, input: text }),
+  });
+  if (!res.ok) {
+    throw new Error(`openai embeddings ${res.status}: ${await res.text().then((s) => s.slice(0, 200))}`);
+  }
+  const payload = await res.json() as { data: { embedding: number[] }[] };
+  if (!payload.data?.[0]?.embedding) throw new Error("openai returned no embedding");
+  return payload.data[0].embedding;
+}
+
+/** Combine topic + keywords into a single query string for embedding. */
+function buildQueryString(opts: FetchOpts): string {
+  const parts: string[] = [];
+  if (opts.topic)    parts.push(opts.topic);
+  if (opts.keywords?.length) parts.push(opts.keywords.join(", "));
+  return parts.join(". ").trim();
+}
+
+/* ─── RPC row → VaultEntry ───────────────────────────────────────────────── */
+
+interface MatchRow {
+  chunk_id:         string;
+  document_id:      string;
+  document_title:   string;
+  document_source:  string | null;
+  document_kind:    string;
+  content:          string;
+  similarity:       number;
+}
+
+function rowToEntry(row: MatchRow): VaultEntry {
+  return {
+    id:       row.chunk_id,
+    title:    row.document_title,
+    content:  row.content,
+    source:   row.document_source ?? row.document_kind,
+    // match_vault_chunks doesn't return category — it's already been filtered
+    // server-side if a category_filter was passed.
+    category: "general",
+  };
+}
+
+/* ─── Fallback: legacy keyword retriever ────────────────────────────────── */
+
+async function keywordFallback(
+  sb: ReturnType<typeof createClient>,
+  opts: FetchOpts,
+  limit: number,
+): Promise<VaultEntry[]> {
   let query = sb
     .from("vault_content")
     .select("id, title, content, source, category")
     .eq("is_approved", true);
 
-  if (opts.vault_category) {
-    query = query.eq("category", opts.vault_category);
-  }
+  if (opts.vault_category) query = query.eq("category", opts.vault_category);
 
-  // Pull a generous slice, then score client-side. Could switch to tsvector
-  // ranking once the vault grows past ~1000 rows.
   const { data, error } = await query.order("updated_at", { ascending: false }).limit(200);
-  if (error) throw new Error(`vault_content fetch failed: ${error.message}`);
+  if (error) throw new Error(`vault_content fallback failed: ${error.message}`);
   if (!data || data.length === 0) return [];
 
   const needles = buildNeedles(opts.keywords, opts.topic);
-  if (needles.length === 0) {
-    // No keywords to score — return most recent approved rows.
-    return data.slice(0, limit) as VaultEntry[];
-  }
+  if (needles.length === 0) return (data as VaultEntry[]).slice(0, limit);
 
   const scored = (data as VaultEntry[]).map((row) => {
     const hay = `${row.title}\n${row.content}`.toLowerCase();
     let score = 0;
     for (const n of needles) {
       if (hay.includes(n)) score += 1;
-      // Title hits weight more.
       if (row.title.toLowerCase().includes(n)) score += 2;
     }
     return { row, score };
@@ -82,35 +173,28 @@ export async function fetchVaultContext(
     .map((s) => s.row);
 }
 
-/** Normalise keyword + topic inputs into a dedup'd lowercase array. */
 function buildNeedles(keywords: string[] | undefined, topic: string | undefined): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   const push = (s: string) => {
     const v = s.trim().toLowerCase();
-    if (v.length >= 3 && !seen.has(v)) {
-      seen.add(v);
-      out.push(v);
-    }
+    if (v.length >= 3 && !seen.has(v)) { seen.add(v); out.push(v); }
   };
   (keywords ?? []).forEach(push);
   if (topic) {
-    // Split topic into individual words too.
     topic.split(/\s+/).forEach(push);
     push(topic);
   }
   return out;
 }
 
-/** Render vault entries as a compact block to paste into a system prompt. */
+/* ─── Prompt formatter (unchanged signature) ─────────────────────────────── */
+
 export function formatVaultContext(entries: VaultEntry[]): string {
   if (entries.length === 0) {
-    return "(no vault entries matched this brief — the model MUST decline to generate factual claims)";
+    return "(No vault entries matched the brief. Treat claims as provisional.)";
   }
   return entries
-    .map(
-      (e, i) =>
-        `[${i + 1}] id=${e.id} | category=${e.category}\nTITLE: ${e.title}\nCONTENT: ${e.content}\nSOURCE: ${e.source}`,
-    )
-    .join("\n---\n");
+    .map((e, i) => `[V${i + 1}] ${e.title}\nsource: ${e.source}\nid: ${e.id}\n${e.content}`)
+    .join("\n\n---\n\n");
 }
