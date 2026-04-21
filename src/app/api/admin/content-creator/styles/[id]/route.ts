@@ -15,69 +15,60 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminClient } from '@/lib/adminClient';
 import { requireAdmin } from '@/lib/auth';
 import { PatchStyleSchema } from '@/lib/content-creator/styles';
+import {
+  ok, err, pgError, parseJsonBody, validate, readParams,
+} from '@/lib/content-creator/api-helpers';
 
 export const runtime = 'nodejs';
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export const GET = requireAdmin(async (_req: NextRequest, ctx?: Ctx) => {
-  const { id } = await ctx!.params;
-  const sb = adminClient();
-  const { data, error } = await sb
+  const { id } = await readParams(ctx);
+
+  const { data, error } = await adminClient()
     .from('content_writing_styles')
     .select('*')
     .eq('id', id)
     .single();
 
-  if (error) {
-    const status = error.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: error.message }, { status });
-  }
-  return NextResponse.json({ style: data });
+  if (error) return pgError(error);
+  return ok({ style: data });
 });
 
 export const PATCH = requireAdmin(async (req: NextRequest, ctx?: Ctx) => {
-  const { id } = await ctx!.params;
+  const { id } = await readParams(ctx);
 
-  let body: unknown;
-  try { body = await req.json(); }
-  catch { return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 }); }
+  const body = await parseJsonBody(req);
+  if (body instanceof NextResponse) return body;
 
-  const parsed = PatchStyleSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Validation failed', issues: parsed.error.issues },
-      { status: 400 },
-    );
-  }
-  if (Object.keys(parsed.data).length === 0) {
-    return NextResponse.json({ error: 'No fields to update.' }, { status: 400 });
-  }
+  const input = validate(PatchStyleSchema, body);
+  if (input instanceof NextResponse) return input;
 
-  const sb = adminClient();
-  const { data, error } = await sb
+  // Empty body is a schema-level success (PatchStyleSchema is all-optional)
+  // but semantically an error: nothing to update. Reject so the UI can
+  // show a targeted "pick at least one field" message.
+  if (Object.keys(input).length === 0) return err('No fields to update.', 400);
+
+  const { data, error } = await adminClient()
     .from('content_writing_styles')
-    .update(parsed.data)
+    .update(input)
     .eq('id', id)
     .select()
     .single();
 
-  if (error) {
-    // Unique-violation on title → 409 so the UI can offer a clean message.
-    if (error.code === '23505') return NextResponse.json({ error: error.message }, { status: 409 });
-    const status = error.code === 'PGRST116' ? 404 : 500;
-    return NextResponse.json({ error: error.message }, { status });
-  }
-  return NextResponse.json({ style: data });
+  if (error) return pgError(error);
+  return ok({ style: data });
 });
 
 export const DELETE = requireAdmin(async (_req: NextRequest, ctx?: Ctx) => {
-  const { id } = await ctx!.params;
-  const sb = adminClient();
-  const { error } = await sb
+  const { id } = await readParams(ctx);
+
+  const { error } = await adminClient()
     .from('content_writing_styles')
     .delete()
     .eq('id', id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ ok: true });
+
+  if (error) return pgError(error);
+  return ok({ ok: true });
 });

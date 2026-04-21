@@ -3,579 +3,94 @@
 /* ═══════════════════════════════════════════════════════════════════════════
  * /admin/content-creator/[id]
  *
- * Single-draft detail page. Behaviour depends on status:
- *   • idea           → show brief, approve → generate full content
- *   • approved_idea  → "Generate content" button (stage 2)
- *   • generating     → live spinner + auto-poll
- *   • draft | rejected → editable title + body + Verify button
- *   • verifying      → live spinner + auto-poll
- *   • verified       → read-only + Copy/Download + "Unlock to edit"
- *   • archived       → read-only
+ * Single-draft detail page — now a thin orchestrator after the Apr 2026
+ * refactor. Behaviour is unchanged; the file-size regression was fixed by
+ * pushing state + actions into `_hooks/useDraftDetail` and splitting the
+ * UI into four colocated components:
  *
- * All heavy lifting is in the API route / edge fn; this file only wires
- * state transitions into the client helpers.
+ *   _components/DraftHeader.tsx        — breadcrumb + title + top actions
+ *   _components/DraftBodyEditor.tsx    — title input + textarea + action row
+ *   _components/DraftSpinner.tsx       — in-flight indicator
+ *   _components/VerificationPanel.tsx  — Claude verifier's verdict
+ *   _components/MetaPanel.tsx          — provenance + drift warnings + last error
+ *
+ * Status-derived flags (`isEditable`, `inFlight`) stay here because that's
+ * the single place where the raw draft is in scope and both child
+ * components need the same computed values.
  * ═══════════════════════════════════════════════════════════════════════════ */
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import {
-  getDraft,
-  patchDraft,
-  generateDraft,
-  verifyDraft,
-  archiveDraft,
-  deleteDraft,
-  approveIdea,
-  unapproveIdea,
-} from "@/lib/content-creator/client";
-import { PLATFORM_CONFIG } from "@/lib/content-creator/platforms";
-import type { ContentDraft, FlaggedClaim, SupportedClaim } from "@/lib/content-creator/types";
+import { useParams } from "next/navigation";
+import { useDraftDetail } from "./_hooks/useDraftDetail";
+import { DraftHeader }       from "./_components/DraftHeader";
+import { DraftBodyEditor }   from "./_components/DraftBodyEditor";
+import { VerificationPanel } from "./_components/VerificationPanel";
+import { MetaPanel }         from "./_components/MetaPanel";
 
 export default function DraftDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
+  const d = useDraftDetail(id);
 
-  const [draft, setDraft] = useState<ContentDraft | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState<null | 'generate' | 'verify' | 'save'>(null);
-  const [error, setError] = useState("");
+  if (d.loading) return <div style={{ padding: 40, color: '#9CA3AF' }}>Loading…</div>;
+  if (!d.draft)  return <div className="swa-alert swa-alert--error">Draft not found.</div>;
 
-  // Local editable copies so the textarea doesn't jank on every poll.
-  const [title, setTitle] = useState<string>("");
-  const [body,  setBody]  = useState<string>("");
-  const pollRef  = useRef<ReturnType<typeof setInterval> | null>(null);
-  // Cap the polling loop. Edge fn max runtime is ~60s; we allow 3×30s headroom
-  // before declaring the row stuck and showing a recovery CTA.
-  const pollCountRef = useRef(0);
-  const MAX_POLLS = 30;  // 30 × 3s = 90s
-  const [stuck, setStuck] = useState(false);
-
-  const refresh = useCallback(async () => {
-    try {
-      const d = await getDraft(id);
-      setDraft(d);
-      setTitle(d.title ?? "");
-      // Defensive: body is TEXT NOT NULL DEFAULT '' so this should always be
-      // a string, but guard anyway since the page previously crashed when
-      // a partial/stale row came through with body=null.
-      setBody(typeof d.body === 'string' ? d.body : "");
-      setError("");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
-
-  useEffect(() => { refresh(); }, [refresh]);
-
-  // Auto-poll while a stage is in flight — bounded by MAX_POLLS so a stuck
-  // edge function can't trap the UI in an infinite refresh loop.
-  useEffect(() => {
-    if (!draft) return;
-    const inFlight = draft.status === 'generating' || draft.status === 'verifying';
-
-    if (inFlight && !pollRef.current) {
-      pollCountRef.current = 0;
-      setStuck(false);
-      pollRef.current = setInterval(() => {
-        pollCountRef.current += 1;
-        if (pollCountRef.current > MAX_POLLS) {
-          // Stop polling and surface a recovery CTA. The edge fn already
-          // resets status on thrown errors, but network blackouts can still
-          // leave the row pending.
-          if (pollRef.current) {
-            clearInterval(pollRef.current);
-            pollRef.current = null;
-          }
-          setStuck(true);
-          return;
-        }
-        refresh();
-      }, 3000);
-    }
-
-    if (!inFlight && pollRef.current) {
-      clearInterval(pollRef.current);
-      pollRef.current = null;
-      pollCountRef.current = 0;
-    }
-
-    return () => {
-      if (pollRef.current && !inFlight) {
-        clearInterval(pollRef.current);
-        pollRef.current = null;
-      }
-    };
-  }, [draft, refresh]);
-
-  /* ─── Actions ─────────────────────────────────────────────────────────── */
-
-  async function doGenerate() {
-    if (!draft) return;
-    setBusy('generate'); setError("");
-    try {
-      // Also covers the "idea → approved_idea → generating" jump — the API
-      // layer returns 409 if you skip steps, so we approve first if needed.
-      if (draft.status === 'idea') {
-        await approveIdea(draft.id);
-      }
-      await generateDraft(draft.id);
-      await refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function doSave() {
-    if (!draft) return;
-    setBusy('save'); setError("");
-    try {
-      const patch: { title?: string | null; body?: string } = { body };
-      if (draft.content_type !== 'social') patch.title = title;
-      await patchDraft(draft.id, patch);
-      await refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function doVerify() {
-    if (!draft) return;
-    setBusy('verify'); setError("");
-    try {
-      // Save any unsaved edits first so the verifier sees what's on screen.
-      await patchDraft(draft.id, {
-        body,
-        title: draft.content_type === 'social' ? null : title,
-      });
-      await verifyDraft(draft.id);
-      await refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function doArchive() {
-    if (!draft) return;
-    if (!confirm("Archive this draft? You can find it later under Archived.")) return;
-    try {
-      await archiveDraft(draft.id);
-      router.push('/admin/content-creator');
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }
-
-  async function doDelete() {
-    if (!draft) return;
-    if (!confirm(
-      "Delete this draft permanently?\n\n" +
-      "This cannot be undone. If you just want to hide it, use Archive instead.",
-    )) return;
-    try {
-      await deleteDraft(draft.id);
-      router.push('/admin/content-creator');
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }
-
-  async function doUnapprove() {
-    if (!draft) return;
-    try {
-      const updated = await unapproveIdea(draft.id);
-      setDraft(updated);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }
-
-  async function copyBody() {
-    if (!draft) return;
-    const safeBody = typeof draft.body === 'string' ? draft.body : '';
-    const text = draft.content_type === 'social'
-      ? safeBody
-      : `# ${draft.title ?? ''}\n\n${safeBody}`;
-    await navigator.clipboard.writeText(text);
-    // minimal feedback — no toast library yet
-    setError("Copied to clipboard");
-    setTimeout(() => setError(""), 1500);
-  }
-
-  function downloadMd() {
-    if (!draft) return;
-    const safeBody = typeof draft.body === 'string' ? draft.body : '';
-    const text = draft.content_type === 'social'
-      ? safeBody
-      : `# ${draft.title ?? ''}\n\n${safeBody}`;
-    const blob = new Blob([text], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${draft.content_type}-${draft.id.slice(0, 8)}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  /* ─── Render ──────────────────────────────────────────────────────────── */
-
-  if (loading) return <div style={{ padding: 40, color: '#9CA3AF' }}>Loading…</div>;
-  if (!draft) return <div className="swa-alert swa-alert--error">Draft not found.</div>;
-
-  const safeBody = typeof draft.body === 'string' ? draft.body : '';
+  // Status-derived flags live here because both editor and header branch
+  // on them. Keeping them in one place guarantees both components agree.
   const isEditable =
-    draft.status === 'draft' || draft.status === 'rejected' ||
-    draft.status === 'approved_idea' || draft.status === 'idea' ||
-    draft.status === 'verified';  // verified edits demote it back to draft
-  const inFlight = busy !== null || draft.status === 'generating' || draft.status === 'verifying';
-  const charLimit = draft.content_type === 'social' && draft.platform
-    ? PLATFORM_CONFIG[draft.platform].maxChars
-    : undefined;
+    d.draft.status === 'draft' ||
+    d.draft.status === 'rejected' ||
+    d.draft.status === 'approved_idea' ||
+    d.draft.status === 'idea' ||
+    // verified edits demote the draft back to `draft` server-side.
+    d.draft.status === 'verified';
+
+  const inFlight =
+    d.busy !== null ||
+    d.draft.status === 'generating' ||
+    d.draft.status === 'verifying';
 
   return (
     <div>
-      {/* ── Header ────────────────────────────────────────────────────────── */}
-      <div className="swa-page-header">
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <Link href="/admin/content-creator" style={{ fontSize: 13, color: '#6B7280', textDecoration: 'none' }}>
-              ← Content Creator
-            </Link>
-            <span style={{ color: '#D1D5DB' }}>·</span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' }}>
-              {draft.content_type}{draft.platform ? ` / ${draft.platform}` : ''}
-            </span>
-          </div>
-          <h1 className="swa-page-title">
-            {draft.title ?? ((safeBody.slice(0, 60) + (safeBody.length > 60 ? '…' : '')) || '(untitled)')}
-          </h1>
-          <p className="swa-page-subtitle">
-            Status: <strong>{draft.status}</strong>
-            {draft.brief?.topic ? <> · Topic: {draft.brief.topic}</> : null}
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          {draft.status === 'approved_idea' && (
-            <button
-              onClick={doUnapprove}
-              className="swa-btn"
-              title="Send back to idea for more edits"
-            >
-              Unapprove
-            </button>
-          )}
-          <button
-            onClick={doArchive}
-            className="swa-btn"
-            title="Soft-delete — reversible"
-            style={{ color: '#6B7280' }}
-          >
-            Archive
-          </button>
-          <button
-            onClick={doDelete}
-            className="swa-btn"
-            title="Delete permanently — cannot be undone"
-            style={{ color: '#EF4444', borderColor: '#FECACA' }}
-            disabled={draft.status === 'generating' || draft.status === 'verifying'}
-          >
-            Delete
-          </button>
-        </div>
-      </div>
+      <DraftHeader
+        draft={d.draft}
+        onUnapprove={d.doUnapprove}
+        onArchive={d.doArchive}
+        onDelete={d.doDelete}
+      />
 
-      {error && (
+      {d.error && (
         <div
-          className={`swa-alert ${error === 'Copied to clipboard' ? 'swa-alert--success' : 'swa-alert--error'}`}
+          className={`swa-alert ${d.error === 'Copied to clipboard' ? 'swa-alert--success' : 'swa-alert--error'}`}
           style={{ marginBottom: 20 }}
         >
-          {error}
+          {d.error}
         </div>
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24 }}>
-        {/* ── Main editor ─────────────────────────────────────────────── */}
-        <div
-          style={{
-            background: '#fff',
-            border: '1px solid #E5E7EB',
-            borderRadius: 12,
-            padding: 24,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 14,
-          }}
-        >
-          {draft.content_type !== 'social' && (
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              disabled={!isEditable || inFlight}
-              placeholder="Title"
-              style={{
-                fontSize: 22,
-                fontWeight: 700,
-                padding: '10px 12px',
-                border: '1px solid #E5E7EB',
-                borderRadius: 8,
-                color: '#1E1040',
-              }}
-            />
-          )}
+        <DraftBodyEditor
+          draft={d.draft}
+          title={d.title}
+          body={d.body}
+          onTitleChange={d.setTitle}
+          onBodyChange={d.setBody}
+          isEditable={isEditable}
+          inFlight={inFlight}
+          busy={d.busy}
+          stuck={d.stuck}
+          stuckAfterSeconds={d.stuckAfterSeconds}
+          onGenerate={d.doGenerate}
+          onSave={d.doSave}
+          onVerify={d.doVerify}
+          onCopy={d.copyBody}
+          onDownload={d.downloadMd}
+          onRetryStuck={d.retryFromStuck}
+        />
 
-          <textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            disabled={!isEditable || inFlight}
-            rows={draft.content_type === 'social' ? 6 : 18}
-            placeholder={
-              draft.status === 'idea'
-                ? 'This is the idea summary. Approve + Generate to produce full content.'
-                : 'Write / edit the body here. Every claim must be backed by a Vault entry.'
-            }
-            style={{
-              padding: '12px 14px',
-              border: '1px solid #E5E7EB',
-              borderRadius: 8,
-              fontSize: 14,
-              fontFamily: 'inherit',
-              lineHeight: 1.6,
-              resize: 'vertical',
-              minHeight: 180,
-            }}
-          />
-
-          {charLimit && (
-            <div style={{ fontSize: 12, color: body.length > charLimit ? '#B91C1C' : '#6B7280' }}>
-              {body.length} / {charLimit} chars
-            </div>
-          )}
-
-          {/* Action row */}
-          <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-            {(draft.status === 'idea' || draft.status === 'approved_idea') && (
-              <button onClick={doGenerate} disabled={inFlight} className="swa-btn swa-btn--primary">
-                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>auto_awesome</span>
-                {busy === 'generate' ? 'Generating…' : 'Generate content'}
-              </button>
-            )}
-
-            {(draft.status === 'draft' || draft.status === 'rejected') && (
-              <>
-                <button onClick={doSave} disabled={inFlight} className="swa-btn">
-                  {busy === 'save' ? 'Saving…' : 'Save'}
-                </button>
-                <button onClick={doVerify} disabled={inFlight} className="swa-btn swa-btn--primary">
-                  <span className="material-symbols-outlined" style={{ fontSize: 16 }}>fact_check</span>
-                  {busy === 'verify' ? 'Verifying…' : 'Verify against Vault'}
-                </button>
-              </>
-            )}
-
-            {draft.status === 'verified' && (
-              <>
-                <button onClick={copyBody} className="swa-btn swa-btn--primary">
-                  <span className="material-symbols-outlined" style={{ fontSize: 16 }}>content_copy</span>
-                  Copy
-                </button>
-                <button onClick={downloadMd} className="swa-btn">
-                  <span className="material-symbols-outlined" style={{ fontSize: 16 }}>download</span>
-                  Download .md
-                </button>
-                <button onClick={doSave} className="swa-btn">
-                  Edit (demotes to draft)
-                </button>
-              </>
-            )}
-
-            {draft.status === 'generating' && !stuck && <Spinner label="Writing draft…" />}
-            {draft.status === 'verifying'  && !stuck && <Spinner label="Checking claims against Vault…" />}
-
-            {stuck && (
-              <div style={{ width: '100%', padding: 12, background: '#FEF2F2', borderRadius: 8, color: '#991B1B', fontSize: 13 }}>
-                <strong>Still processing after {MAX_POLLS * 3}s.</strong> The AI call may have stalled.
-                <button
-                  onClick={() => { setStuck(false); refresh(); }}
-                  className="swa-btn"
-                  style={{ marginLeft: 8 }}
-                >
-                  Check again
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── Sidebar: verification + metadata ─────────────────────────── */}
         <aside style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <VerificationPanel draft={draft} />
-          <MetaPanel draft={draft} />
+          <VerificationPanel draft={d.draft} />
+          <MetaPanel         draft={d.draft} />
         </aside>
       </div>
-    </div>
-  );
-}
-
-/* ─── Subcomponents ─────────────────────────────────────────────────────── */
-
-function Spinner({ label }: { label: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#4338CA', fontSize: 14 }}>
-      <span className="material-symbols-outlined" style={{ fontSize: 18, animation: 'spin 1.2s linear infinite' }}>
-        progress_activity
-      </span>
-      {label}
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
-}
-
-function VerificationPanel({ draft }: { draft: ContentDraft }) {
-  const v = draft.verification ?? {};
-  const supported = (v.supported_claims ?? []) as SupportedClaim[];
-  const flagged   = (v.flagged_claims   ?? []) as FlaggedClaim[];
-
-  const hasRun = draft.status === 'verified' || draft.status === 'rejected' || !!v.status;
-
-  return (
-    <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: 16 }}>
-      <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1E1040', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
-        <span className="material-symbols-outlined" style={{ fontSize: 18 }}>fact_check</span>
-        Vault verification
-      </h3>
-
-      {!hasRun ? (
-        <p style={{ fontSize: 13, color: '#9CA3AF', margin: 0 }}>
-          Not yet verified. Run Verify once the draft is ready to cross-check every factual claim against the Vault.
-        </p>
-      ) : (
-        <>
-          <div style={{ marginBottom: 10 }}>
-            <StatusBadge status={v.status ?? 'unverified'} />
-            {v.confidence && (
-              <span style={{ marginLeft: 8, fontSize: 12, color: '#6B7280' }}>
-                confidence: {v.confidence}
-              </span>
-            )}
-          </div>
-          {v.notes && <p style={{ fontSize: 13, color: '#374151', marginBottom: 12 }}>{v.notes}</p>}
-
-          {supported.length > 0 && (
-            <Section title={`✓ Supported (${supported.length})`} color="#047857">
-              {supported.map((c, i) => (
-                <ClaimRow key={i} claim={c.claim} sub={c.source || c.vault_id} tone="good" />
-              ))}
-            </Section>
-          )}
-
-          {flagged.length > 0 && (
-            <Section title={`✗ Flagged (${flagged.length})`} color="#B91C1C">
-              {flagged.map((c, i) => (
-                <ClaimRow key={i} claim={c.claim} sub={c.reason + (c.suggested_fix ? ` — fix: ${c.suggested_fix}` : '')} tone="bad" />
-              ))}
-            </Section>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { bg: string; color: string }> = {
-    verified:            { bg: '#D1FAE5', color: '#047857' },
-    partially_verified:  { bg: '#FEF3C7', color: '#B45309' },
-    unverified:          { bg: '#FEE2E2', color: '#B91C1C' },
-  };
-  const m = map[status] ?? map.unverified;
-  return (
-    <span style={{ background: m.bg, color: m.color, fontSize: 11, fontWeight: 700, padding: '3px 8px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-      {status.replace('_', ' ')}
-    </span>
-  );
-}
-
-function Section({ title, color, children }: { title: string; color: string; children: React.ReactNode }) {
-  return (
-    <div style={{ marginBottom: 10 }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>{title}</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>{children}</div>
-    </div>
-  );
-}
-
-function ClaimRow({ claim, sub, tone }: { claim: string; sub: string; tone: 'good' | 'bad' }) {
-  return (
-    <div
-      style={{
-        fontSize: 12,
-        padding: '8px 10px',
-        background: tone === 'good' ? '#ECFDF5' : '#FEF2F2',
-        borderLeft: `3px solid ${tone === 'good' ? '#10B981' : '#EF4444'}`,
-        borderRadius: 4,
-      }}
-    >
-      <div style={{ color: '#1E1040', marginBottom: 2 }}>{claim}</div>
-      <div style={{ color: '#6B7280' }}>{sub}</div>
-    </div>
-  );
-}
-
-function MetaPanel({ draft }: { draft: ContentDraft }) {
-  const m = draft.ai_metadata ?? {};
-  // drift_warnings, last_error are stored as extras on ai_metadata by the edge
-  // fn — surface them here so admins can see why a run failed or drifted.
-  const metaUnknown = m as unknown as Record<string, unknown>;
-  const driftWarnings = Array.isArray(metaUnknown.drift_warnings)
-    ? (metaUnknown.drift_warnings as string[])
-    : [];
-  const lastError = typeof metaUnknown.last_error === 'string'
-    ? (metaUnknown.last_error as string)
-    : null;
-  const lastErrorStage = typeof metaUnknown.last_error_stage === 'string'
-    ? (metaUnknown.last_error_stage as string)
-    : null;
-
-  return (
-    <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 12, padding: 16, fontSize: 12, color: '#6B7280' }}>
-      <h3 style={{ fontSize: 14, fontWeight: 700, color: '#1E1040', marginBottom: 10 }}>Provenance</h3>
-      <dl style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 10px', margin: 0 }}>
-        <dt>OpenAI</dt>     <dd>{m.openai_model ?? '—'}</dd>
-        <dt>Anthropic</dt>  <dd>{m.anthropic_model ?? '—'}</dd>
-        <dt>Tokens</dt>     <dd>{m.tokens?.total ?? '—'}</dd>
-        <dt>Vault refs</dt> <dd>{(draft.vault_refs ?? []).length}</dd>
-        <dt>Created</dt>    <dd>{new Date(draft.created_at).toLocaleString()}</dd>
-        <dt>Updated</dt>    <dd>{new Date(draft.updated_at).toLocaleString()}</dd>
-      </dl>
-
-      {driftWarnings.length > 0 && (
-        <div style={{ marginTop: 12, padding: 8, background: '#FFFBEB', borderLeft: '3px solid #F59E0B', borderRadius: 4 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#B45309', marginBottom: 4, textTransform: 'uppercase' }}>
-            Drift warnings ({driftWarnings.length})
-          </div>
-          {driftWarnings.map((w, i) => (
-            <div key={i} style={{ fontSize: 12, color: '#78350F', marginTop: 2 }}>• {w}</div>
-          ))}
-        </div>
-      )}
-
-      {lastError && (
-        <div style={{ marginTop: 12, padding: 8, background: '#FEF2F2', borderLeft: '3px solid #EF4444', borderRadius: 4 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#B91C1C', marginBottom: 4, textTransform: 'uppercase' }}>
-            Last error{lastErrorStage ? ` (${lastErrorStage})` : ''}
-          </div>
-          <div style={{ fontSize: 12, color: '#991B1B' }}>{lastError}</div>
-        </div>
-      )}
     </div>
   );
 }

@@ -6,17 +6,18 @@
  * generate endpoint (which is rate-limited).
  * ═══════════════════════════════════════════════════════════════════════════ */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { adminClient } from '@/lib/adminClient';
 import { requireAdmin } from '@/lib/auth';
 import { canTransition } from '@/lib/content-creator/schemas';
+import { ok, err, pgError, readParams } from '@/lib/content-creator/api-helpers';
 
 export const runtime = 'nodejs';
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export const POST = requireAdmin(async (_req: NextRequest, ctx?: Ctx) => {
-  const { id } = await ctx!.params;
+  const { id } = await readParams(ctx);
   const sb = adminClient();
 
   const { data: current, error: loadErr } = await sb
@@ -24,13 +25,10 @@ export const POST = requireAdmin(async (_req: NextRequest, ctx?: Ctx) => {
     .select('id, status')
     .eq('id', id)
     .single();
-  if (loadErr) return NextResponse.json({ error: loadErr.message }, { status: 404 });
+  if (loadErr) return pgError(loadErr);
 
   if (!canTransition(current.status, 'approved_idea')) {
-    return NextResponse.json(
-      { error: `Cannot approve from status '${current.status}'.` },
-      { status: 409 },
-    );
+    return err(`Cannot approve from status '${current.status}'.`, 409);
   }
 
   const { data, error } = await sb
@@ -39,6 +37,6 @@ export const POST = requireAdmin(async (_req: NextRequest, ctx?: Ctx) => {
     .eq('id', id)
     .select()
     .single();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ draft: data });
+  if (error) return pgError(error);
+  return ok({ draft: data });
 });

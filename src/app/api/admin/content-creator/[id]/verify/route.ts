@@ -11,6 +11,7 @@ import { adminClient } from '@/lib/adminClient';
 import { requireAdmin } from '@/lib/auth';
 import { canTransition } from '@/lib/content-creator/schemas';
 import { callEdge, contentCreatorAILimiter } from '../../route';
+import { err, pgError, readParams } from '@/lib/content-creator/api-helpers';
 
 export const runtime = 'nodejs';
 export const maxDuration = 90;
@@ -21,7 +22,7 @@ export const POST = requireAdmin(async (req: NextRequest, ctx?: Ctx) => {
   const limited = contentCreatorAILimiter.check(req);
   if (limited) return limited;
 
-  const { id } = await ctx!.params;
+  const { id } = await readParams(ctx);
   const sb = adminClient();
 
   const { data: current, error: loadErr } = await sb
@@ -29,13 +30,10 @@ export const POST = requireAdmin(async (req: NextRequest, ctx?: Ctx) => {
     .select('id, status')
     .eq('id', id)
     .single();
-  if (loadErr) return NextResponse.json({ error: loadErr.message }, { status: 404 });
+  if (loadErr) return pgError(loadErr);
 
   if (!canTransition(current.status, 'verifying')) {
-    return NextResponse.json(
-      { error: `Cannot verify from status '${current.status}'.` },
-      { status: 409 },
-    );
+    return err(`Cannot verify from status '${current.status}'.`, 409);
   }
 
   const edgeRes = await callEdge('content-creator-verify', { draft_id: id });

@@ -12,6 +12,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminClient } from '@/lib/adminClient';
 import { requireAdmin, verifyAdminAuth } from '@/lib/auth';
 import { CreateStyleSchema } from '@/lib/content-creator/styles';
+import {
+  ok, pgError, parseJsonBody, validate,
+} from '@/lib/content-creator/api-helpers';
 
 export const runtime = 'nodejs';
 
@@ -19,57 +22,46 @@ export const GET = requireAdmin(async (req: NextRequest) => {
   const { searchParams } = new URL(req.url);
   const activeOnly = searchParams.get('active_only') === 'true';
 
-  const sb = adminClient();
-  let q = sb
+  let q = adminClient()
     .from('content_writing_styles')
     .select('*')
     .order('sort_order', { ascending: true })
-    .order('title', { ascending: true });
+    .order('title',      { ascending: true });
 
   if (activeOnly) q = q.eq('is_active', true);
 
   const { data, error } = await q;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ styles: data ?? [] });
+  if (error) return pgError(error);
+  return ok({ styles: data ?? [] });
 });
 
 export const POST = requireAdmin(async (req: NextRequest) => {
-  let body: unknown;
-  try { body = await req.json(); }
-  catch { return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 }); }
+  const body = await parseJsonBody(req);
+  if (body instanceof NextResponse) return body;
 
-  const parsed = CreateStyleSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Validation failed', issues: parsed.error.issues },
-      { status: 400 },
-    );
-  }
+  const input = validate(CreateStyleSchema, body);
+  if (input instanceof NextResponse) return input;
 
   // verifyAdminAuth was already called inside requireAdmin, but it doesn't
   // pass the user through — rerun to attribute created_by. Cheap (one
   // cached session lookup) so we don't bother refactoring the wrapper.
   const user = await verifyAdminAuth(req);
 
-  const sb = adminClient();
-  const { data, error } = await sb
+  const { data, error } = await adminClient()
     .from('content_writing_styles')
     .insert({
-      title:       parsed.data.title,
-      description: parsed.data.description ?? null,
-      prompt:      parsed.data.prompt,
-      is_active:   parsed.data.is_active ?? true,
-      sort_order:  parsed.data.sort_order ?? 0,
+      title:       input.title,
+      description: input.description ?? null,
+      prompt:      input.prompt,
+      is_active:   input.is_active ?? true,
+      sort_order:  input.sort_order ?? 0,
       created_by:  user?.id ?? null,
     })
     .select()
     .single();
 
-  if (error) {
-    // Unique-violation on title is the most likely failure; surface as 409.
-    const status = error.code === '23505' ? 409 : 500;
-    return NextResponse.json({ error: error.message }, { status });
-  }
-
-  return NextResponse.json({ style: data }, { status: 201 });
+  // pgError maps 23505 → 409 automatically, matching the previous
+  // manual unique-violation handling.
+  if (error) return pgError(error);
+  return ok({ style: data }, 201);
 });
