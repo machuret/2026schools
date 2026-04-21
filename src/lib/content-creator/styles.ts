@@ -57,7 +57,10 @@ const AppliesToValue = z.enum(['all', 'blog', 'newsletter', 'social']);
 // just ['all'] server-side so the DB doesn't carry ambiguous data like
 // ['all','blog']; enforced by the PG CHECK plus a transform here.
 const appliesToField = z.array(AppliesToValue).min(1).max(4)
-  .transform((arr) => (arr.includes('all') ? ['all'] as const : arr));
+  // Note: no `as const` on the wildcard branch — we want the inferred
+  // output to stay `('all'|'blog'|'newsletter'|'social')[]` so callers
+  // can include() with any variant without TS narrowing to `['all']`.
+  .transform<StyleAppliesTo[]>((arr) => (arr.includes('all') ? ['all'] : arr));
 
 // examples: up to 3 snippets, each ≤ 500 chars. Mirrors (slightly tighter
 // than) the 4 KB row-level cap so the user can't push a single snippet

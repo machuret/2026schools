@@ -39,6 +39,33 @@ export function StyleRow({ style, onEdit, onDelete, onToggleActive }: StyleRowPr
               Retired
             </span>
           )}
+          {/* Scope chip: only render when the style is actually scoped.
+              Universal styles ('all') stay clean so the row noise is low. */}
+          {style.applies_to && !style.applies_to.includes('all') && (
+            <span style={{
+              fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 3,
+              background: '#EDE9FE', color: '#4C1D95',
+              textTransform: 'uppercase', letterSpacing: 0.5,
+            }}>
+              {style.applies_to.join(' / ')}
+            </span>
+          )}
+          {/* Count of attached examples, so the admin sees at a glance
+              which rows have few-shot anchors wired up. */}
+          {style.examples && style.examples.length > 0 && (
+            <span
+              title={`${style.examples.length} style example${style.examples.length === 1 ? '' : 's'}`}
+              style={{
+                fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 3,
+                background: '#ECFDF5', color: '#065F46',
+                textTransform: 'uppercase', letterSpacing: 0.5,
+                display: 'inline-flex', alignItems: 'center', gap: 3,
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 11 }}>format_quote</span>
+              {style.examples.length}
+            </span>
+          )}
           <span style={{ fontSize: 11, color: '#9CA3AF' }}>#{style.sort_order}</span>
         </div>
 
