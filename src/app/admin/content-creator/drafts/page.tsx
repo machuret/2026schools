@@ -35,7 +35,7 @@ export default function DraftsPage() {
           <h1 className="swa-page-title">Drafts</h1>
           <p className="swa-page-subtitle">
             Articles waiting on you — edit the body, then Verify against the Vault.
-            Looking for something that's already verified?{' '}
+            Looking for something that&apos;s already verified?{' '}
             <Link href="/admin/content-creator/library">See all content →</Link>
           </p>
         </div>

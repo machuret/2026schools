@@ -23,10 +23,12 @@
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import type {
   ContentDraft, ContentType, SocialPlatform,
 } from "@/lib/content-creator/types";
 import { listStyles, type WritingStyle } from "@/lib/content-creator/styles";
+import { wordTarget } from "@/lib/content-creator/length";
 
 /** Payload returned to the parent on confirm. Any field left undefined means
  *  "keep whatever the draft already has" — the hook consumer dedupes by
@@ -83,20 +85,13 @@ export function GenerateOptionsModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contentType]);
 
-  /* ─── Derived: show a preview of the word range for long-form ────────── */
-
-  const lengthPreview = useMemo(() => {
-    if (contentType === 'social') return null;
-    // Kept in sync with src/lib/content-creator/length.ts · wordTarget.
-    // Hardcoded here rather than imported so the modal stays self-
-    // contained — if wordTarget changes we update the two places together.
-    const base = contentType === 'blog' ? [600, 900] : [300, 500];
-    const scale = lengthPreset === 'short' ? 0.6 : lengthPreset === 'long' ? 1.6 : 1;
-    return {
-      min: Math.round(base[0] * scale),
-      max: Math.round(base[1] * scale),
-    };
-  }, [contentType, lengthPreset]);
+  /* ─── Derived: word-range preview for long-form ──────────────────────── */
+  // Delegate to the shared wordTarget() so the modal, the prompt, and the
+  // length-gate all agree on numbers. wordTarget returns null for social.
+  const lengthPreview = useMemo(
+    () => wordTarget(contentType, lengthPreset),
+    [contentType, lengthPreset],
+  );
 
   /* ─── Type swap sanitisation ─────────────────────────────────────────── */
 
@@ -266,12 +261,13 @@ export function GenerateOptionsModal({
             </select>
             {styles.length === 0 && (
               <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 6 }}>
-                No styles scoped to {contentType}. <a
+                No styles scoped to {contentType}.{' '}
+                <Link
                   href="/admin/content-creator/styles"
                   style={{ color: '#5925F4' }}
                 >
                   Create one →
-                </a>
+                </Link>
               </div>
             )}
           </Field>
