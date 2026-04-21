@@ -50,9 +50,30 @@ export function MetaPanel({ draft }: { draft: ContentDraft }) {
         <dt>Anthropic</dt>  <dd>{m.anthropic_model ?? '—'}</dd>
         <dt>Tokens</dt>     <dd>{m.tokens?.total ?? '—'}</dd>
         <dt>Vault refs</dt> <dd>{(draft.vault_refs ?? []).length}</dd>
+        <dt>Style</dt>      <dd>{(metaUnknown.style_title as string | undefined) ?? '—'}</dd>
         <dt>Created</dt>    <dd>{new Date(draft.created_at).toLocaleString()}</dd>
         <dt>Updated</dt>    <dd>{new Date(draft.updated_at).toLocaleString()}</dd>
       </dl>
+
+      {/* Finalization stamp — appears after a human signs off on a
+          verified draft. Kept in the provenance card rather than the
+          verifier card because it's an audit signal about who, not what. */}
+      {draft.verification?.approved_at && (
+        <div style={{
+          marginTop: 12, padding: 8,
+          background: '#ECFDF5', borderLeft: '3px solid #10B981', borderRadius: 4,
+        }}>
+          <div style={{
+            fontSize: 11, fontWeight: 700, color: '#047857',
+            marginBottom: 2, textTransform: 'uppercase',
+          }}>
+            Finalized
+          </div>
+          <div style={{ fontSize: 12, color: '#065F46' }}>
+            {new Date(draft.verification.approved_at as unknown as string).toLocaleString()}
+          </div>
+        </div>
+      )}
 
       {driftWarnings.length > 0 && (
         <div style={{

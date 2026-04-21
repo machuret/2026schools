@@ -156,6 +156,22 @@ export interface GeneratePromptInput {
   vault_block: string;
   /** Optional writing-style directive, prepended to the system message. */
   style_prompt?: string;
+  /**
+   * Free-text feedback captured from the "Request improvement" flow.
+   * When present, the user prompt gains a FEEDBACK section and the model
+   * is told explicitly to address those notes.
+   */
+  regeneration_feedback?: string;
+  /**
+   * The draft produced by a previous run. Sent alongside `regeneration_feedback`
+   * so the model can see what it's rewriting, not just an abstract set of notes.
+   */
+  previous_draft?: { title: string | null; body: string };
+  /**
+   * For long-form only. When false, the model is instructed to return
+   * `title: null` and the body must not rely on a headline. Defaults to true.
+   */
+  include_title?: boolean;
 }
 
 export function buildGeneratePrompt(input: GeneratePromptInput): { system: string; user: string } {
@@ -164,6 +180,14 @@ export function buildGeneratePrompt(input: GeneratePromptInput): { system: strin
   const stylePrefix = input.style_prompt
     ? `WRITING STYLE\n${input.style_prompt.trim()}\n\n`
     : "";
+
+  // Title is null for social, OR for long-form with include_title === false.
+  const wantsTitle = input.content_type !== "social"
+    && input.include_title !== false;
+
+  const titleRule = wantsTitle
+    ? `title field REQUIRED.`
+    : `title field MUST be null. Open the body with the hook directly — no headline line.`;
 
   const system = `${stylePrefix}${MISSION}
 
@@ -180,15 +204,32 @@ CITATION FORMAT — IMPORTANT
   and will shrink to ~4 chars after post-processing, but the uuid still
   counts toward your output token budget. One or two citations is plenty.
 
+TITLE RULE
+- ${titleRule}
+
 TYPE RULES
 ${typeRules}
 
 Return STRICT JSON only:
 {
-  "title": ${input.content_type === "social" ? "null" : "\"headline string\""},
+  "title": ${wantsTitle ? "\"headline string\"" : "null"},
   "body": "the full content",
   "vault_ids_used": ["uuid", ...]
 }`.trim();
+
+  // Regeneration sections: include the previous draft (so the model has
+  // concrete material to rewrite) and the admin's feedback (the change
+  // they actually want). Both are optional — a fresh generate has neither.
+  const feedback = input.regeneration_feedback?.trim();
+  const prev     = input.previous_draft;
+
+  const regenBlock = feedback
+    ? `\n\nADMIN FEEDBACK (address these notes — this is a rewrite, not a fresh draft)\n${feedback}`
+    : "";
+
+  const prevBlock = prev
+    ? `\n\nPREVIOUS DRAFT (for reference — improve on this, don't regress)\n${prev.title ? `title: ${prev.title}\n` : ""}body:\n${prev.body}`
+    : "";
 
   const user = `APPROVED IDEA
 title:   ${input.idea.title}
@@ -197,7 +238,7 @@ summary: ${input.idea.summary}
 BRIEF
 topic:    ${input.brief.topic}
 tone:     ${input.brief.tone ?? "(default)"}
-audience: ${input.brief.audience ?? "(default)"}
+audience: ${input.brief.audience ?? "(default)"}${regenBlock}${prevBlock}
 
 VAULT (authoritative facts — your ONLY allowed source of statistics/claims)
 ${input.vault_block}

@@ -75,13 +75,27 @@ async function handleGenerate(body: Record<string, unknown>, ctx: Ctx) {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
+  // `regeneration: true` comes from the Request-improvement flow. When
+  // present, we accept a broader set of source statuses (draft, verified,
+  // rejected) — the Next.js route already enforced the transition rule,
+  // we just need to not reject those here. On failure below, we reset to
+  // the *original* status instead of 'approved_idea'.
+  const isRegeneration = body.regeneration === true;
+
   // 1. Load.
   const { data: draft, error: loadErr } = await sb
     .from("content_drafts").select("*").eq("id", draft_id).single();
   if (loadErr || !draft) throw new Error(`load draft failed: ${loadErr?.message ?? "not found"}`);
-  if (draft.status !== "approved_idea") {
-    throw new Error(`draft must be in status 'approved_idea' (got '${draft.status}')`);
+
+  const validFromStatuses = isRegeneration
+    ? ["approved_idea", "draft", "verified", "rejected"]
+    : ["approved_idea"];
+  if (!validFromStatuses.includes(draft.status)) {
+    throw new Error(
+      `draft must be in status ${validFromStatuses.map((s) => `'${s}'`).join(" or ")} (got '${draft.status}')`,
+    );
   }
+  const originalStatus = draft.status;
 
   // 2. Flip to 'generating' so the UI can show a spinner.
   await sb.from("content_drafts").update({ status: "generating" }).eq("id", draft_id);
@@ -120,7 +134,10 @@ async function handleGenerate(body: Record<string, unknown>, ctx: Ctx) {
       }).eq("id", draft_id);
     }
 
-    // OpenAI draft.
+    // OpenAI draft. If the admin asked for an improvement, inject their
+    // feedback + (when we have one) the previous draft body so the model
+    // knows exactly what to fix. The prompts module reads both fields
+    // out of `brief` / options and appends them to the user prompt.
     const gen = buildGeneratePrompt({
       content_type: draft.content_type,
       platform:     draft.platform ?? undefined,
@@ -128,6 +145,16 @@ async function handleGenerate(body: Record<string, unknown>, ctx: Ctx) {
       brief:        draft.brief,
       vault_block:  vaultBlock,
       style_prompt: style?.prompt,
+      regeneration_feedback: isRegeneration
+        ? (draft.brief?.regeneration_feedback as string | undefined)
+        : undefined,
+      previous_draft: isRegeneration && originalStatus !== "approved_idea"
+        ? { title: draft.title ?? null, body: draft.body ?? "" }
+        : undefined,
+      // A title toggle only makes sense for long-form. Social never has one.
+      include_title: draft.content_type === "social"
+        ? false
+        : (draft.brief?.include_title ?? true),
     });
 
     openaiRes = await callOpenAI({
@@ -169,9 +196,12 @@ async function handleGenerate(body: Record<string, unknown>, ctx: Ctx) {
       };
     }
   } catch (err) {
-    // Reset on failure so the admin can retry.
+    // Reset on failure so the admin can retry. For regenerations we roll
+    // back to whatever the row was before — the admin's content is
+    // preserved either way because the 'generating' flip doesn't clobber
+    // body/title until the final update at the end of this function.
     await sb.from("content_drafts").update({
-      status: "approved_idea",
+      status: originalStatus,
       ai_metadata: {
         ...(draft.ai_metadata ?? {}),
         last_error: err instanceof Error ? err.message : String(err),
@@ -188,7 +218,14 @@ async function handleGenerate(body: Record<string, unknown>, ctx: Ctx) {
   //    the final shape the reader will see.
   const cited = formatCitations(improved.body, vault, draft.content_type);
 
-  const newTitle = draft.content_type === "social" ? null : (improved.title ?? openaiDraft.title);
+  // Respect the include_title toggle on long-form. When false, force the
+  // title to null even if the model returned one.
+  const includeTitle = draft.content_type === "social"
+    ? false
+    : (draft.brief?.include_title ?? true);
+  const newTitle = !includeTitle
+    ? null
+    : (draft.content_type === "social" ? null : (improved.title ?? openaiDraft.title));
   const newBody  = cited.body;
 
   // Char-limit enforcement for social posts. We don't truncate (that would
@@ -222,12 +259,21 @@ async function handleGenerate(body: Record<string, unknown>, ctx: Ctx) {
     char_limit_exceeded:   platformLimit ? newBody.length > platformLimit : false,
   };
 
+  // Clear one-shot fields after a successful run: regeneration_feedback
+  // must not leak into the next generation, and a stale verification
+  // verdict on a regen would mislead the admin.
+  const nextBrief = isRegeneration
+    ? { ...(draft.brief ?? {}), regeneration_feedback: undefined }
+    : draft.brief;
+
   const { data: updated, error: upErr } = await sb
     .from("content_drafts")
     .update({
       status:     "draft",
       title:      newTitle,
       body:       newBody,
+      brief:      nextBrief,
+      verification: {},
       ai_metadata,
       vault_refs: dedupUuids([
         ...(draft.vault_refs ?? []),

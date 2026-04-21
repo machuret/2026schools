@@ -32,15 +32,28 @@ import {
   deleteDraft,
   approveIdea,
   unapproveIdea,
+  finalizeDraft,
+  regenerateDraft,
 } from "@/lib/content-creator/client";
-import type { ContentDraft } from "@/lib/content-creator/types";
+import type {
+  ContentDraft, ContentType, SocialPlatform,
+} from "@/lib/content-creator/types";
+
+/** Input shape for the BriefSettingsPanel. Every field optional — the
+ *  panel sends only what actually changed. */
+export interface BriefMetaPatch {
+  content_type?: ContentType;
+  platform?:     SocialPlatform | null;
+  include_title?: boolean;
+  style_id?:     string | null;
+}
 
 /** Max poll ticks before we declare the row stuck. 30 × 3s = 90s, which
  *  gives 3× headroom over the edge fn's ~60s max runtime. */
 const MAX_POLLS = 30;
 const POLL_INTERVAL_MS = 3000;
 
-export type DraftBusy = null | 'generate' | 'verify' | 'save';
+export type DraftBusy = null | 'generate' | 'verify' | 'save' | 'finalize' | 'regenerate' | 'meta';
 
 export interface UseDraftDetail {
   /** Loaded draft, or null while fetching / if not found. */
@@ -68,6 +81,15 @@ export interface UseDraftDetail {
   doArchive:    () => Promise<void>;
   doDelete:     () => Promise<void>;
   doUnapprove:  () => Promise<void>;
+  /** Human sign-off on a verified draft (status stays 'verified';
+   *  verification.approved_at gets stamped). */
+  doFinalize:   () => Promise<void>;
+  /** Request-improvement flow: saves feedback in brief and kicks off
+   *  a regeneration pass. Fires from draft / verified / rejected. */
+  doRegenerate: (feedback: string) => Promise<void>;
+  /** Patch the meta bar (content_type / platform / include_title / style_id).
+   *  Returns true on success so the UI can close its editor cleanly. */
+  patchMeta:    (patch: BriefMetaPatch) => Promise<boolean>;
   copyBody:     () => Promise<void>;
   downloadMd:   () => void;
   /** Dismiss the stuck banner and run another refresh. */
@@ -226,6 +248,91 @@ export function useDraftDetail(id: string): UseDraftDetail {
     }
   }, [draft, router]);
 
+  const doFinalize = useCallback(async () => {
+    if (!draft) return;
+    setBusy('finalize'); setError("");
+    try {
+      const updated = await finalizeDraft(draft.id);
+      setDraft(updated);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
+  }, [draft]);
+
+  const doRegenerate = useCallback(async (feedback: string) => {
+    if (!draft) return;
+    const clean = feedback.trim();
+    if (clean.length < 3) {
+      setError('Feedback must be at least 3 characters.');
+      return;
+    }
+    setBusy('regenerate'); setError("");
+    try {
+      // Save any pending on-screen edits first so the regenerator sees
+      // them as the "previous draft". Without this, a user who typed
+      // edits then asked for improvement would get the model rewriting
+      // the pre-edit version.
+      if (draft.status === 'draft' || draft.status === 'verified' || draft.status === 'rejected') {
+        await patchDraft(draft.id, {
+          body,
+          title: draft.content_type === 'social' ? null : title,
+        });
+      }
+      await regenerateDraft(draft.id, clean);
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
+  }, [draft, title, body, refresh]);
+
+  const patchMeta = useCallback(async (patch: BriefMetaPatch): Promise<boolean> => {
+    if (!draft) return false;
+    setBusy('meta'); setError("");
+    try {
+      // Split the flat panel shape into the server's PATCH shape.
+      // include_title + style_id live under brief_patch; content_type
+      // and platform are top-level (they affect the draft row directly).
+      const serverPatch: Parameters<typeof patchDraft>[1] = {};
+      if (patch.content_type) serverPatch.content_type = patch.content_type;
+      if ('platform' in patch) serverPatch.platform    = patch.platform;
+
+      const briefPatch: Record<string, unknown> = {};
+      if ('include_title' in patch && patch.include_title !== undefined) {
+        briefPatch.include_title = patch.include_title;
+      }
+      if ('style_id' in patch) {
+        // Empty string or null both mean "unset" — omit the brief key
+        // entirely so Zod's .uuid() doesn't reject it.
+        if (patch.style_id) briefPatch.style_id = patch.style_id;
+      }
+      if (Object.keys(briefPatch).length > 0) {
+        serverPatch.brief_patch = briefPatch;
+      }
+
+      // If switching OUT of social and the title is empty, carry the
+      // on-screen title through so the server's "long-form requires a
+      // title" rule doesn't 400 us.
+      if (patch.content_type && patch.content_type !== 'social'
+          && draft.content_type === 'social' && !draft.title) {
+        serverPatch.title = title || 'Untitled';
+      }
+
+      const updated = await patchDraft(draft.id, serverPatch);
+      setDraft(updated);
+      setTitle(updated.title ?? "");
+      return true;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      return false;
+    } finally {
+      setBusy(null);
+    }
+  }, [draft, title]);
+
   const doUnapprove = useCallback(async () => {
     if (!draft) return;
     try {
@@ -274,6 +381,7 @@ export function useDraftDetail(id: string): UseDraftDetail {
     title, setTitle, body, setBody,
     refresh,
     doGenerate, doSave, doVerify, doArchive, doDelete, doUnapprove,
+    doFinalize, doRegenerate, patchMeta,
     copyBody, downloadMd,
     retryFromStuck,
   };

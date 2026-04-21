@@ -43,6 +43,19 @@ export interface ContentBrief {
    * the system message so the AI adopts the chosen voice.
    */
   style_id?: string;
+  /**
+   * For long-form only (blog / newsletter). When explicitly false the
+   * generate stage is instructed to omit the title, and the PATCH route
+   * allows `title` to be null regardless of content_type. Undefined is
+   * treated as true so existing drafts keep their title behaviour.
+   */
+  include_title?: boolean;
+  /**
+   * Captured from the "Request improvement" feedback box on the draft
+   * detail page. The next generate pass reads this, injects it into the
+   * user prompt, and clears it on success.
+   */
+  regeneration_feedback?: string;
 }
 
 /**
@@ -105,6 +118,11 @@ export interface VerificationResult {
   supported_claims: SupportedClaim[];
   flagged_claims: FlaggedClaim[];
   checked_at: string;
+  /** Human sign-off (set by the /finalize endpoint). Row stays in
+   *  status='verified' — these two flags are what the UI treats as the
+   *  "ready to publish" signal. */
+  approved_at?: string;
+  approved_by?: string | null;
 }
 
 /**

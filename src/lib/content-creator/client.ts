@@ -116,14 +116,67 @@ export async function verifyDraft(
   return asJson<{ draft: ContentDraft; verification: VerificationResult }>(res);
 }
 
+/**
+ * PATCH a draft. Supports classic title/body edits plus the richer
+ * draft-retargeting fields added in Apr 2026:
+ *   - content_type / platform   (blog ↔ newsletter ↔ social)
+ *   - brief_patch               (style_id, include_title, regeneration_feedback,
+ *                                and any other brief field)
+ *
+ * The server shallow-merges brief_patch over the existing brief, so you
+ * only need to send what changed.
+ */
 export async function patchDraft(
   id: string,
-  patch: { title?: string | null; body?: string },
+  patch: {
+    title?:        string | null;
+    body?:         string;
+    content_type?: 'social' | 'blog' | 'newsletter';
+    platform?:     'twitter' | 'linkedin' | 'facebook' | 'instagram' | null;
+    brief_patch?:  Partial<{
+      style_id:              string;
+      include_title:         boolean;
+      regeneration_feedback: string;
+      topic:                 string;
+      tone:                  string;
+      audience:              string;
+      keywords:              string[];
+      vault_category:        string;
+    }>;
+  },
 ): Promise<ContentDraft> {
   const res = await adminFetch(`${BASE}/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(patch),
+  });
+  const { draft } = await asJson<{ draft: ContentDraft }>(res);
+  return draft;
+}
+
+/**
+ * Sign off on a verified draft. Runs after the AI verifier has passed
+ * (status must be 'verified'); flips `verification.approved_at` +
+ * `approved_by`. The row stays in status 'verified' — this is a flag
+ * rather than a new pipeline stage.
+ */
+export async function finalizeDraft(id: string): Promise<ContentDraft> {
+  const res = await adminFetch(`${BASE}/${id}/finalize`, { method: 'POST' });
+  const { draft } = await asJson<{ draft: ContentDraft }>(res);
+  return draft;
+}
+
+/**
+ * Kick off a fresh generation pass with feedback from the admin. Accepted
+ * when the draft is in draft / verified / rejected. Server merges the
+ * feedback into brief.regeneration_feedback, flips status to 'generating',
+ * and calls the generate edge fn with `regeneration: true`.
+ */
+export async function regenerateDraft(id: string, feedback: string): Promise<ContentDraft> {
+  const res = await adminFetch(`${BASE}/${id}/regenerate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ feedback }),
   });
   const { draft } = await asJson<{ draft: ContentDraft }>(res);
   return draft;

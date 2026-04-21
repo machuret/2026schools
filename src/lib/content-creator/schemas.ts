@@ -43,6 +43,14 @@ export const ContentBriefSchema = z.object({
   /** Optional writing-style (content_writing_styles.id). Prepended to the
    *  edge-fn system prompt. */
   style_id:        z.string().uuid().optional(),
+  /** For long-form only: admin toggle to generate / keep a title field.
+   *  Social posts never have a title regardless. Defaults to true when
+   *  missing, which matches pre-Apr-2026 behaviour. */
+  include_title:   z.boolean().optional(),
+  /** Free-text feedback captured from the "Request improvement" flow.
+   *  The generate edge fn appends this to the user prompt so the next
+   *  pass tries to address it. Cleared after a successful regen. */
+  regeneration_feedback: z.string().max(2000).optional(),
 });
 
 /* ─── Stage 1: generate ideas (POST /api/admin/content-creator) ──────────── */
@@ -72,11 +80,32 @@ export const GenerateIdeasSchema = z
     }
   });
 
-/* ─── PATCH draft (manual edits) ─────────────────────────────────────────── */
+/* ─── PATCH draft (manual edits) ─────────────────────────────────── */
 
+/**
+ * Patch shape sent from the draft detail page. title + body are the classic
+ * fields; the trailing group (content_type, platform, brief_patch) lets the
+ * admin retarget a draft mid-flight ("actually this should be a LinkedIn
+ * post, not a blog"). Changing content_type re-runs the title rule in the
+ * route handler and may wipe the existing title.
+ */
 export const ContentDraftPatchSchema = z.object({
   title: z.string().max(200).nullable().optional(),
   body:  z.string().max(50_000).optional(),
+
+  content_type: ContentTypeSchema.optional(),
+  /** When moving into `social` the admin must also supply a platform;
+   *  when moving out of `social` platform must be null. The route handler
+   *  enforces this — the schema is deliberately permissive here. */
+  platform:     SocialPlatformSchema.nullable().optional(),
+
+  /** Shallow-merge patch for the draft's brief. Most usefully:
+   *   - style_id             (change voice)
+   *   - include_title        (long-form only)
+   *   - regeneration_feedback (for the Request improvement flow)
+   *  The route handler merges this over the existing brief rather than
+   *  overwriting, so callers only need to send what changed. */
+  brief_patch:  ContentBriefSchema.partial().optional(),
 });
 
 /* ─── Status transition (explicit, to avoid invalid jumps) ────────────────── */
@@ -89,10 +118,12 @@ export const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   idea:          ['approved_idea', 'archived'],
   approved_idea: ['generating', 'idea', 'archived'],  // 'idea' = unapprove
   generating:    ['draft', 'rejected'],
-  draft:         ['verifying', 'archived'],
+  // `generating` here enables the Request-improvement / regenerate flow
+  // from either a fresh draft or a verified one.
+  draft:         ['verifying', 'generating', 'archived'],
   verifying:     ['verified', 'rejected'],
-  verified:      ['draft', 'archived'],    // "unlock" path back to editing
-  rejected:      ['draft', 'archived'],    // fix + retry
+  verified:      ['draft', 'generating', 'archived'],  // edit or regen
+  rejected:      ['draft', 'generating', 'archived'],  // fix or regen
   archived:      [],
 };
 

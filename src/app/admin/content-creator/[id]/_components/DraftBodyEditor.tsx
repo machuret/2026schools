@@ -1,26 +1,40 @@
 "use client";
 
 /* ═══════════════════════════════════════════════════════════════════════════
- * DraftBodyEditor — the big editing surface.
+ * DraftBodyEditor — the big editing surface + stage-specific action row.
  *
  * Renders, in order:
- *   1. Title input (long-form only — social posts have no title).
+ *   1. Title input (long-form only, and only when the brief's include_title
+ *      flag isn't explicitly false).
  *   2. Body textarea (row count adapts to content_type).
- *   3. Char counter with turn-red-over-limit behaviour.
- *   4. Stage-specific action row:
- *        idea / approved_idea → Generate
- *        draft / rejected     → Save + Verify
- *        verified             → Copy / Download / Edit (demotes)
- *        generating / verifying → <DraftSpinner />
- *        stuck                → <StuckBanner />
+ *   3. Char counter with turn-red-over-limit behaviour for social.
+ *   4. Stage-specific action row. The action row has grown beyond what
+ *      a single buttonbar comfortably fits, so we split it:
+ *        - Primary actions (Generate, Save, Verify, Finalize, Copy, …)
+ *        - "Request improvement" — a collapsible panel with a feedback
+ *          textarea. Opens inline so the admin doesn't lose scroll
+ *          position or the current draft contents.
  *
- * The `isEditable` flag is computed in the parent because it's status-
- * derived and we want the parent hook to own all status logic.
+ * Status → action mapping (covers the two-step verify/finalize flow):
+ *
+ *   idea / approved_idea    → Generate
+ *   draft / rejected        → Save · Verify · Request improvement
+ *   verified (unfinalized)  → Finalize · Copy · Download · Request improvement · Edit
+ *   verified (finalized)    → Copy · Download · Reopen for edits (demotes)
+ *   generating / verifying  → <DraftSpinner />
+ *   stuck                   → <StuckBanner />
+ *
+ * `isEditable` is computed in the parent because it's status-derived and
+ * we want the parent hook to own all status logic.
  * ═══════════════════════════════════════════════════════════════════════════ */
 
+import { useState } from "react";
 import type { ContentDraft } from "@/lib/content-creator/types";
 import { PLATFORM_CONFIG } from "@/lib/content-creator/platforms";
 import { DraftSpinner } from "./DraftSpinner";
+
+export type EditorBusy =
+  | null | 'generate' | 'verify' | 'save' | 'finalize' | 'regenerate' | 'meta';
 
 export interface DraftBodyEditorProps {
   draft:        ContentDraft;
@@ -30,13 +44,15 @@ export interface DraftBodyEditorProps {
   onBodyChange:  (b: string) => void;
   isEditable:   boolean;
   inFlight:     boolean;
-  busy:         null | 'generate' | 'verify' | 'save';
+  busy:         EditorBusy;
   stuck:        boolean;
   stuckAfterSeconds: number;
 
   onGenerate:   () => void;
   onSave:       () => void;
   onVerify:     () => void;
+  onFinalize:   () => void;
+  onRegenerate: (feedback: string) => void;
   onCopy:       () => void;
   onDownload:   () => void;
   onRetryStuck: () => void;
@@ -46,12 +62,34 @@ export function DraftBodyEditor(props: DraftBodyEditorProps) {
   const {
     draft, title, body, onTitleChange, onBodyChange,
     isEditable, inFlight, busy, stuck, stuckAfterSeconds,
-    onGenerate, onSave, onVerify, onCopy, onDownload, onRetryStuck,
+    onGenerate, onSave, onVerify, onFinalize, onRegenerate,
+    onCopy, onDownload, onRetryStuck,
   } = props;
+
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedback, setFeedback]         = useState("");
 
   const charLimit = draft.content_type === 'social' && draft.platform
     ? PLATFORM_CONFIG[draft.platform]?.maxChars
     : undefined;
+
+  // Title visibility mirrors the generate-stage logic so the editor shows
+  // exactly what will be produced: social never has one; long-form is
+  // governed by the brief's include_title flag (default true).
+  const showTitle =
+    draft.content_type !== 'social' &&
+    (draft.brief?.include_title ?? true);
+
+  const isFinalized = !!draft.verification?.approved_at;
+
+  async function submitFeedback() {
+    const text = feedback.trim();
+    if (text.length < 3) return;
+    setFeedbackOpen(false);
+    setFeedback("");
+    // Fire-and-forget; the hook handles errors.
+    onRegenerate(text);
+  }
 
   return (
     <div style={{
@@ -63,7 +101,7 @@ export function DraftBodyEditor(props: DraftBodyEditorProps) {
       flexDirection: 'column',
       gap: 14,
     }}>
-      {draft.content_type !== 'social' && (
+      {showTitle && (
         <input
           type="text"
           value={title}
@@ -109,7 +147,28 @@ export function DraftBodyEditor(props: DraftBodyEditorProps) {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+      {/* Finalized banner — locks the primary-action row into "copy / reopen". */}
+      {isFinalized && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: 10,
+          padding: '10px 14px',
+        }}>
+          <span className="material-symbols-outlined" style={{ fontSize: 20, color: '#047857' }}>
+            verified
+          </span>
+          <div style={{ fontSize: 13, color: '#065F46', lineHeight: 1.4 }}>
+            <strong>Finalized.</strong>{' '}
+            Ready to publish. Reopen to edit — that demotes the draft and
+            clears the finalization flag.
+          </div>
+        </div>
+      )}
+
+      {/* Primary action row. One wrapping row; buttons are small/medium so
+          they flow nicely on narrow widths without an overflow menu. */}
+      <div style={{ display: 'flex', gap: 10, marginTop: 4, flexWrap: 'wrap' }}>
+
         {(draft.status === 'idea' || draft.status === 'approved_idea') && (
           <button onClick={onGenerate} disabled={inFlight} className="swa-btn swa-btn--primary">
             <span className="material-symbols-outlined" style={{ fontSize: 16 }}>auto_awesome</span>
@@ -126,10 +185,51 @@ export function DraftBodyEditor(props: DraftBodyEditorProps) {
               <span className="material-symbols-outlined" style={{ fontSize: 16 }}>fact_check</span>
               {busy === 'verify' ? 'Verifying…' : 'Verify against Vault'}
             </button>
+            <button
+              onClick={() => setFeedbackOpen((v) => !v)}
+              disabled={inFlight}
+              className="swa-btn"
+              title="Ask the AI to rewrite this draft with your feedback"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+                {feedbackOpen ? 'expand_less' : 'refresh'}
+              </span>
+              Request improvement
+            </button>
           </>
         )}
 
-        {draft.status === 'verified' && (
+        {draft.status === 'verified' && !isFinalized && (
+          <>
+            <button onClick={onFinalize} disabled={inFlight} className="swa-btn swa-btn--primary">
+              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>task_alt</span>
+              {busy === 'finalize' ? 'Finalizing…' : 'Approve & finalize'}
+            </button>
+            <button onClick={onCopy} className="swa-btn">
+              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>content_copy</span>
+              Copy
+            </button>
+            <button onClick={onDownload} className="swa-btn">
+              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>download</span>
+              Download
+            </button>
+            <button
+              onClick={() => setFeedbackOpen((v) => !v)}
+              disabled={inFlight}
+              className="swa-btn"
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+                {feedbackOpen ? 'expand_less' : 'refresh'}
+              </span>
+              Request improvement
+            </button>
+            <button onClick={onSave} className="swa-btn" title="Edit demotes the draft back so it can be changed">
+              Edit (demotes to draft)
+            </button>
+          </>
+        )}
+
+        {draft.status === 'verified' && isFinalized && (
           <>
             <button onClick={onCopy} className="swa-btn swa-btn--primary">
               <span className="material-symbols-outlined" style={{ fontSize: 16 }}>content_copy</span>
@@ -140,12 +240,12 @@ export function DraftBodyEditor(props: DraftBodyEditorProps) {
               Download .md
             </button>
             <button onClick={onSave} className="swa-btn">
-              Edit (demotes to draft)
+              Reopen for edits
             </button>
           </>
         )}
 
-        {draft.status === 'generating' && !stuck && <DraftSpinner label="Writing draft…" />}
+        {draft.status === 'generating' && !stuck && <DraftSpinner label={busy === 'regenerate' ? 'Rewriting draft with your feedback…' : 'Writing draft…'} />}
         {draft.status === 'verifying'  && !stuck && <DraftSpinner label="Checking claims against Vault…" />}
 
         {stuck && (
@@ -164,6 +264,74 @@ export function DraftBodyEditor(props: DraftBodyEditorProps) {
           </div>
         )}
       </div>
+
+      {/* Request-improvement drawer. Appears inline under the action row. */}
+      {feedbackOpen && !inFlight && (
+        <div style={{
+          background: '#F9FAFB',
+          border: '1px solid #E5E7EB',
+          borderRadius: 10,
+          padding: 14,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 18, color: '#5925F4' }}>
+              psychology
+            </span>
+            <h3 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#1E1040', letterSpacing: 0.3 }}>
+              What should the AI fix?
+            </h3>
+          </div>
+          <p style={{ margin: 0, fontSize: 12, color: '#6B7280', lineHeight: 1.5 }}>
+            The model will read your current draft and rewrite it to address
+            these notes, staying grounded in the Vault. Be specific — "shorter
+            intro, punchier CTA, drop the loneliness stat" beats "make it better".
+          </p>
+          <textarea
+            value={feedback}
+            onChange={(e) => setFeedback(e.target.value)}
+            rows={4}
+            maxLength={2000}
+            placeholder="e.g. Tighten the opening; add one more data point from the Vault; drop the self-referential ending."
+            style={{
+              padding: '10px 12px', border: '1px solid #D1D5DB', borderRadius: 8,
+              fontSize: 13, fontFamily: 'inherit', lineHeight: 1.5, resize: 'vertical',
+              minHeight: 80, background: '#fff',
+            }}
+          />
+          <div style={{
+            display: 'flex', gap: 8, justifyContent: 'space-between', alignItems: 'center',
+          }}>
+            <span style={{ fontSize: 11, color: '#9CA3AF' }}>
+              {feedback.length}/2000 — min 3 characters
+            </span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                className="swa-btn"
+                onClick={() => { setFeedbackOpen(false); setFeedback(""); }}
+                style={{ fontSize: 12, padding: '6px 12px' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="swa-btn swa-btn--primary"
+                onClick={submitFeedback}
+                disabled={feedback.trim().length < 3}
+                style={{ fontSize: 12, padding: '6px 12px' }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+                  auto_awesome
+                </span>
+                Rewrite with feedback
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

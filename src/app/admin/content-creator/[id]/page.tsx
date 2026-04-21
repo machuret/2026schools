@@ -21,10 +21,11 @@
 
 import { useParams } from "next/navigation";
 import { useDraftDetail } from "./_hooks/useDraftDetail";
-import { DraftHeader }       from "./_components/DraftHeader";
-import { DraftBodyEditor }   from "./_components/DraftBodyEditor";
-import { VerificationPanel } from "./_components/VerificationPanel";
-import { MetaPanel }         from "./_components/MetaPanel";
+import { DraftHeader }         from "./_components/DraftHeader";
+import { DraftBodyEditor }     from "./_components/DraftBodyEditor";
+import { VerificationPanel }   from "./_components/VerificationPanel";
+import { MetaPanel }           from "./_components/MetaPanel";
+import { BriefSettingsPanel }  from "./_components/BriefSettingsPanel";
 
 export default function DraftDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -67,24 +68,36 @@ export default function DraftDetailPage() {
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24 }}>
-        <DraftBodyEditor
-          draft={d.draft}
-          title={d.title}
-          body={d.body}
-          onTitleChange={d.setTitle}
-          onBodyChange={d.setBody}
-          isEditable={isEditable}
-          inFlight={inFlight}
-          busy={d.busy}
-          stuck={d.stuck}
-          stuckAfterSeconds={d.stuckAfterSeconds}
-          onGenerate={d.doGenerate}
-          onSave={d.doSave}
-          onVerify={d.doVerify}
-          onCopy={d.copyBody}
-          onDownload={d.downloadMd}
-          onRetryStuck={d.retryFromStuck}
-        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Retarget controls live above the editor so the admin can change
+              "what am I writing?" before hitting Generate / Regenerate. */}
+          <BriefSettingsPanel
+            draft={d.draft}
+            disabled={inFlight}
+            onSave={d.patchMeta}
+          />
+
+          <DraftBodyEditor
+            draft={d.draft}
+            title={d.title}
+            body={d.body}
+            onTitleChange={d.setTitle}
+            onBodyChange={d.setBody}
+            isEditable={isEditable}
+            inFlight={inFlight}
+            busy={d.busy}
+            stuck={d.stuck}
+            stuckAfterSeconds={d.stuckAfterSeconds}
+            onGenerate={d.doGenerate}
+            onSave={d.doSave}
+            onVerify={d.doVerify}
+            onFinalize={d.doFinalize}
+            onRegenerate={d.doRegenerate}
+            onCopy={d.copyBody}
+            onDownload={d.downloadMd}
+            onRetryStuck={d.retryFromStuck}
+          />
+        </div>
 
         <aside style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <VerificationPanel draft={d.draft} />
