@@ -171,6 +171,15 @@ Task: write the ${input.content_type} post described by the approved idea below.
 Follow the TYPE RULES exactly. Every factual claim MUST cite a vault id
 inline like [vault:<uuid>]. You may omit citations only on opinion / CTA lines.
 
+CITATION FORMAT — IMPORTANT
+- Use EXACTLY the form [vault:<uuid>] with the raw uuid from the vault block.
+- Do NOT pre-number citations, do NOT invent URLs, do NOT write "(Source N)".
+- A post-processor replaces [vault:<uuid>] with [Source N] for long-form and
+  [N] for social, and appends a Sources list at the end of long-form pieces.
+- For SOCIAL posts, cite sparingly — each [vault:<uuid>] marker is ~45 chars
+  and will shrink to ~4 chars after post-processing, but the uuid still
+  counts toward your output token budget. One or two citations is plenty.
+
 TYPE RULES
 ${typeRules}
 

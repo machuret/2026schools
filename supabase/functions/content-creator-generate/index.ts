@@ -30,10 +30,22 @@ import {
 import { callOpenAI } from "../_shared/content-creator/openai.ts";
 import { callAnthropic } from "../_shared/content-creator/anthropic.ts";
 import { resolveStylePrompt } from "../_shared/content-creator/styles.ts";
+import { formatCitations } from "../_shared/content-creator/citations.ts";
 import {
   corsHeaders, json, readCtx, requireAuth,
   safeParseJson, dedupUuids, type Ctx,
 } from "../_shared/content-creator/common.ts";
+
+/* Hard character budgets per social platform — mirrors the values in
+ * prompts.ts' PLATFORM table. Duplicated here rather than exported because
+ * keeping the table local to prompts.ts keeps the prompt concerns isolated,
+ * and this is a five-line map that almost never changes. */
+const SOCIAL_MAX_CHARS: Record<string, number> = {
+  twitter:   280,
+  linkedin:  3000,
+  facebook:  2000,
+  instagram: 2200,
+};
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -170,9 +182,25 @@ async function handleGenerate(body: Record<string, unknown>, ctx: Ctx) {
     throw err;
   }
 
-  // 6. Persist.
+  // 6. Post-process: replace [vault:<uuid>] markers with reader-friendly
+  //    [Source N] refs + append a Sources block for long-form. This runs
+  //    once, right before persisting, so the verifier stage always sees
+  //    the final shape the reader will see.
+  const cited = formatCitations(improved.body, vault, draft.content_type);
+
   const newTitle = draft.content_type === "social" ? null : (improved.title ?? openaiDraft.title);
-  const newBody  = improved.body;
+  const newBody  = cited.body;
+
+  // Char-limit enforcement for social posts. We don't truncate (that would
+  // silently mangle the content); we surface a drift warning so the admin
+  // sees it on the detail page and can edit down before publishing.
+  const drift = [...(improved.drift_warnings ?? [])];
+  const platformLimit = SOCIAL_MAX_CHARS[draft.platform ?? ""];
+  if (platformLimit && newBody.length > platformLimit) {
+    drift.push(
+      `Body is ${newBody.length} chars — over the ${draft.platform} limit of ${platformLimit}. Trim before publishing.`,
+    );
+  }
 
   const ai_metadata = {
     ...(draft.ai_metadata ?? {}),
@@ -183,8 +211,15 @@ async function handleGenerate(body: Record<string, unknown>, ctx: Ctx) {
       completion: (openaiRes.tokens.completion + anthroRes.tokens.completion),
       total:      (openaiRes.tokens.total      + anthroRes.tokens.total),
     },
-    drift_warnings: improved.drift_warnings ?? [],
-    generated_at:   new Date().toISOString(),
+    drift_warnings:        drift,
+    generated_at:          new Date().toISOString(),
+    // Record citation shape so the detail UI can render Sources links and
+    // the verifier can map [Source N] back to vault ids if needed.
+    citation_style:        cited.citation_style,
+    ordered_vault_ids:     cited.ordered_vault_ids,
+    char_count:            newBody.length,
+    char_limit:            platformLimit ?? null,
+    char_limit_exceeded:   platformLimit ? newBody.length > platformLimit : false,
   };
 
   const { data: updated, error: upErr } = await sb
