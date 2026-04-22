@@ -14,7 +14,7 @@ import { callEdge, contentCreatorAILimiter } from '../../route';
 import { err, pgError, readParams } from '@/lib/content-creator/api-helpers';
 
 export const runtime = 'nodejs';
-export const maxDuration = 90;
+export const maxDuration = 300;
 
 type Ctx = { params: Promise<{ id: string }> };
 

@@ -21,10 +21,13 @@ export const contentCreatorAILimiter = createLimiter('content-creator-ai', {
   windowSeconds: 60 * 60,
 });
 
-// Hard ceiling for edge-fn round trips. Edge fn itself caps at ~60s; we add
-// ~25s headroom before giving up so the client sees a clean 504 rather than
-// a hung request.
-const EDGE_FN_TIMEOUT_MS = 85_000;
+// Hard ceiling for edge-fn round trips. Supabase edge fns themselves cap
+// at 150s; the Next route has maxDuration=300 on the AI paths; we give
+// the outgoing fetch 270s so there's still a ~25s budget for the Next
+// handler to finish serializing and return before Vercel guillotines
+// the request. GEO + long-form drafts observed p95 ≈ 90-150s on the
+// full OpenAI (+ length retry) → Anthropic chain.
+const EDGE_FN_TIMEOUT_MS = 270_000;
 
 /* ─── GET — list ─────────────────────────────────────────────────────────── */
 

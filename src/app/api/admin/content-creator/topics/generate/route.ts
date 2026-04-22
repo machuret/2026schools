@@ -12,7 +12,7 @@ import { GenerateTopicsSchema } from '@/lib/content-creator/topics';
 import { callEdge, contentCreatorAILimiter } from '../../route';
 
 export const runtime = 'nodejs';
-export const maxDuration = 90;
+export const maxDuration = 300;
 
 export const POST = requireAdmin(async (req: NextRequest) => {
   const limited = contentCreatorAILimiter.check(req);

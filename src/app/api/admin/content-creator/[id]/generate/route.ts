@@ -16,7 +16,7 @@ import { err, pgError, readParams } from '@/lib/content-creator/api-helpers';
 export const runtime = 'nodejs';
 // Generation can take >30s on the edge fn round-trip. Opt into the longer
 // Vercel serverless timeout for this specific route.
-export const maxDuration = 90;
+export const maxDuration = 300;
 
 type Ctx = { params: Promise<{ id: string }> };
 

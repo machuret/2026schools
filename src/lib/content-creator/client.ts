@@ -20,14 +20,14 @@ const BASE = '/api/admin/content-creator';
 
 /**
  * Browser-side timeout for endpoints that proxy to the long-running AI
- * chain (generate, regenerate, verify). The edge fn cap is 85s and the
- * Next.js route uses maxDuration=90, so we give the client 100s before
- * giving up. Named so every AI-facing wrapper uses the same number —
- * picking a smaller value aborts a request that is still doing real
- * work, and picking a larger one just waits longer after the server
- * has already hung up.
+ * chain (generate, regenerate, verify). The Next.js route uses
+ * maxDuration=300 (Vercel Pro), so we give the client 240s before
+ * giving up — enough for OpenAI draft + length retry + Anthropic
+ * improve on long-form/GEO (observed p95 ≈ 90-150s) with headroom,
+ * while still short enough that a hung edge fn doesn't leave the
+ * spinner spinning forever.
  */
-export const AI_ROUND_TRIP_TIMEOUT_MS = 100_000;
+export const AI_ROUND_TRIP_TIMEOUT_MS = 240_000;
 
 async function asJson<T>(res: Response): Promise<T> {
   if (!res.ok) {
