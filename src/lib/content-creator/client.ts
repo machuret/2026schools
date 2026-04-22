@@ -199,6 +199,31 @@ export async function regenerateDraft(id: string, feedback: string): Promise<Con
   return draft;
 }
 
+/**
+ * Publish a finalized blog draft to the CMS-side `blog_posts` table.
+ *
+ * Server enforces:
+ *   - content_type === 'blog'
+ *   - status === 'verified' AND verification.approved_at set (finalized)
+ *
+ * Idempotent: if this draft has been published before, the linked
+ * blog_posts row is UPDATED rather than a duplicate inserted. The server
+ * returns `created: false` in that case — callers can use that to
+ * render "Updated on /admin/blog" vs "Published to /admin/blog".
+ *
+ * The blog row is created with `published: false` (draft state). Admin
+ * flips it live from /admin/blog after a final visual review.
+ */
+export interface PublishToBlogResult {
+  post:    { id: string; slug: string; title: string; published: boolean };
+  created: boolean;
+}
+
+export async function publishDraftToBlog(id: string): Promise<PublishToBlogResult> {
+  const res = await adminFetch(`${BASE}/${id}/publish-to-blog`, { method: 'POST' });
+  return asJson<PublishToBlogResult>(res);
+}
+
 /** Soft-delete — flips status to 'archived'. Reversible. */
 export async function archiveDraft(id: string): Promise<void> {
   const res = await adminFetch(`${BASE}/${id}`, { method: 'DELETE' });

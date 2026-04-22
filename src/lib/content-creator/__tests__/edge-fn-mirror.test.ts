@@ -39,7 +39,7 @@ const FUNCTIONS_TO_CHECK: Array<{
   edgeFile: string;
   fns:      string[];
 }> = [
-  { srcFile: 'length.ts',  edgeFile: 'length.ts',  fns: ['wordTarget', 'countWords', 'isOutsideTarget', 'buildLengthRetryDirective'] },
+  { srcFile: 'length.ts',  edgeFile: 'length.ts',  fns: ['wordTarget', 'countWords', 'stripHashHeadings', 'isOutsideTarget', 'buildLengthRetryDirective'] },
   { srcFile: 'density.ts', edgeFile: 'density.ts', fns: ['densityTarget', 'evaluateDensity', 'densityPromptRule'] },
   { srcFile: 'styles.ts',  edgeFile: 'styles.ts',  fns: ['buildStyleExamplesBlock'] },
   { srcFile: 'logger.ts',  edgeFile: 'common.ts',  fns: ['newRequestId', 'createLogger'] },

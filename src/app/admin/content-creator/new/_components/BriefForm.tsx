@@ -18,6 +18,9 @@ import {
 } from "@/lib/content-creator/platforms";
 import type { ContentType, SocialPlatform } from "@/lib/content-creator/types";
 import type { WritingStyle } from "@/lib/content-creator/styles";
+import {
+  TONE_PRESETS, AUDIENCE_PRESETS, CUSTOM, isPreset,
+} from "@/lib/content-creator/brief-presets";
 import { Field, inputStyle } from "./form-primitives";
 
 export interface BriefFormValues {
@@ -97,22 +100,25 @@ export function BriefForm({ value, onChange, styles, submitting, onSubmit }: Bri
         />
       </Field>
 
-      {/* Tone + audience */}
+      {/* Tone + audience. Dropdowns back the common presets; "Custom…"
+          swaps in a free-text input so admin can still type anything.
+          The stored value stays a plain string either way so nothing
+          downstream (edge fn, PATCH route) has to care. */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <Field label="Tone (optional)">
-          <input
+          <PresetOrCustomInput
             value={value.tone}
-            onChange={(e) => onChange('tone', e.target.value)}
-            placeholder="evidence-based, warm, direct…"
-            style={inputStyle}
+            presets={TONE_PRESETS}
+            placeholder="Custom tone…"
+            onChange={(v) => onChange('tone', v)}
           />
         </Field>
         <Field label="Audience (optional)">
-          <input
+          <PresetOrCustomInput
             value={value.audience}
-            onChange={(e) => onChange('audience', e.target.value)}
-            placeholder="school principals, parents…"
-            style={inputStyle}
+            presets={AUDIENCE_PRESETS}
+            placeholder="Custom audience…"
+            onChange={(v) => onChange('audience', v)}
           />
         </Field>
       </div>
@@ -190,5 +196,57 @@ export function BriefForm({ value, onChange, styles, submitting, onSubmit }: Bri
         </button>
       </div>
     </form>
+  );
+}
+
+/* ─── Preset-or-custom input ─────────────────────────────────────────────
+ * Renders a `<select>` backed by the preset list plus "— (none) —" and
+ * "Custom…" sentinels. When the admin picks "Custom…", a paired text
+ * input appears beneath so they can type anything; the picker snaps to
+ * that custom state whenever the current value isn't in the preset list
+ * (so legacy / topic-prefilled values show up in the free-text input
+ * instead of silently collapsing to "none"). */
+interface PresetOrCustomInputProps {
+  value:       string;
+  presets:     readonly string[];
+  placeholder: string;
+  onChange:    (v: string) => void;
+}
+
+function PresetOrCustomInput({
+  value, presets, placeholder, onChange,
+}: PresetOrCustomInputProps) {
+  // Three possible select states: empty (→ ""), a preset (→ value),
+  // or CUSTOM (→ value exists but isn't in presets).
+  const isCustom = value.length > 0 && !isPreset(value, presets);
+  const selectVal = value.length === 0 ? '' : (isCustom ? CUSTOM : value);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <select
+        value={selectVal}
+        onChange={(e) => {
+          const v = e.target.value;
+          if (v === '')     onChange('');
+          else if (v === CUSTOM) onChange(isCustom ? value : ' ');
+          else              onChange(v);
+        }}
+        style={inputStyle}
+      >
+        <option value="">— none —</option>
+        {presets.map((p) => <option key={p} value={p}>{p}</option>)}
+        <option value={CUSTOM}>Custom…</option>
+      </select>
+      {isCustom && (
+        <input
+          value={value.trim() === '' ? '' : value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          maxLength={120}
+          autoFocus
+          style={inputStyle}
+        />
+      )}
+    </div>
   );
 }

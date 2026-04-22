@@ -33,8 +33,20 @@ import type { ContentDraft } from "@/lib/content-creator/types";
 import { PLATFORM_CONFIG } from "@/lib/content-creator/platforms";
 import { DraftSpinner } from "./DraftSpinner";
 
+/** Preset improvement prompts. Picking one appends its text to the
+ *  feedback textarea so the admin can stack multiple quick-fixes and
+ *  still add bespoke notes. Order matches the user's Apr-2026 spec. */
+const FEEDBACK_PRESETS: readonly { label: string; text: string }[] = [
+  { label: 'More in-depth',           text: 'Go more in-depth on each point — add a concrete example or data point from the Vault for every claim.' },
+  { label: 'Longer',                  text: 'Make this longer. Expand the analysis and add more supporting detail without introducing new claims.' },
+  { label: 'Research more',           text: 'Draw on more Vault sources. Include additional evidence and cross-reference multiple entries where possible.' },
+  { label: 'More professional',       text: 'Tighten the tone — more formal, remove colloquialisms and filler, keep the voice authoritative and evidence-led.' },
+  { label: 'Reduce sources',          text: 'Use fewer Vault sources. Consolidate to the two or three strongest citations and drop the rest.' },
+  { label: 'Without sources',         text: 'Rewrite without citing any sources. Preserve every factual claim as a plain statement — no [Source N] or [vault:…] markers.' },
+];
+
 export type EditorBusy =
-  | null | 'generate' | 'verify' | 'save' | 'finalize' | 'regenerate' | 'meta';
+  | null | 'generate' | 'verify' | 'save' | 'finalize' | 'regenerate' | 'meta' | 'publish';
 
 export interface DraftBodyEditorProps {
   draft:        ContentDraft;
@@ -55,6 +67,7 @@ export interface DraftBodyEditorProps {
   onRegenerate: (feedback: string) => void;
   onCopy:       () => void;
   onDownload:   () => void;
+  onPublishToBlog: () => void;
   onRetryStuck: () => void;
 }
 
@@ -63,7 +76,7 @@ export function DraftBodyEditor(props: DraftBodyEditorProps) {
     draft, title, body, onTitleChange, onBodyChange,
     isEditable, inFlight, busy, stuck, stuckAfterSeconds,
     onGenerate, onSave, onVerify, onFinalize, onRegenerate,
-    onCopy, onDownload, onRetryStuck,
+    onCopy, onDownload, onPublishToBlog, onRetryStuck,
   } = props;
 
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -239,6 +252,20 @@ export function DraftBodyEditor(props: DraftBodyEditorProps) {
               <span className="material-symbols-outlined" style={{ fontSize: 16 }}>download</span>
               Download .md
             </button>
+            {/* Blog-only: push this finalized draft to /admin/blog as an
+                unpublished draft. Rendered next to Download so it reads as
+                a natural sibling of the export actions. */}
+            {draft.content_type === 'blog' && (
+              <button
+                onClick={onPublishToBlog}
+                disabled={inFlight}
+                className="swa-btn"
+                title="Creates (or updates) a matching row in /admin/blog. You then toggle it live from there."
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>publish</span>
+                {busy === 'publish' ? 'Publishing…' : 'Publish to /admin/blog'}
+              </button>
+            )}
             <button onClick={onSave} className="swa-btn">
               Reopen for edits
             </button>
@@ -289,6 +316,43 @@ export function DraftBodyEditor(props: DraftBodyEditorProps) {
             these notes, staying grounded in the Vault. Be specific — &ldquo;shorter
             intro, punchier CTA, drop the loneliness stat&rdquo; beats &ldquo;make it better&rdquo;.
           </p>
+
+          {/* Preset picker — appends the chosen preset's text to the feedback
+              textarea so the admin can stack them. Resets the select back to
+              empty after each pick so a preset can be added twice if needed. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <label style={{ fontSize: 11, color: '#6B7280', fontWeight: 600 }}>
+              Quick preset:
+            </label>
+            <select
+              value=""
+              onChange={(e) => {
+                const preset = FEEDBACK_PRESETS.find((p) => p.label === e.target.value);
+                if (!preset) return;
+                setFeedback((prev) => {
+                  // Separate with a blank line when stacking onto existing
+                  // text, otherwise drop the preset in clean.
+                  const sep = prev.trim().length > 0 ? '\n\n' : '';
+                  return (prev + sep + preset.text).slice(0, 2000);
+                });
+              }}
+              style={{
+                padding: '6px 10px',
+                border: '1px solid #D1D5DB',
+                borderRadius: 6,
+                fontSize: 12,
+                background: '#fff',
+                color: '#1E1040',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="">Choose a preset…</option>
+              {FEEDBACK_PRESETS.map((p) => (
+                <option key={p.label} value={p.label}>{p.label}</option>
+              ))}
+            </select>
+          </div>
+
           <textarea
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}

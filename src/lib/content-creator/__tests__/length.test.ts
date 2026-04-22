@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   countWords, wordTarget, isOutsideTarget, buildLengthRetryDirective,
+  stripHashHeadings,
 } from '../length';
 
 describe('countWords', () => {
@@ -69,8 +70,11 @@ describe('wordTarget', () => {
   });
 
   it('returns the baseline blog range when preset is standard / omitted', () => {
-    expect(wordTarget('blog')).toEqual({ min: 600, max: 900, tolerance: 0.15 });
-    expect(wordTarget('blog', 'standard')).toEqual({ min: 600, max: 900, tolerance: 0.15 });
+    // Apr-2026: blog baseline re-centred on 1000 words. Standard preset
+    // gets a tighter ±10% tolerance so "standard blog = ~1000 words" is
+    // actually enforced by the length gate.
+    expect(wordTarget('blog')).toEqual({ min: 900, max: 1100, tolerance: 0.10 });
+    expect(wordTarget('blog', 'standard')).toEqual({ min: 900, max: 1100, tolerance: 0.10 });
   });
 
   it('returns the baseline newsletter range when preset is standard / omitted', () => {
@@ -79,13 +83,14 @@ describe('wordTarget', () => {
   });
 
   it('scales blog down 0.6× for short', () => {
-    // 600×0.6=360, 900×0.6=540. Math.round applied explicitly.
-    expect(wordTarget('blog', 'short')).toEqual({ min: 360, max: 540, tolerance: 0.15 });
+    // 900×0.6=540, 1100×0.6=660. Non-standard preset keeps the 0.15
+    // tolerance — we only tightened the standard baseline.
+    expect(wordTarget('blog', 'short')).toEqual({ min: 540, max: 660, tolerance: 0.15 });
   });
 
   it('scales blog up 1.6× for long', () => {
-    // 600×1.6=960, 900×1.6=1440.
-    expect(wordTarget('blog', 'long')).toEqual({ min: 960, max: 1440, tolerance: 0.15 });
+    // 900×1.6=1440, 1100×1.6=1760.
+    expect(wordTarget('blog', 'long')).toEqual({ min: 1440, max: 1760, tolerance: 0.15 });
   });
 
   it('scales newsletter proportionally', () => {
@@ -93,12 +98,64 @@ describe('wordTarget', () => {
     expect(wordTarget('newsletter', 'long')).toEqual({ min: 480, max: 800, tolerance: 0.15 });
   });
 
-  it('tolerance stays at 0.15 across all presets', () => {
-    // If we ever scale tolerance per preset the length-gate retry logic
-    // has to change too — this test guards that coupling.
-    for (const p of ['short', 'standard', 'long'] as const) {
-      expect(wordTarget('blog', p)?.tolerance).toBe(0.15);
+  it('tolerance is 0.10 on standard blog, 0.15 elsewhere', () => {
+    // Standard-blog is the one case where we tighten tolerance: admin
+    // asked for "exactly ~1000 words", so we don't want the gate to
+    // quietly accept a 1265-word draft. Other presets/types stay at
+    // the historical 0.15 so we don't churn newsletters unnecessarily.
+    expect(wordTarget('blog',       'standard')?.tolerance).toBe(0.10);
+    expect(wordTarget('blog',       'short')?.tolerance).toBe(0.15);
+    expect(wordTarget('blog',       'long')?.tolerance).toBe(0.15);
+    expect(wordTarget('newsletter', 'standard')?.tolerance).toBe(0.15);
+  });
+});
+
+describe('stripHashHeadings', () => {
+  it('returns the input unchanged when there are no headings', () => {
+    const body = 'Regular paragraph.\n\nAnother one — no sigils here.';
+    expect(stripHashHeadings(body)).toBe(body);
+  });
+
+  it('promotes single-# headings to bold lines', () => {
+    expect(stripHashHeadings('# Top heading')).toBe('**Top heading**');
+  });
+
+  it('handles H1 through H6 identically', () => {
+    for (const n of [1, 2, 3, 4, 5, 6]) {
+      const prefix = '#'.repeat(n);
+      expect(stripHashHeadings(`${prefix} Section`)).toBe('**Section**');
     }
+  });
+
+  it('drops orphan heading tokens (`#` alone on a line)', () => {
+    expect(stripHashHeadings('Para.\n###\nMore text.'))
+      .toBe('Para.\n\nMore text.');
+  });
+
+  it('leaves inline # characters alone (hashtags, refs)', () => {
+    const body = 'See #mentalhealth for context. Prices from $#NZD.';
+    expect(stripHashHeadings(body)).toBe(body);
+  });
+
+  it('does not touch # that sits after leading whitespace-and-word chars', () => {
+    // A line starting with a word, then a #, must not be treated as a heading.
+    const body = 'note: # is used as a sigil.';
+    expect(stripHashHeadings(body)).toBe(body);
+  });
+
+  it('handles empty / nullish input safely', () => {
+    expect(stripHashHeadings('')).toBe('');
+  });
+
+  it('collapses the triple-newlines that orphan removal could leave', () => {
+    const out = stripHashHeadings('A\n\n##\n\nB');
+    expect(out).toBe('A\n\nB');
+  });
+
+  it('is idempotent — running it twice is a no-op', () => {
+    const input = '# Heading\n\nPara.\n## Sub\nMore.';
+    const once  = stripHashHeadings(input);
+    expect(stripHashHeadings(once)).toBe(once);
   });
 });
 

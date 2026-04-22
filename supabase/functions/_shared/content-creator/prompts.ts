@@ -314,10 +314,13 @@ function typeSpecificRules(
   if (type === "blog") {
     return [
       lengthLine,
-      `- Structure: compelling headline (title field), 1-sentence hook, 3–5 H2 sections, conclusion with CTA.`,
+      `- Structure: compelling headline (title field), 1-sentence hook, 3–5 section breaks, conclusion with CTA.`,
       `- Tone: evidence-based, accessible, no jargon.`,
       `- title field REQUIRED (compelling, ≤ 70 chars).`,
-      `- body should use simple markdown (## for subheads, - for lists).`,
+      // Admin rule (Apr 2026): NO '#' markdown headings anywhere in the
+      // body — they render as literal hashes in our CMS. Use bold for
+      // section titles and plain paragraphs for flow.
+      `- body MUST NOT use '#' markdown headings. For section breaks use a bold line like **Section title** on its own line. Bulleted lists are fine ('- item').`,
       densityRule,
     ].join("\n");
   }

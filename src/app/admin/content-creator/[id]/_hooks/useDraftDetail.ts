@@ -34,10 +34,12 @@ import {
   unapproveIdea,
   finalizeDraft,
   regenerateDraft,
+  publishDraftToBlog,
 } from "@/lib/content-creator/client";
 import type {
   ContentDraft, ContentType, SocialPlatform,
 } from "@/lib/content-creator/types";
+import { stripHashHeadings } from "@/lib/content-creator/length";
 
 /** Input shape for the BriefSettingsPanel. Every field optional — the
  *  panel sends only what actually changed. */
@@ -53,7 +55,7 @@ export interface BriefMetaPatch {
 const MAX_POLLS = 30;
 const POLL_INTERVAL_MS = 3000;
 
-export type DraftBusy = null | 'generate' | 'verify' | 'save' | 'finalize' | 'regenerate' | 'meta';
+export type DraftBusy = null | 'generate' | 'verify' | 'save' | 'finalize' | 'regenerate' | 'meta' | 'publish';
 
 export interface UseDraftDetail {
   /** Loaded draft, or null while fetching / if not found. */
@@ -87,6 +89,10 @@ export interface UseDraftDetail {
   /** Request-improvement flow: saves feedback in brief and kicks off
    *  a regeneration pass. Fires from draft / verified / rejected. */
   doRegenerate: (feedback: string) => Promise<void>;
+  /** Publish a finalized blog draft into the CMS-side `blog_posts` table
+   *  as an unpublished draft. No-ops (and surfaces an error) for non-blog
+   *  or non-finalized drafts. */
+  doPublishToBlog: () => Promise<void>;
   /** Patch the meta bar (content_type / platform / include_title / style_id).
    *  Returns true on success so the UI can close its editor cleanly. */
   patchMeta:    (patch: BriefMetaPatch) => Promise<boolean>;
@@ -121,7 +127,10 @@ export function useDraftDetail(id: string): UseDraftDetail {
       setTitle(d.title ?? "");
       // body is TEXT NOT NULL DEFAULT '' but defend against partial rows
       // the page previously crashed on.
-      setBody(typeof d.body === 'string' ? d.body : "");
+      // Legacy drafts may contain '#' markdown headings that our CMS
+      // renders as literal hashes. Sanitize on load — promotes them to
+      // bold and leaves the rest of the body untouched.
+      setBody(typeof d.body === 'string' ? stripHashHeadings(d.body) : "");
       setError("");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -261,6 +270,27 @@ export function useDraftDetail(id: string): UseDraftDetail {
     }
   }, [draft]);
 
+  /* Push a finalized blog draft into /admin/blog as an unpublished row.
+   * Server is the source of truth for the content_type / finalized gates,
+   * but we check them here too so the UI can hide the button altogether
+   * when it wouldn't work. The success path re-uses the `error` slot for
+   * a toast-style message — matches the pattern copyBody already uses. */
+  const doPublishToBlog = useCallback(async () => {
+    if (!draft) return;
+    setBusy('publish'); setError("");
+    try {
+      const { created } = await publishDraftToBlog(draft.id);
+      setError(created
+        ? 'Published to /admin/blog as draft. Go there to make it live.'
+        : 'Updated the existing blog post on /admin/blog.');
+      setTimeout(() => setError(""), 3500);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
+  }, [draft]);
+
   const doRegenerate = useCallback(async (feedback: string) => {
     if (!draft) return;
     const clean = feedback.trim();
@@ -345,7 +375,12 @@ export function useDraftDetail(id: string): UseDraftDetail {
 
   const copyBody = useCallback(async () => {
     if (!draft) return;
-    const safeBody = typeof draft.body === 'string' ? draft.body : '';
+    const rawBody  = typeof draft.body === 'string' ? draft.body : '';
+    // Strip '#' heading sigils from the body (blog + newsletter) so the
+    // clipboard payload matches what the admin sees in the editor. The
+    // title prepend below stays a single '# ' because downstream markdown
+    // readers expect that as the document root.
+    const safeBody = stripHashHeadings(rawBody);
     const text = draft.content_type === 'social'
       ? safeBody
       : `# ${draft.title ?? ''}\n\n${safeBody}`;
@@ -357,7 +392,9 @@ export function useDraftDetail(id: string): UseDraftDetail {
 
   const downloadMd = useCallback(() => {
     if (!draft) return;
-    const safeBody = typeof draft.body === 'string' ? draft.body : '';
+    const rawBody  = typeof draft.body === 'string' ? draft.body : '';
+    // See copyBody above for why we sanitize before emitting.
+    const safeBody = stripHashHeadings(rawBody);
     const text = draft.content_type === 'social'
       ? safeBody
       : `# ${draft.title ?? ''}\n\n${safeBody}`;
@@ -381,7 +418,7 @@ export function useDraftDetail(id: string): UseDraftDetail {
     title, setTitle, body, setBody,
     refresh,
     doGenerate, doSave, doVerify, doArchive, doDelete, doUnapprove,
-    doFinalize, doRegenerate, patchMeta,
+    doFinalize, doRegenerate, doPublishToBlog, patchMeta,
     copyBody, downloadMd,
     retryFromStuck,
   };

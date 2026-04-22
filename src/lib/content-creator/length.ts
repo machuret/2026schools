@@ -48,8 +48,10 @@ export function wordTarget(
   if (content_type === 'social') return null;
   // Baseline is the Apr-2026 "standard" range. Presets scale proportionally
   // rather than snap to hand-tuned numbers so we don't pile on config.
+  // Blog standard centers on 1000 words (admin-requested Apr 2026).
+  // Newsletter baseline held at 300–500 — short-form by design.
   const base = content_type === 'blog'
-    ? { min: 600, max: 900 }
+    ? { min: 900, max: 1100 }
     : { min: 300, max: 500 };
   const scale =
     preset === 'short' ? 0.6
@@ -58,7 +60,9 @@ export function wordTarget(
   return {
     min: Math.round(base.min * scale),
     max: Math.round(base.max * scale),
-    tolerance: 0.15,
+    // Tighter ±10% (was 15%) on standard blog so "1000 words" actually
+    // lands inside ~900–1210 instead of drifting up to 1265.
+    tolerance: content_type === 'blog' && preset === 'standard' ? 0.10 : 0.15,
   };
 }
 
@@ -102,6 +106,30 @@ export function countWords(body: string): number {
   s = s.replace(/[*_`~]+/g, '');                    // emphasis chars
 
   return s.trim().split(/\s+/).filter(Boolean).length;
+}
+
+/**
+ * Strip `#` markdown heading sigils from a body, promoting the heading
+ * text to a bold line instead. Runs in the draft editor and the
+ * copy/download paths so legacy drafts — generated before the Apr-2026
+ * "no # headings" rule — render cleanly in downstream CMS surfaces.
+ *
+ * Rules:
+ *   - `# Heading` → `**Heading**`  (single line, any H1–H6)
+ *   - Orphan `#` / `##` / `###` tokens with no following word are dropped.
+ *   - Inline `#` characters (hashtags, prices, section refs like "see §3")
+ *     are NOT touched — only line-start heading sigils.
+ */
+export function stripHashHeadings(body: string): string {
+  if (!body) return body;
+  return body
+    // Promote heading lines to bold — captures 1-6 hashes followed by
+    // at least one space and non-empty text.
+    .replace(/^[ \t]*#{1,6}[ \t]+(.+?)[ \t]*$/gm, '**$1**')
+    // Drop orphan heading tokens left on their own line.
+    .replace(/^[ \t]*#{1,6}[ \t]*$/gm, '')
+    // Squash the double blank lines the orphan removal may leave behind.
+    .replace(/\n{3,}/g, '\n\n');
 }
 
 /**
