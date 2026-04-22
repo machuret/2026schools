@@ -133,10 +133,11 @@ function NewBriefPageInner() {
         .catch(() => { /* non-critical — form stays usable */ });
     }
     if (issues.length === 0) {
-      // /api/admin/issues returns a flat array (see /admin/issues/page.tsx
-      // which reads it as `issues`). The server shape is the same as the
-      // fields IssueOption expects.
-      adminFetch('/api/admin/issues')
+      // Public /api/issues returns a flat array of issues. No admin
+      // endpoint exists (admin UI reads issues server-side directly),
+      // and issues are a public fixture so using the unauthenticated
+      // endpoint here is safe.
+      fetch('/api/issues')
         .then((r) => r.json())
         .then((d: IssueOption[] | { issues?: IssueOption[] }) => {
           const list = Array.isArray(d) ? d : (d.issues ?? []);
