@@ -26,6 +26,7 @@ import {
 } from "../_shared/content-creator/vault.ts";
 import { buildVerifyPrompt } from "../_shared/content-creator/prompts.ts";
 import { callAnthropic } from "../_shared/content-creator/anthropic.ts";
+import { fetchAreaBySlug, formatAreaContext } from "../_shared/content-creator/area.ts";
 import {
   corsHeaders, json, readCtx, requireAuth, safeParseJson, type Ctx,
 } from "../_shared/content-creator/common.ts";
@@ -80,18 +81,29 @@ async function handleVerify(body: Record<string, unknown>, ctx: Ctx) {
   };
 
   try {
-    // Bigger window for verification — every claim counts.
-    vault = await fetchVaultContext(ctx.sbUrl, ctx.sbKey, {
-      keywords:       draft.brief.keywords,
-      vault_category: draft.brief.vault_category,
-      topic:          draft.brief.topic,
-      limit:          40,
-    });
+    // Bigger window for verification — every claim counts. For GEO
+    // drafts we also reload the area row so [area:<slug>] citations
+    // can be compared against the same local data the writer saw.
+    const areaSlug = draft.content_type === "geo"
+      ? (draft.brief?.area_slug as string | undefined)
+      : undefined;
+    const [vaultRes, areaRow] = await Promise.all([
+      fetchVaultContext(ctx.sbUrl, ctx.sbKey, {
+        keywords:       draft.brief.keywords,
+        vault_category: draft.brief.vault_category,
+        topic:          draft.brief.topic,
+        limit:          40,
+      }),
+      areaSlug ? fetchAreaBySlug(ctx.sbUrl, ctx.sbKey, areaSlug) : Promise.resolve(null),
+    ]);
+    vault = vaultRes;
+    const areaContext = areaRow ? formatAreaContext(areaRow) : undefined;
 
     const { system, user } = buildVerifyPrompt({
       content_type: draft.content_type,
       draft:        { title: draft.title, body: draft.body },
       vault_block:  formatVaultContext(vault),
+      area_context: areaContext,
     });
 
     anthroRes = await callAnthropic({

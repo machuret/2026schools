@@ -11,7 +11,17 @@
 
 import { z } from 'zod';
 
-export const ContentTypeSchema = z.enum(['social', 'blog', 'newsletter']);
+export const ContentTypeSchema = z.enum(['social', 'blog', 'newsletter', 'geo']);
+
+/** Slug shape we accept for area / issue references. Matches the slug
+ *  regex used on /admin/issues + /admin/content: lowercase letters,
+ *  numbers, hyphens. Kept loose on length (80) to cover long NSW LGA
+ *  names like "blue-mountains-local-government-area". */
+export const SlugSchema = z
+  .string()
+  .min(1)
+  .max(80)
+  .regex(/^[a-z0-9-]+$/, 'Slug must be lowercase letters, numbers, and hyphens');
 export const SocialPlatformSchema = z.enum([
   'twitter',
   'linkedin',
@@ -56,6 +66,12 @@ export const ContentBriefSchema = z.object({
    *  range the generate prompt asks the model to hit. Social posts
    *  ignore this field. */
   length_preset:   z.enum(['short', 'standard', 'long']).optional(),
+  /** GEO-page only. Required at generate time when content_type === 'geo';
+   *  optional here because the same schema is reused for blog/newsletter
+   *  briefs that never set them. The geo-specific schema below makes them
+   *  required where it matters. */
+  area_slug:       SlugSchema.optional(),
+  issue_slug:      SlugSchema.optional(),
 });
 
 /* ─── Stage 1: generate ideas (POST /api/admin/content-creator) ──────────── */
@@ -83,7 +99,42 @@ export const GenerateIdeasSchema = z
         message: 'Platform is only valid for social posts.',
       });
     }
+    // GEO goes through its own stage-0 endpoint (GenerateGeoDraftSchema
+    // below); the generic ideas endpoint shouldn't accept it.
+    if (val.content_type === 'geo') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['content_type'],
+        message: "GEO pages don't use the ideas stage. POST /api/admin/content-creator/geo instead.",
+      });
+    }
   });
+
+/* ─── GEO draft creation (skips ideas) ───────────────────────────────────── */
+
+/**
+ * GEO drafts don't go through the ideas stage — the (area, issue) pair is
+ * already the topic. The admin POSTs this payload to
+ * /api/admin/content-creator/geo which inserts a single content_drafts row
+ * in status='draft' and returns its id. The admin then opens the draft
+ * detail page and clicks Generate as usual.
+ *
+ * `brief` carries the optional knobs that parallel the blog brief — tone,
+ * audience, style, length. No topic field: the route composes a topic
+ * string like "{Area name}: {Issue title}" from the DB lookups.
+ */
+export const GenerateGeoDraftSchema = z.object({
+  area_slug:  SlugSchema,
+  issue_slug: SlugSchema,
+  brief: z
+    .object({
+      tone:          z.string().max(120).optional(),
+      audience:      z.string().max(120).optional(),
+      style_id:      z.string().uuid().nullable().optional(),
+      length_preset: z.enum(['short', 'standard', 'long']).optional(),
+    })
+    .optional(),
+});
 
 /* ─── PATCH draft (manual edits) ─────────────────────────────────── */
 

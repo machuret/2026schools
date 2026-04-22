@@ -142,7 +142,7 @@ export async function patchDraft(
   patch: {
     title?:        string | null;
     body?:         string;
-    content_type?: 'social' | 'blog' | 'newsletter';
+    content_type?: ContentType;
     platform?:     'twitter' | 'linkedin' | 'facebook' | 'instagram' | null;
     brief_patch?:  Partial<{
       style_id:              string | null;
@@ -222,6 +222,49 @@ export interface PublishToBlogResult {
 export async function publishDraftToBlog(id: string): Promise<PublishToBlogResult> {
   const res = await adminFetch(`${BASE}/${id}/publish-to-blog`, { method: 'POST' });
   return asJson<PublishToBlogResult>(res);
+}
+
+/**
+ * GEO draft creation — the stage-0 shortcut for the geo content_type.
+ * Posts (area_slug, issue_slug, brief?) to the dedicated /geo endpoint
+ * which inserts a content_drafts row in status='approved_idea' (skipping
+ * the ideas stage) and returns it. Caller should redirect the admin to
+ * the draft detail page afterwards.
+ */
+export interface CreateGeoDraftInput {
+  area_slug:  string;
+  issue_slug: string;
+  brief?: {
+    tone?:          string;
+    audience?:      string;
+    style_id?:      string | null;
+    length_preset?: 'short' | 'standard' | 'long';
+  };
+}
+
+export async function createGeoDraft(input: CreateGeoDraftInput): Promise<ContentDraft> {
+  const res = await adminFetch(`${BASE}/geo`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(input),
+  });
+  const { draft } = await asJson<{ draft: ContentDraft }>(res);
+  return draft;
+}
+
+/**
+ * Publish-to-pages — the GEO equivalent of publishDraftToBlog. Inserts
+ * (or updates) a cms_pages row with category='geo' and leaves it
+ * unpublished; admin flips it live from /admin/cms/pages.
+ */
+export interface PublishToPagesResult {
+  page:    { id: string; slug: string; title: string; published: boolean };
+  created: boolean;
+}
+
+export async function publishDraftToPages(id: string): Promise<PublishToPagesResult> {
+  const res = await adminFetch(`${BASE}/${id}/publish-to-pages`, { method: 'POST' });
+  return asJson<PublishToPagesResult>(res);
 }
 
 /** Soft-delete — flips status to 'archived'. Reversible. */

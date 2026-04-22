@@ -161,11 +161,23 @@ Produce ${input.count} ideas now. Return JSON only.`.trim();
 /* ─── STAGE 2: CONTENT GENERATION ───────────────────────────────────────── */
 
 export interface GeneratePromptInput {
-  content_type: "social" | "blog" | "newsletter";
+  content_type: "social" | "blog" | "newsletter" | "geo";
   platform?: string;
   idea: { title: string; summary: string };
   brief: { topic: string; tone?: string; audience?: string; keywords?: string[] };
   vault_block: string;
+  /**
+   * GEO-only. Pre-rendered block of local context about the area (town)
+   * the article is being written about — sourced from the `areas` table's
+   * `issues` JSON + `overview` + key stats. Treated as an additional
+   * citable source under [area:<area-slug>] markers. Omitted for other
+   * content types.
+   */
+  area_context?: string;
+  /** Slug of the area attached to a GEO draft. Used to interpolate the
+   *  literal citation token the model should emit. Required when
+   *  content_type === 'geo'. */
+  area_slug?: string;
   /** Optional writing-style directive, prepended to the system message. */
   style_prompt?: string;
   /** Optional rendered STYLE EXAMPLES block (from buildStyleExamplesBlock). */
@@ -196,6 +208,7 @@ export interface GeneratePromptInput {
 
 export function buildGeneratePrompt(input: GeneratePromptInput): { system: string; user: string } {
   const typeRules = typeSpecificRules(input.content_type, input.platform, input.length_preset);
+  const isGeo = input.content_type === "geo";
 
   const stylePrefix = input.style_prompt
     ? `WRITING STYLE\n${input.style_prompt.trim()}\n\n`
@@ -212,6 +225,14 @@ export function buildGeneratePrompt(input: GeneratePromptInput): { system: strin
     ? `title field REQUIRED.`
     : `title field MUST be null. Open the body with the hook directly — no headline line.`;
 
+  // GEO-only: teach the model about the [area:<slug>] citation token so
+  // it can ground claims that come from the local-context block (as
+  // opposed to the general Vault). Both forms count as supported
+  // citations during verification.
+  const geoCitationRule = isGeo && input.area_slug
+    ? `\n- GEO LOCAL CONTEXT: for any claim sourced from the AREA CONTEXT block (local stats, severity, local prevention efforts), cite it inline as [area:${input.area_slug}] instead of [vault:<uuid>]. Every local claim MUST carry this marker.`
+    : "";
+
   const system = `${stylePrefix}${examplesBlock}${MISSION}
 
 Task: write the ${input.content_type} post described by the approved idea below.
@@ -225,7 +246,7 @@ CITATION FORMAT — IMPORTANT
   [N] for social, and appends a Sources list at the end of long-form pieces.
 - For SOCIAL posts, cite sparingly — each [vault:<uuid>] marker is ~45 chars
   and will shrink to ~4 chars after post-processing, but the uuid still
-  counts toward your output token budget. One or two citations is plenty.
+  counts toward your output token budget. One or two citations is plenty.${geoCitationRule}
 
 TITLE RULE
 - ${titleRule}
@@ -254,6 +275,13 @@ Return STRICT JSON only:
     ? `\n\nPREVIOUS DRAFT (for reference — improve on this, don't regress)\n${prev.title ? `title: ${prev.title}\n` : ""}body:\n${prev.body}`
     : "";
 
+  // GEO-only: the area's local issues/overview land as a dedicated block
+  // so the model can weave town-specific detail into the article without
+  // those facts leaking out of the citation contract.
+  const areaBlock = isGeo && input.area_context
+    ? `\n\nAREA CONTEXT (local data for this town — cite as [area:${input.area_slug}])\n${input.area_context}`
+    : "";
+
   const user = `APPROVED IDEA
 title:   ${input.idea.title}
 summary: ${input.idea.summary}
@@ -261,9 +289,9 @@ summary: ${input.idea.summary}
 BRIEF
 topic:    ${input.brief.topic}
 tone:     ${input.brief.tone ?? "(default)"}
-audience: ${input.brief.audience ?? "(default)"}${regenBlock}${prevBlock}
+audience: ${input.brief.audience ?? "(default)"}${regenBlock}${prevBlock}${areaBlock}
 
-VAULT (authoritative facts — your ONLY allowed source of statistics/claims)
+VAULT (authoritative facts — your ONLY allowed source of statistics/claims${isGeo ? ", alongside AREA CONTEXT above" : ""})
 ${input.vault_block}
 
 Write the ${input.content_type} now. Return JSON only.`.trim();
@@ -280,7 +308,7 @@ Write the ${input.content_type} now. Return JSON only.`.trim();
  *  Range numbers are computed in length.ts · wordTarget so a single source
  *  of truth drives both the prompt and the post-generation length gate. */
 function typeSpecificRules(
-  type: "social" | "blog" | "newsletter",
+  type: "social" | "blog" | "newsletter" | "geo",
   platform?: string,
   length_preset?: "short" | "standard" | "long",
 ): string {
@@ -324,6 +352,23 @@ function typeSpecificRules(
       densityRule,
     ].join("\n");
   }
+
+  if (type === "geo") {
+    // GEO pages pair an Australian town with a wellbeing issue and must
+    // read as genuinely local, not as generic national copy sprinkled
+    // with place-names. Structure is tighter than blog because we want
+    // crawlable sub-sections for SEO.
+    return [
+      lengthLine,
+      `- MUST mention the town by name repeatedly and naturally — aim for the area name in the title, the opening hook, and at least 3 section breaks.`,
+      `- Structure: local hook (what's happening in this town) → the issue explained with Vault data → local angle / AREA CONTEXT data → what schools & families in this town can do → local CTA.`,
+      `- Every town-specific claim cites [area:<slug>]; every national claim cites [vault:<uuid>]. Do not blur the two.`,
+      `- Tone: evidence-based, locally-aware, no jargon. This is an SEO landing page, not an op-ed.`,
+      `- title field REQUIRED (compelling, includes the town and the issue, ≤ 80 chars).`,
+      `- body MUST NOT use '#' markdown headings. Use bold lines (**Section title**) for section breaks.`,
+      densityRule,
+    ].join("\n");
+  }
   // newsletter
   return [
     lengthLine,
@@ -338,10 +383,14 @@ function typeSpecificRules(
 /* ─── STAGE 2b: ANTHROPIC IMPROVEMENT PASS ──────────────────────────────── */
 
 export interface ImprovePromptInput {
-  content_type: "social" | "blog" | "newsletter";
+  content_type: "social" | "blog" | "newsletter" | "geo";
   platform?: string;
   draft: { title: string | null; body: string };
   vault_block: string;
+  /** GEO-only: optional local-context block, treated as an additional
+   *  allowed source during the improvement pass so the model doesn't
+   *  strip area-specific detail thinking it's unverified. */
+  area_context?: string;
 }
 
 export function buildImprovePrompt(input: ImprovePromptInput): { system: string; user: string } {
@@ -377,13 +426,17 @@ JSON QUOTING RULES — CRITICAL
 - Example — RIGHT: "body": "So-called 'soft skills' matter."
 - Do not wrap the JSON in markdown fences.`.trim();
 
+  const areaBlock = input.content_type === "geo" && input.area_context
+    ? `\n\nAREA CONTEXT (local data — treat as an additional allowed source)\n${input.area_context}`
+    : "";
+
   const user = `CURRENT DRAFT
 title: ${input.draft.title ?? "(none — social post)"}
 body:
 ${input.draft.body}
 
 VAULT (authoritative facts)
-${input.vault_block}
+${input.vault_block}${areaBlock}
 
 Return improved JSON now.`.trim();
 
@@ -393,9 +446,12 @@ Return improved JSON now.`.trim();
 /* ─── STAGE 3: VERIFICATION ─────────────────────────────────────────────── */
 
 export interface VerifyPromptInput {
-  content_type: "social" | "blog" | "newsletter";
+  content_type: "social" | "blog" | "newsletter" | "geo";
   draft: { title: string | null; body: string };
   vault_block: string;
+  /** GEO-only: pre-rendered area_context that the verifier is allowed to
+   *  treat as a supporting source (cited in-body as [area:<slug>]). */
+  area_context?: string;
 }
 
 export function buildVerifyPrompt(input: VerifyPromptInput): { system: string; user: string } {
@@ -425,14 +481,22 @@ Rules:
 - status = "unverified" if the core thesis is not supported.
 
 EVIDENCE DENSITY (the draft was written under this rule — flag if violated)
-${densityPromptRule(input.content_type)}`.trim();
+${densityPromptRule(input.content_type)}${
+    input.content_type === "geo"
+      ? "\n\nGEO LOCAL-CONTEXT RULE\nClaims cited as [area:<slug>] must match the AREA CONTEXT block below. Treat those as supported; do not flag them for missing from Vault."
+      : ""
+  }`.trim();
+
+  const areaBlock = input.content_type === "geo" && input.area_context
+    ? `\n\nAREA CONTEXT (local data — compare [area:<slug>] claims against this)\n${input.area_context}`
+    : "";
 
   const user = `DRAFT TO VERIFY
 ${input.draft.title ? `TITLE: ${input.draft.title}\n` : ""}BODY:
 ${input.draft.body}
 
 VAULT (authoritative facts — compare every claim against these)
-${input.vault_block}
+${input.vault_block}${areaBlock}
 
 Return verdict JSON now.`.trim();
 

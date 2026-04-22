@@ -30,6 +30,7 @@ import {
 import { callOpenAI } from "../_shared/content-creator/openai.ts";
 import { callAnthropic } from "../_shared/content-creator/anthropic.ts";
 import { resolveStylePrompt, buildStyleExamplesBlock } from "../_shared/content-creator/styles.ts";
+import { fetchAreaBySlug, formatAreaContext } from "../_shared/content-creator/area.ts";
 import { formatCitations } from "../_shared/content-creator/citations.ts";
 import {
   countWords, wordTarget, isOutsideTarget, buildLengthRetryDirective,
@@ -145,9 +146,15 @@ async function handleGenerate(body: Record<string, unknown>, ctx: Ctx, log: Logg
   );
 
   try {
-    // Fetch vault + style concurrently — both are independent DB reads.
-    const vaultSpan = log.span("vault+style");
-    const [vaultRes, style] = await Promise.all([
+    // Fetch vault + style (+ area, GEO only) concurrently — independent
+    // DB reads. The area fetch resolves to null when the draft isn't GEO
+    // or the slug is bad; the call cost is trivial and the conditional
+    // adds zero time to non-GEO pipelines.
+    const vaultSpan = log.span("vault+style+area");
+    const areaSlug = draft.content_type === "geo"
+      ? (draft.brief?.area_slug as string | undefined)
+      : undefined;
+    const [vaultRes, style, area] = await Promise.all([
       fetchVaultContext(ctx.sbUrl, ctx.sbKey, {
         keywords:       draft.brief.keywords,
         vault_category: draft.brief.vault_category,
@@ -156,10 +163,20 @@ async function handleGenerate(body: Record<string, unknown>, ctx: Ctx, log: Logg
       resolveStylePrompt(ctx.sbUrl, ctx.sbKey, draft.brief?.style_id, {
         contentType: draft.content_type,
       }),
+      areaSlug
+        ? fetchAreaBySlug(ctx.sbUrl, ctx.sbKey, areaSlug)
+        : Promise.resolve(null),
     ]);
     msVault    = vaultSpan.end();
     vault      = vaultRes;
     vaultBlock = formatVaultContext(vault);
+
+    // GEO-only: render the area block. Falls back to undefined when no
+    // area row resolved — prompts.ts handles the omission gracefully.
+    const areaContext = area ? formatAreaContext(area) : undefined;
+    if (draft.content_type === "geo" && !areaContext) {
+      log.warn(`geo draft missing area row (slug=${areaSlug ?? "(none)"}) — generating without local context`);
+    }
 
     // Stash the resolved style on the draft's ai_metadata for audit. We do
     // this on the "generate" pass (not ideas) because that's when a human
@@ -199,6 +216,11 @@ async function handleGenerate(body: Record<string, unknown>, ctx: Ctx, log: Logg
       // Admin-picked length on the "Generate options" modal. Undefined →
       // prompts.ts emits the default range for the content type.
       length_preset: draft.brief?.length_preset,
+      // GEO-only: local context + slug so the model knows to cite local
+      // claims as [area:<slug>]. Both undefined on non-GEO drafts and
+      // prompts.ts silently omits the corresponding blocks.
+      area_context:  areaContext,
+      area_slug:     areaSlug,
     });
 
     const openaiSpan = log.span("openai.first");
@@ -272,6 +294,7 @@ async function handleGenerate(body: Record<string, unknown>, ctx: Ctx, log: Logg
       platform:     draft.platform ?? undefined,
       draft:        { title: openaiDraft.title, body: openaiDraft.body },
       vault_block:  vaultBlock,
+      area_context: areaContext,
     });
 
     const anthroSpan = log.span("anthropic.improve");

@@ -35,6 +35,7 @@ import {
   finalizeDraft,
   regenerateDraft,
   publishDraftToBlog,
+  publishDraftToPages,
 } from "@/lib/content-creator/client";
 import type {
   ContentDraft, ContentType, SocialPlatform,
@@ -93,6 +94,10 @@ export interface UseDraftDetail {
    *  as an unpublished draft. No-ops (and surfaces an error) for non-blog
    *  or non-finalized drafts. */
   doPublishToBlog: () => Promise<void>;
+  /** GEO equivalent — publishes a finalized GEO draft into cms_pages with
+   *  category='geo'. No-ops (and surfaces an error) for non-GEO or
+   *  non-finalized drafts. */
+  doPublishToPages: () => Promise<void>;
   /** Patch the meta bar (content_type / platform / include_title / style_id).
    *  Returns true on success so the UI can close its editor cleanly. */
   patchMeta:    (patch: BriefMetaPatch) => Promise<boolean>;
@@ -291,6 +296,24 @@ export function useDraftDetail(id: string): UseDraftDetail {
     }
   }, [draft]);
 
+  /* GEO equivalent — publishes into cms_pages under category='geo'. Same
+   * "error slot = toast" pattern as publishToBlog. */
+  const doPublishToPages = useCallback(async () => {
+    if (!draft) return;
+    setBusy('publish'); setError("");
+    try {
+      const { created } = await publishDraftToPages(draft.id);
+      setError(created
+        ? 'Published to /admin/cms/pages as draft. Go there to make it live.'
+        : 'Updated the existing GEO page on /admin/cms/pages.');
+      setTimeout(() => setError(""), 3500);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
+  }, [draft]);
+
   const doRegenerate = useCallback(async (feedback: string) => {
     if (!draft) return;
     const clean = feedback.trim();
@@ -418,7 +441,7 @@ export function useDraftDetail(id: string): UseDraftDetail {
     title, setTitle, body, setBody,
     refresh,
     doGenerate, doSave, doVerify, doArchive, doDelete, doUnapprove,
-    doFinalize, doRegenerate, doPublishToBlog, patchMeta,
+    doFinalize, doRegenerate, doPublishToBlog, doPublishToPages, patchMeta,
     copyBody, downloadMd,
     retryFromStuck,
   };

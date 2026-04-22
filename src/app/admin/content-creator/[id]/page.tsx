@@ -96,6 +96,7 @@ export default function DraftDetailPage() {
             onCopy={d.copyBody}
             onDownload={d.downloadMd}
             onPublishToBlog={d.doPublishToBlog}
+            onPublishToPages={d.doPublishToPages}
             onRetryStuck={d.retryFromStuck}
           />
         </div>

@@ -33,7 +33,13 @@ export interface BriefFormValues {
   vaultCat:    string;
   count:       number;
   styleId:     string;   // "" = no style
+  // GEO-only fields. Empty strings when contentType !== 'geo'.
+  areaSlug:    string;
+  issueSlug:   string;
 }
+
+export interface AreaOption  { slug: string; name: string; state: string }
+export interface IssueOption { slug: string; title: string; severity?: string }
 
 export interface BriefFormProps {
   value:      BriefFormValues;
@@ -41,9 +47,17 @@ export interface BriefFormProps {
   styles:     WritingStyle[];
   submitting: boolean;
   onSubmit:   (e: React.FormEvent) => void;
+  /** GEO-only option lists. Empty arrays when not loaded; the form
+   *  still renders but the selectors are disabled. */
+  areas?:     AreaOption[];
+  issues?:    IssueOption[];
 }
 
-export function BriefForm({ value, onChange, styles, submitting, onSubmit }: BriefFormProps) {
+export function BriefForm({
+  value, onChange, styles, submitting, onSubmit,
+  areas = [], issues = [],
+}: BriefFormProps) {
+  const isGeo = value.contentType === 'geo';
   return (
     <form
       onSubmit={onSubmit}
@@ -68,6 +82,7 @@ export function BriefForm({ value, onChange, styles, submitting, onSubmit }: Bri
             <option value="social">Social post</option>
             <option value="blog">Blog post</option>
             <option value="newsletter">Newsletter</option>
+            <option value="geo">GEO page (town × issue)</option>
           </select>
         </Field>
         {value.contentType === 'social' && (
@@ -87,18 +102,57 @@ export function BriefForm({ value, onChange, styles, submitting, onSubmit }: Bri
         )}
       </div>
 
-      {/* Topic */}
-      <Field label="Topic" required hint="One sentence describing what this content should be about.">
-        <input
-          value={value.topic}
-          onChange={(e) => onChange('topic', e.target.value)}
-          placeholder="e.g. Why check-ins catch student mental-health issues early"
-          style={inputStyle}
-          required
-          minLength={3}
-          maxLength={500}
-        />
-      </Field>
+      {/* GEO: Area + Issue selectors replace the free-text topic. The
+          generate route composes a topic like "{issue.title} in
+          {area.name}, {area.state}" server-side from these slugs. */}
+      {isGeo ? (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <Field label="Area (town)" required hint={areas.length === 0 ? 'Loading areas…' : `${areas.length} towns available`}>
+            <select
+              value={value.areaSlug}
+              onChange={(e) => onChange('areaSlug', e.target.value)}
+              style={inputStyle}
+              required
+              disabled={areas.length === 0}
+            >
+              <option value="">— pick a town —</option>
+              {areas.map((a) => (
+                <option key={a.slug} value={a.slug}>
+                  {a.name} · {a.state}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Issue" required hint={issues.length === 0 ? 'Loading issues…' : `${issues.length} issues available`}>
+            <select
+              value={value.issueSlug}
+              onChange={(e) => onChange('issueSlug', e.target.value)}
+              style={inputStyle}
+              required
+              disabled={issues.length === 0}
+            >
+              <option value="">— pick an issue —</option>
+              {issues.map((i) => (
+                <option key={i.slug} value={i.slug}>
+                  {i.title}{i.severity ? ` · ${i.severity}` : ''}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+      ) : (
+        <Field label="Topic" required hint="One sentence describing what this content should be about.">
+          <input
+            value={value.topic}
+            onChange={(e) => onChange('topic', e.target.value)}
+            placeholder="e.g. Why check-ins catch student mental-health issues early"
+            style={inputStyle}
+            required
+            minLength={3}
+            maxLength={500}
+          />
+        </Field>
+      )}
 
       {/* Tone + audience. Dropdowns back the common presets; "Custom…"
           swaps in a free-text input so admin can still type anything.
@@ -146,44 +200,52 @@ export function BriefForm({ value, onChange, styles, submitting, onSubmit }: Bri
         </select>
       </Field>
 
-      {/* Keywords + category */}
-      <Field
-        label="Keywords (optional)"
-        hint="Comma-separated. Used for vault keyword matching and in the prompt."
-      >
-        <input
-          value={value.keywords}
-          onChange={(e) => onChange('keywords', e.target.value)}
-          placeholder="wellbeing, early intervention, secondary school"
-          style={inputStyle}
-        />
-      </Field>
-      <Field
-        label="Vault category (optional)"
-        hint="Narrows the vault RAG to a single category. Leave blank to search everything."
-      >
-        <input
-          value={value.vaultCat}
-          onChange={(e) => onChange('vaultCat', e.target.value)}
-          placeholder="mental-health / statistics / research"
-          style={inputStyle}
-        />
-      </Field>
+      {/* Keywords + category — hidden for GEO because the route derives
+          vault_category from the issue slug and keywords are irrelevant
+          when the Area+Issue pair IS the topic. */}
+      {!isGeo && (
+        <>
+          <Field
+            label="Keywords (optional)"
+            hint="Comma-separated. Used for vault keyword matching and in the prompt."
+          >
+            <input
+              value={value.keywords}
+              onChange={(e) => onChange('keywords', e.target.value)}
+              placeholder="wellbeing, early intervention, secondary school"
+              style={inputStyle}
+            />
+          </Field>
+          <Field
+            label="Vault category (optional)"
+            hint="Narrows the vault RAG to a single category. Leave blank to search everything."
+          >
+            <input
+              value={value.vaultCat}
+              onChange={(e) => onChange('vaultCat', e.target.value)}
+              placeholder="mental-health / statistics / research"
+              style={inputStyle}
+            />
+          </Field>
+        </>
+      )}
 
-      {/* Count */}
-      <Field label="How many ideas?">
-        <input
-          type="number"
-          min={1}
-          max={10}
-          value={value.count}
-          onChange={(e) => onChange(
-            'count',
-            Math.max(1, Math.min(10, parseInt(e.target.value || '5', 10))),
-          )}
-          style={{ ...inputStyle, maxWidth: 120 }}
-        />
-      </Field>
+      {/* Count — hidden for GEO (always a single draft per area×issue). */}
+      {!isGeo && (
+        <Field label="How many ideas?">
+          <input
+            type="number"
+            min={1}
+            max={10}
+            value={value.count}
+            onChange={(e) => onChange(
+              'count',
+              Math.max(1, Math.min(10, parseInt(e.target.value || '5', 10))),
+            )}
+            style={{ ...inputStyle, maxWidth: 120 }}
+          />
+        </Field>
+      )}
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 8 }}>
         <Link href="/admin/content-creator" className="swa-btn">Cancel</Link>
@@ -192,7 +254,9 @@ export function BriefForm({ value, onChange, styles, submitting, onSubmit }: Bri
           className="swa-btn swa-btn--primary"
           disabled={submitting}
         >
-          {submitting ? 'Generating ideas…' : 'Generate ideas'}
+          {submitting
+            ? (isGeo ? 'Creating GEO draft…' : 'Generating ideas…')
+            : (isGeo ? 'Create GEO draft'      : 'Generate ideas')}
         </button>
       </div>
     </form>

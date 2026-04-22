@@ -23,7 +23,7 @@ export interface StyleExample {
 }
 
 /** Content types a style may apply to. 'all' is a wildcard. Keep lowercased. */
-export type StyleAppliesTo = 'all' | 'blog' | 'newsletter' | 'social';
+export type StyleAppliesTo = 'all' | 'blog' | 'newsletter' | 'social' | 'geo';
 
 /** Mirrors the content_writing_styles row 1:1. */
 export interface WritingStyle {

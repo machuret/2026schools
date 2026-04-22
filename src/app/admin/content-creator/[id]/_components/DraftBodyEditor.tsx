@@ -67,7 +67,9 @@ export interface DraftBodyEditorProps {
   onRegenerate: (feedback: string) => void;
   onCopy:       () => void;
   onDownload:   () => void;
-  onPublishToBlog: () => void;
+  onPublishToBlog:  () => void;
+  /** GEO-only mirror of onPublishToBlog — pushes into cms_pages. */
+  onPublishToPages: () => void;
   onRetryStuck: () => void;
 }
 
@@ -76,7 +78,7 @@ export function DraftBodyEditor(props: DraftBodyEditorProps) {
     draft, title, body, onTitleChange, onBodyChange,
     isEditable, inFlight, busy, stuck, stuckAfterSeconds,
     onGenerate, onSave, onVerify, onFinalize, onRegenerate,
-    onCopy, onDownload, onPublishToBlog, onRetryStuck,
+    onCopy, onDownload, onPublishToBlog, onPublishToPages, onRetryStuck,
   } = props;
 
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -114,6 +116,33 @@ export function DraftBodyEditor(props: DraftBodyEditorProps) {
       flexDirection: 'column',
       gap: 14,
     }}>
+      {/* GEO-only: compact chip strip so the admin can see at a glance
+          which town + issue this draft is anchored to. Slugs come from
+          the brief where the /api/admin/content-creator/geo route
+          stored them at create time. */}
+      {draft.content_type === 'geo' && (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {draft.brief?.area_slug && (
+            <span style={{
+              background: '#EEF2FF', color: '#3730A3', fontSize: 12, fontWeight: 600,
+              padding: '4px 10px', borderRadius: 999,
+            }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 13, verticalAlign: '-2px', marginRight: 4 }}>location_on</span>
+              Area: {String(draft.brief.area_slug)}
+            </span>
+          )}
+          {draft.brief?.issue_slug && (
+            <span style={{
+              background: '#FEF3C7', color: '#92400E', fontSize: 12, fontWeight: 600,
+              padding: '4px 10px', borderRadius: 999,
+            }}>
+              <span className="material-symbols-outlined" style={{ fontSize: 13, verticalAlign: '-2px', marginRight: 4 }}>psychology</span>
+              Issue: {String(draft.brief.issue_slug)}
+            </span>
+          )}
+        </div>
+      )}
+
       {showTitle && (
         <input
           type="text"
@@ -264,6 +293,19 @@ export function DraftBodyEditor(props: DraftBodyEditorProps) {
               >
                 <span className="material-symbols-outlined" style={{ fontSize: 16 }}>publish</span>
                 {busy === 'publish' ? 'Publishing…' : 'Publish to /admin/blog'}
+              </button>
+            )}
+            {/* GEO-only: push to cms_pages with category='geo'. Same
+                idempotent insert/update semantics as publish-to-blog. */}
+            {draft.content_type === 'geo' && (
+              <button
+                onClick={onPublishToPages}
+                disabled={inFlight}
+                className="swa-btn"
+                title="Creates (or updates) a matching row in /admin/cms/pages under the GEO pages category. You then toggle it live from there."
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>publish</span>
+                {busy === 'publish' ? 'Publishing…' : 'Publish to /admin/cms/pages'}
               </button>
             )}
             <button onClick={onSave} className="swa-btn">

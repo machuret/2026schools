@@ -46,9 +46,10 @@ export interface DensityTarget {
 
 /** Mirror of the language in prompts.ts · typeSpecificRules. Update both. */
 export function densityTarget(
-  content_type: 'social' | 'blog' | 'newsletter',
+  content_type: 'social' | 'blog' | 'newsletter' | 'geo',
 ): DensityTarget | null {
-  if (content_type === 'blog')       return { wordsPerCite: 150, minCites: 3, tolerance: 0.25 };
+  // GEO shares the blog profile — long-form, same ~150 words/cite rule.
+  if (content_type === 'blog' || content_type === 'geo') return { wordsPerCite: 150, minCites: 3, tolerance: 0.25 };
   if (content_type === 'newsletter') return { wordsPerCite: 100, minCites: 2, tolerance: 0.25 };
   // Social: at least 1 citation per post, but we don't density-check.
   return null;
@@ -74,7 +75,7 @@ export interface DensityReport {
  * call this and decide per-return.
  */
 export function evaluateDensity(
-  content_type: 'social' | 'blog' | 'newsletter',
+  content_type: 'social' | 'blog' | 'newsletter' | 'geo',
   words: number,
   cites: number,
 ): DensityReport {
@@ -110,7 +111,7 @@ export function evaluateDensity(
  * verify stages. Centralised here so updating the rule in one place
  * updates what the writer AND the verifier see.
  */
-export function densityPromptRule(content_type: 'social' | 'blog' | 'newsletter'): string {
+export function densityPromptRule(content_type: 'social' | 'blog' | 'newsletter' | 'geo'): string {
   const t = densityTarget(content_type);
   if (!t) {
     // Social: one citation per post is enough; don't ask for more.

@@ -6,7 +6,11 @@
  * edge function. Keep them in sync when either end changes.
  * ═══════════════════════════════════════════════════════════════════════════ */
 
-export type ContentType = 'social' | 'blog' | 'newsletter';
+/** `geo` = area×issue landing page, rendered via the CMS Pages module
+ *  with `cms_pages.category = 'geo'`. Shares the long-form pipeline with
+ *  blog / newsletter but skips the ideas stage (the area+issue pair IS
+ *  the topic). */
+export type ContentType = 'social' | 'blog' | 'newsletter' | 'geo';
 
 export type SocialPlatform = 'twitter' | 'linkedin' | 'facebook' | 'instagram';
 
@@ -67,6 +71,17 @@ export interface ContentBrief {
    * driven by platform char limits).
    */
   length_preset?: 'short' | 'standard' | 'long';
+  /**
+   * GEO-page only. Both required when `content_type === 'geo'`.
+   *   - `area_slug`  matches areas.slug (e.g. "wagga-wagga").
+   *   - `issue_slug` matches issues.slug (e.g. "bullying").
+   * The edge fn resolves these to the full area row + issue row on the
+   * server and injects the area's `issues` JSON into the user prompt for
+   * local context. Stored as slugs (not UUIDs) so the draft stays readable
+   * in the DB and the publish step can build the page slug directly.
+   */
+  area_slug?: string;
+  issue_slug?: string;
 }
 
 /**

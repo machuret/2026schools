@@ -40,15 +40,16 @@ export type LengthPreset = 'short' | 'standard' | 'long';
  *  optional `preset` which widens / tightens the baseline range so an
  *  admin can nudge the same brief toward a shorter or longer piece. */
 export function wordTarget(
-  content_type: 'social' | 'blog' | 'newsletter',
+  content_type: 'social' | 'blog' | 'newsletter' | 'geo',
   preset: LengthPreset = 'standard',
 ): WordTarget | null {
   if (content_type === 'social') return null;
   // Baseline is the Apr-2026 "standard" range. Presets scale proportionally
   // rather than snap to hand-tuned numbers so we don't pile on config.
-  // Blog standard centers on 1000 words (admin-requested Apr 2026).
+  // Blog + GEO standards center on 1000 words (admin-requested Apr 2026).
   // Newsletter baseline held at 300–500 — short-form by design.
-  const base = content_type === 'blog'
+  const longForm = content_type === 'blog' || content_type === 'geo';
+  const base = longForm
     ? { min: 900, max: 1100 }
     : { min: 300, max: 500 };
   const scale =
@@ -58,9 +59,9 @@ export function wordTarget(
   return {
     min: Math.round(base.min * scale),
     max: Math.round(base.max * scale),
-    // Tighter ±10% (was 15%) on standard blog so "1000 words" actually
+    // Tighter ±10% (was 15%) on standard long-form so "1000 words" actually
     // lands inside ~900–1210 instead of drifting up to 1265.
-    tolerance: content_type === 'blog' && preset === 'standard' ? 0.10 : 0.15,
+    tolerance: longForm && preset === 'standard' ? 0.10 : 0.15,
   };
 }
 
@@ -93,6 +94,7 @@ export function countWords(body: string): number {
 
   // Citation markers — these are artefacts, not prose.
   s = s.replace(/\[vault:[0-9a-f-]{36}\]/gi, ' ');
+  s = s.replace(/\[area:[a-z0-9-]+\]/gi, ' ');
   s = s.replace(/\[Source\s+\d+\]/gi, ' ');
   s = s.replace(/\[\d+\]/g, ' ');
 

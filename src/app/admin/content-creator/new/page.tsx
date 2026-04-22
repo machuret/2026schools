@@ -18,12 +18,18 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { generateIdeas } from "@/lib/content-creator/client";
+import { generateIdeas, createGeoDraft } from "@/lib/content-creator/client";
+import { adminFetch } from "@/lib/adminFetch";
 import {
   getTopic, listTopics, type ContentTopic,
 } from "@/lib/content-creator/topics";
 import { listStyles, type WritingStyle } from "@/lib/content-creator/styles";
-import { BriefForm, type BriefFormValues } from "./_components/BriefForm";
+import {
+  BriefForm,
+  type BriefFormValues,
+  type AreaOption,
+  type IssueOption,
+} from "./_components/BriefForm";
 import { SourceTopicBanner }      from "./_components/SourceTopicBanner";
 import { ApprovedTopicsSidebar }  from "./_components/ApprovedTopicsSidebar";
 
@@ -51,7 +57,14 @@ function NewBriefPageInner() {
     vaultCat:    '',
     count:       5,
     styleId:     '',
+    areaSlug:    '',
+    issueSlug:   '',
   });
+
+  // GEO dropdown data — loaded lazily (only when the admin switches to
+  // GEO) to keep the /new page snappy for the common non-GEO case.
+  const [areas,  setAreas]  = useState<AreaOption[]>([]);
+  const [issues, setIssues] = useState<IssueOption[]>([]);
 
   const updateForm = useCallback(
     <K extends keyof BriefFormValues>(key: K, v: BriefFormValues[K]) => {
@@ -107,11 +120,60 @@ function NewBriefPageInner() {
       .catch(() => { /* non-critical */ });
   }, []);
 
+  // GEO data. Only fires when the admin switches to GEO; both fetches
+  // are idempotent so repeated switches are cheap.
+  useEffect(() => {
+    if (form.contentType !== 'geo') return;
+    if (areas.length === 0) {
+      adminFetch('/api/admin/areas')
+        .then((r) => r.json())
+        .then((d: { areas?: AreaOption[] }) => setAreas(
+          (d.areas ?? []).map((a) => ({ slug: a.slug, name: a.name, state: a.state }))
+        ))
+        .catch(() => { /* non-critical — form stays usable */ });
+    }
+    if (issues.length === 0) {
+      // /api/admin/issues returns a flat array (see /admin/issues/page.tsx
+      // which reads it as `issues`). The server shape is the same as the
+      // fields IssueOption expects.
+      adminFetch('/api/admin/issues')
+        .then((r) => r.json())
+        .then((d: IssueOption[] | { issues?: IssueOption[] }) => {
+          const list = Array.isArray(d) ? d : (d.issues ?? []);
+          setIssues(list.map((i) => ({ slug: i.slug, title: i.title, severity: i.severity })));
+        })
+        .catch(() => { /* non-critical */ });
+    }
+  }, [form.contentType, areas.length, issues.length]);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setSubmitting(true);
     try {
+      // GEO goes through its own stage-0 endpoint. Single draft, no ideas
+      // stage — we redirect straight to the detail page so the admin can
+      // click Generate.
+      if (form.contentType === 'geo') {
+        if (!form.areaSlug || !form.issueSlug) {
+          setError('Please pick both an area and an issue.');
+          setSubmitting(false);
+          return;
+        }
+        const draft = await createGeoDraft({
+          area_slug:  form.areaSlug,
+          issue_slug: form.issueSlug,
+          brief: {
+            tone:          form.tone.trim()     || undefined,
+            audience:      form.audience.trim() || undefined,
+            style_id:      form.styleId || undefined,
+            length_preset: 'standard',
+          },
+        });
+        router.push(`/admin/content-creator/${draft.id}`);
+        return;
+      }
+
       const result = await generateIdeas({
         content_type: form.contentType,
         platform:     form.contentType === 'social' ? form.platform : undefined,
@@ -182,6 +244,8 @@ function NewBriefPageInner() {
           value={form}
           onChange={updateForm}
           styles={styles}
+          areas={areas}
+          issues={issues}
           submitting={submitting}
           onSubmit={onSubmit}
         />

@@ -35,6 +35,12 @@ describe('countWords', () => {
     expect(countWords(body)).toBe(5);
   });
 
+  it('strips [area:<slug>] markers (GEO-page local-context citations)', () => {
+    const body = 'Wagga Wagga has higher bullying rates [area:wagga-wagga] than the state average.';
+    // After stripping: "Wagga Wagga has higher bullying rates than the state average." = 10 words.
+    expect(countWords(body)).toBe(10);
+  });
+
   it('drops the Sources block appended by formatCitations', () => {
     const body = [
       'Body paragraph one here.',
@@ -96,6 +102,14 @@ describe('wordTarget', () => {
   it('scales newsletter proportionally', () => {
     expect(wordTarget('newsletter', 'short')).toEqual({ min: 180, max: 300, tolerance: 0.15 });
     expect(wordTarget('newsletter', 'long')).toEqual({ min: 480, max: 800, tolerance: 0.15 });
+  });
+
+  it('treats geo like blog — 1000-word baseline, same tolerance curve', () => {
+    // GEO pages share the 900–1100 baseline and the tighter 0.10 tolerance
+    // on standard so the "Wagga × Bullying" article lands near 1000 words.
+    expect(wordTarget('geo')).toEqual({ min: 900, max: 1100, tolerance: 0.10 });
+    expect(wordTarget('geo', 'short')).toEqual({ min: 540, max: 660, tolerance: 0.15 });
+    expect(wordTarget('geo', 'long')).toEqual({ min: 1440, max: 1760, tolerance: 0.15 });
   });
 
   it('tolerance is 0.10 on standard blog, 0.15 elsewhere', () => {

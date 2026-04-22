@@ -6,7 +6,7 @@ export const GET = requireAdmin(async () => {
   const sb = adminClient();
   const { data, error } = await sb
     .from("pages")
-    .select("id, slug, title, status, show_in_menu, updated_at")
+    .select("id, slug, title, status, show_in_menu, updated_at, category, area_slug, issue_slug")
     .order("updated_at", { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
