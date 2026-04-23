@@ -23,6 +23,7 @@ import {
   deleteDraft,
   generateDraft,
   patchDraft,
+  recoverStuckDraft,
 } from "@/lib/content-creator/client";
 import type { ContentDraft, ContentType, ContentStatus, SocialPlatform } from "@/lib/content-creator/types";
 
@@ -122,6 +123,11 @@ export interface UseIdeasList {
   onGenerate:  (id: string) => Promise<void>;
   onArchive:   (id: string) => Promise<void>;
   onDelete:    (id: string) => Promise<void>;
+  /** Unstick a row the edge fn stranded in 'generating'. Server-side
+   *  /recover enforces a 5-min minimum age so this can't race a real
+   *  in-flight request. On too-early clicks we surface the wait-time
+   *  hint in `error`. */
+  onRecover:   (id: string) => Promise<void>;
   /** Single-row variant used by the "Generate options" modal. Diffs the
    *  payload against the idea, PATCHes only what changed, flips idea →
    *  approved_idea if needed, then fires the generate edge fn. Errors
@@ -254,6 +260,24 @@ export function useIdeasList(): UseIdeasList {
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
   }
 
+  /* Unstick a row stranded in 'generating'. The server enforces the
+   * 5-min minimum stuck age so a race with a live request is impossible
+   * — we just surface the 409 wait-time hint in place of an error
+   * message when it fires. On success the row transitions to
+   * 'approved_idea' (no body produced) or 'draft' (body present from a
+   * regen) and a full refresh pulls it back into the list correctly. */
+  async function onRecover(id: string) {
+    try {
+      const { recovered_from, recovered_to } = await recoverStuckDraft(id);
+      await refresh();
+      setError(`Recovered: ${recovered_from} → ${recovered_to}. You can retry now.`);
+      // Clear the "toast" after a few seconds so it doesn't linger.
+      window.setTimeout(() => setError(""), 4000);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
   /* ─── Generate with options (from the modal) ─────────────────────────── */
 
   async function generateWithOptions(id: string, opts: GenerateWithOptionsInput) {
@@ -340,7 +364,7 @@ export function useIdeasList(): UseIdeasList {
     selected, toggleSelect, clearSelection, selectAllVisible, allVisibleSelected,
     canApproveSelected,
     bulkBusy, bulkApprove, bulkGenerate, bulkArchive,
-    refresh, onApprove, onUnapprove, onGenerate, onArchive, onDelete,
+    refresh, onApprove, onUnapprove, onGenerate, onArchive, onDelete, onRecover,
     generateWithOptions,
   };
 }

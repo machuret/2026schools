@@ -16,6 +16,11 @@ export interface AnthropicOpts {
   model?: string;
   temperature?: number;
   maxTokens?: number;
+  /** Per-call fetch timeout. Default 60s. See ../openai.ts::OpenAIOpts
+   *  for the full rationale — TL;DR: without this the edge-fn worker
+   *  gets SIGKILL'd at Supabase's 150s cap when upstream stalls, and
+   *  the row is left stranded at status='generating'|'verifying'. */
+  timeoutMs?: number;
 }
 
 export interface AnthropicResult {
@@ -29,22 +34,35 @@ export async function callAnthropic(opts: AnthropicOpts): Promise<AnthropicResul
   // default (claude-3-5-sonnet-20241022) was retired by Anthropic and
   // started returning 404 "not_found_error".
   const model = opts.model ?? "claude-sonnet-4-5-20250929";
+  const timeoutMs = opts.timeoutMs ?? 60_000;
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type":      "application/json",
-      "x-api-key":         opts.apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model,
-      system: opts.system,
-      max_tokens: opts.maxTokens ?? 2000,
-      temperature: opts.temperature ?? 0.3,
-      messages: [{ role: "user", content: opts.user }],
-    }),
-  });
+  let res: Response;
+  try {
+    res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type":      "application/json",
+        "x-api-key":         opts.apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model,
+        system: opts.system,
+        max_tokens: opts.maxTokens ?? 2000,
+        temperature: opts.temperature ?? 0.3,
+        messages: [{ role: "user", content: opts.user }],
+      }),
+      // AbortSignal.timeout throws a catchable AbortError — without it
+      // Supabase SIGKILLs the worker at its wall-clock cap and the
+      // caller's cleanup try/catch never runs.
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'TimeoutError') {
+      throw new Error(`Anthropic timed out after ${timeoutMs}ms`);
+    }
+    throw err;
+  }
 
   if (!res.ok) {
     const txt = await res.text().catch(() => "");

@@ -65,15 +65,34 @@ export interface IdeaCardProps {
   onGenerate:    () => void;
   onArchive:     () => void;
   onDelete:      () => void;
+  /** Unstick a row the edge fn stranded in 'generating'. Only wired
+   *  when the card renders for a 'generating' row AND that row's
+   *  updated_at is ≥ STUCK_THRESHOLD_MS old. */
+  onRecover:     () => void;
 }
+
+/** Rows that have been in 'generating' longer than this are almost
+ *  certainly stuck — the edge fn's hard runtime cap is 150s and the
+ *  full chain p95 is ~90-150s. We wait 5 min to avoid racing a real
+ *  in-flight request; the server /recover endpoint enforces the same
+ *  floor server-side. */
+const STUCK_THRESHOLD_MS = 5 * 60 * 1000;
 
 export function IdeaCard(props: IdeaCardProps) {
   const {
     idea, selected, selectable, disabled,
-    onToggleSelect, onApprove, onUnapprove, onGenerate, onArchive, onDelete,
+    onToggleSelect, onApprove, onUnapprove, onGenerate, onArchive, onDelete, onRecover,
   } = props;
 
   const theme = STATUS_THEME[idea.status] ?? STATUS_THEME.idea;
+  // A row is 'stuck' when it's been sitting in 'generating' for longer
+  // than the AI chain's realistic max runtime. We compute this from
+  // updated_at (which the status-flip at the start of generate-stage
+  // bumped) so the threshold matches the server's own /recover gate.
+  const stuckMs = idea.status === 'generating'
+    ? Date.now() - new Date(idea.updated_at).getTime()
+    : 0;
+  const isStuck = stuckMs >= STUCK_THRESHOLD_MS;
 
   const safeBody = typeof idea.body === 'string' ? idea.body : '';
   // Title falls back to a 60-char body snippet, then to a generic label.
@@ -252,6 +271,24 @@ export function IdeaCard(props: IdeaCardProps) {
               Unapprove
             </button>
           </>
+        )}
+
+        {/* 'Generating…' row that's been stuck past the AI chain's
+            realistic max runtime. We surface a Recover CTA inline so
+            the admin doesn't have to click through to the detail
+            page + wait 90s for its own stuck banner to appear. */}
+        {idea.status === 'generating' && isStuck && (
+          <button
+            onClick={onRecover}
+            className="swa-btn swa-btn--primary"
+            style={{ fontSize: 12, padding: '6px 12px', background: '#EF4444', borderColor: '#EF4444' }}
+            title={`Stuck for ${Math.round(stuckMs / 60000)} min — roll back to ${idea.body && idea.body.length > 0 ? "'draft'" : "'approved_idea'"} so you can retry`}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+              restart_alt
+            </span>
+            Recover (stuck {Math.round(stuckMs / 60000)}m)
+          </button>
         )}
 
         {/* Link to detail + icon actions on the right */}

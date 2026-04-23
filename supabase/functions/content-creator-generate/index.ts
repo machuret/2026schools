@@ -39,7 +39,8 @@ import { evaluateDensity } from "../_shared/content-creator/density.ts";
 import { sumCosts } from "../_shared/content-creator/pricing.ts";
 import {
   corsHeaders, json, readCtx, requireAuth,
-  safeParseJson, dedupUuids, createLogger, type Ctx, type Logger,
+  safeParseJson, dedupUuids, createLogger, clearLastError,
+  type Ctx, type Logger,
 } from "../_shared/content-creator/common.ts";
 
 /* Hard character budgets per social platform — mirrors the values in
@@ -400,7 +401,9 @@ async function handleGenerate(body: Record<string, unknown>, ctx: Ctx, log: Logg
   }
 
   const ai_metadata = {
-    ...(draft.ai_metadata ?? {}),
+    // Strip any `last_error_*` from a prior failed run so the Provenance
+    // card doesn't keep showing stale errors on a now-healthy draft.
+    ...clearLastError(draft.ai_metadata),
     openai_model:    openaiRes.model,
     anthropic_model: anthroRes.model,
     tokens: {

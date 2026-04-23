@@ -28,7 +28,8 @@ import { buildVerifyPrompt } from "../_shared/content-creator/prompts.ts";
 import { callAnthropic } from "../_shared/content-creator/anthropic.ts";
 import { fetchAreaBySlug, formatAreaContext } from "../_shared/content-creator/area.ts";
 import {
-  corsHeaders, json, readCtx, requireAuth, safeParseJson, type Ctx,
+  corsHeaders, json, readCtx, requireAuth, safeParseJson, clearLastError,
+  type Ctx,
 } from "../_shared/content-creator/common.ts";
 
 Deno.serve(async (req: Request) => {
@@ -150,7 +151,9 @@ async function handleVerify(body: Record<string, unknown>, ctx: Ctx) {
       : "rejected";
 
   const ai_metadata = {
-    ...(draft.ai_metadata ?? {}),
+    // Strip stale `last_error_*` from a prior failed verify so the
+    // Provenance card matches the current (healthy) verdict.
+    ...clearLastError(draft.ai_metadata),
     anthropic_model:     anthroRes.model,
     verified_at:         verification.checked_at,
     verification_tokens: anthroRes.tokens,

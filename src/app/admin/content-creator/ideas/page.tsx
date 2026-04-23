@@ -123,6 +123,7 @@ export default function IdeasPage() {
               onGenerate={()     => setModalFor(idea)}
               onArchive={()      => d.onArchive(idea.id)}
               onDelete={()       => d.onDelete(idea.id)}
+              onRecover={()      => d.onRecover(idea.id)}
             />
           ))}
         </div>

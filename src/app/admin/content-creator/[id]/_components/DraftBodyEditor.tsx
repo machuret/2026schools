@@ -70,7 +70,7 @@ export interface DraftBodyEditorProps {
   onPublishToBlog:  () => void;
   /** GEO-only mirror of onPublishToBlog — pushes into cms_pages. */
   onPublishToPages: () => void;
-  onRetryStuck: () => void;
+  onRetryStuck: () => void | Promise<void>;
 }
 
 export function DraftBodyEditor(props: DraftBodyEditorProps) {

@@ -124,10 +124,13 @@ export const POST = requireAdmin(async (_req: NextRequest, ctx?: Ctx) => {
     .maybeSingle();
 
   const desiredSlug = slugify(title);
-  // When updating, keep the existing slug unless the title (and therefore
-  // derived slug) has changed — avoids breaking any external links that
-  // may have been copied between publishes.
-  const targetSlug = existing && existing.slug === slugify(existing.slug)
+  // When updating, keep the existing slug IFF it still matches what the
+  // current title would produce. Renaming the draft title between
+  // publishes thus updates the slug (and, by design, may break any
+  // external links admins copied from the old slug — that's the cost of
+  // renaming). The prior check `existing.slug === slugify(existing.slug)`
+  // was a tautology that locked the slug forever.
+  const targetSlug = existing && existing.slug === desiredSlug
     ? existing.slug
     : await reserveSlug(sb, desiredSlug, existing?.id ?? null);
 

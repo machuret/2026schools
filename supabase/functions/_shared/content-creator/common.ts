@@ -117,6 +117,28 @@ export function trim(s: string, max: number): string {
 }
 
 /**
+ * Strip stale `last_error_*` keys from an ai_metadata blob.
+ *
+ * Every stage writes `last_error / last_error_at / last_error_stage /
+ * last_error_request_id` in its failure branch. Without this helper,
+ * successful runs spread the prior metadata into the new row and the
+ * stale error sticks around in the Provenance card forever — confusing
+ * admins who ran Generate three times and see a two-week-old error on
+ * a perfectly good draft.
+ *
+ * Call this on the metadata object *before* spreading it into the
+ * success-path update.
+ */
+export function clearLastError<T extends Record<string, unknown>>(meta: T | null | undefined): T {
+  const base = { ...(meta ?? {}) } as Record<string, unknown>;
+  delete base.last_error;
+  delete base.last_error_at;
+  delete base.last_error_stage;
+  delete base.last_error_request_id;
+  return base as T;
+}
+
+/**
  * Shared auth gate. Every content-creator-* fn is called by a Next.js API
  * route that forwards the service-role key as `Authorization`, so we just
  * assert the header exists (Supabase already verifies the key).

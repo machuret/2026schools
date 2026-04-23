@@ -179,6 +179,25 @@ export async function finalizeDraft(id: string): Promise<ContentDraft> {
 }
 
 /**
+ * Escape hatch for drafts stuck in 'generating' / 'verifying'. The
+ * server-side gate enforces a 5-minute minimum age so this can't race
+ * a real in-flight AI call. Returns the recovered draft + which
+ * statuses it transitioned between for a clean toast.
+ */
+export async function recoverStuckDraft(id: string): Promise<{
+  draft: ContentDraft;
+  recovered_from: 'generating' | 'verifying';
+  recovered_to:   'draft' | 'approved_idea';
+}> {
+  const res = await adminFetch(`${BASE}/${id}/recover`, { method: 'POST' });
+  return asJson<{
+    draft: ContentDraft;
+    recovered_from: 'generating' | 'verifying';
+    recovered_to:   'draft' | 'approved_idea';
+  }>(res);
+}
+
+/**
  * Kick off a fresh generation pass with feedback from the admin. Accepted
  * when the draft is in draft / verified / rejected. Server merges the
  * feedback into brief.regeneration_feedback, flips status to 'generating',

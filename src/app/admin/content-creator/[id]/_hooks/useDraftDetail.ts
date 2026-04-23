@@ -36,6 +36,7 @@ import {
   regenerateDraft,
   publishDraftToBlog,
   publishDraftToPages,
+  recoverStuckDraft,
 } from "@/lib/content-creator/client";
 import type {
   ContentDraft, ContentType, SocialPlatform,
@@ -103,8 +104,11 @@ export interface UseDraftDetail {
   patchMeta:    (patch: BriefMetaPatch) => Promise<boolean>;
   copyBody:     () => Promise<void>;
   downloadMd:   () => void;
-  /** Dismiss the stuck banner and run another refresh. */
-  retryFromStuck: () => void;
+  /** Recover a draft that the edge fn stranded in 'generating' /
+   *  'verifying'. Server enforces a 5-minute minimum stuck age so this
+   *  can't race a real in-flight AI call; on too-early clicks it
+   *  surfaces the wait-time hint in `error`. */
+  retryFromStuck: () => Promise<void>;
 }
 
 export function useDraftDetail(id: string): UseDraftDetail {
@@ -430,10 +434,36 @@ export function useDraftDetail(id: string): UseDraftDetail {
     URL.revokeObjectURL(url);
   }, [draft]);
 
-  const retryFromStuck = useCallback(() => {
-    setStuck(false);
-    refresh();
-  }, [refresh]);
+  /* Stuck-row recovery. Previously this just hid the banner and
+   * re-fetched the row — which did nothing if the edge fn had truly
+   * hung. We now call /recover which flips the row back to the
+   * pre-in-flight editable state (server enforces a 5-minute minimum
+   * stuck age so we can't race a real request). On the rare
+   * pre-5-minute click, the server 409s and we surface a helpful hint
+   * via the shared `error` slot. */
+  const retryFromStuck = useCallback(async () => {
+    if (!draft) { setStuck(false); return; }
+    setBusy('generate'); setError("");
+    try {
+      const { recovered_from, recovered_to } = await recoverStuckDraft(draft.id);
+      setStuck(false);
+      await refresh();
+      setError(`Recovered: ${recovered_from} → ${recovered_to}. You can retry now.`);
+      setTimeout(() => setError(""), 4000);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      // 409 (too early) means the edge fn may still be running —
+      // tell the admin to wait rather than scaring them with a raw
+      // "Cannot recover" string.
+      setError(
+        /Wait at least/.test(msg)
+          ? msg
+          : `Recovery failed: ${msg}`,
+      );
+    } finally {
+      setBusy(null);
+    }
+  }, [draft, refresh]);
 
   return {
     draft, loading, busy, error, stuck,
