@@ -25,6 +25,11 @@ export default function ParagraphBlock({ block, onChange }: Props) {
     content: block.data.text ?? "",
     onUpdate: ({ editor }) => onChange({ ...blockRef.current, data: { ...blockRef.current.data, text: editor.getHTML() } }),
     editorProps: { attributes: { class: "wysiwyg-prose" } },
+    // Required under Next 16 / React 19. Without it Tiptap runs its
+    // initial render on the server where ProseMirror's DOM APIs are
+    // unavailable, which shows up as a hydration-mismatch warning and
+    // leaves the editor un-interactable until a manual refresh.
+    immediatelyRender: false,
   });
 
   if (!editor) return null;

@@ -22,6 +22,9 @@ function ColEditor({ value, onChange, placeholder }: { value: string; onChange: 
     content: value,
     onUpdate: ({ editor }) => onChangeRef.current(editor.getHTML()),
     editorProps: { attributes: { class: "wysiwyg-prose" } },
+    // See ParagraphBlock.tsx — required under Next 16 / React 19 to
+    // avoid a hydration mismatch that leaves the column un-editable.
+    immediatelyRender: false,
   });
 
   if (!editor) return null;

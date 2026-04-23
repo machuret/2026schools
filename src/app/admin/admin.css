@@ -1924,10 +1924,28 @@
   background: transparent;
   cursor: pointer;
   padding: 0;
-  opacity: 0;
+  /* Baseline visibility of 0.45 so the + divider is discoverable on
+   * every-draft loads (and on touch devices where :hover never
+   * fires). Hovering the strip pops to full opacity for the classic
+   * focused-insertion affordance. Empty-state gets its own full
+   * opacity via the .wysiwyg-canvas-empty scope below. */
+  opacity: 0.45;
   transition: opacity 0.15s;
 }
-.admin-shell .wysiwyg-add-block:hover .wysiwyg-add-btn { opacity: 1; }
+.admin-shell .wysiwyg-add-block:hover .wysiwyg-add-btn,
+.admin-shell .wysiwyg-add-btn:focus-visible { opacity: 1; }
+
+/* In the empty-state card the add-button IS the primary call-to-action,
+ * so always render it at full opacity regardless of hover. Without this,
+ * a brand-new /admin/cms/pages/new looked like a dead page to admins. */
+.admin-shell .wysiwyg-canvas-empty .wysiwyg-add-btn { opacity: 1; }
+
+/* Touch devices can't hover — keep the + fully visible so the editor
+ * isn't silently broken on iPad. `hover: none` covers real touch
+ * hardware; desktop browsers keep the hover fade. */
+@media (hover: none) {
+  .admin-shell .wysiwyg-add-btn { opacity: 1; }
+}
 .admin-shell .wysiwyg-add-line {
   flex: 1;
   height: 1px;

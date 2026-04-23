@@ -44,6 +44,8 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
     editorProps: {
       attributes: { class: "rte-body", style: `min-height:${minHeight}px` },
     },
+    // Next 16 / React 19 SSR hygiene — see wysiwyg/blocks/ParagraphBlock.tsx.
+    immediatelyRender: false,
   });
 
   // Sync value changes from outside (e.g. cancel/reset)
